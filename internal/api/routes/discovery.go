@@ -28,6 +28,7 @@ func SetupDiscoveryRoutes(router *gin.Engine, discoveryHandler *handlers.Discove
 			// History and info
 			discovery.GET("/history", discoveryHandler.GetScanHistory)
 			discovery.GET("/protocol-ports", discoveryHandler.GetProtocolPorts)
+			discovery.GET("/active-scans", discoveryHandler.GetActiveScans)
 		}
 	}
 }

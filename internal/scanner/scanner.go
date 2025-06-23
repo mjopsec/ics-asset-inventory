@@ -558,35 +558,220 @@ func (s *Scanner) identifyByPorts(device *DeviceResult) {
 	}
 }
 
-// Protocol-specific checks (stubs for now)
+// checkModbus checks if the device supports Modbus protocol
 func (s *Scanner) checkModbus(device *DeviceResult) bool {
-	// TODO: Implement Modbus identification
+	detector := &protocols.ModbusDetector{}
+	
+	// Check default port first
+	if info, err := detector.Detect(device.IPAddress, detector.GetDefaultPort()); err == nil {
+		device.Protocol = info.Protocol
+		device.DeviceType = info.DeviceType
+		device.Vendor = info.Vendor
+		device.Model = info.Model
+		device.Version = info.Version
+		device.Fingerprint["modbus"] = true
+		return true
+	}
+	
+	// Check if any open port responds to Modbus
+	for _, port := range device.OpenPorts {
+		if info, err := detector.Detect(device.IPAddress, port.Port); err == nil {
+			device.Protocol = info.Protocol
+			device.DeviceType = info.DeviceType
+			device.Vendor = info.Vendor
+			device.Model = info.Model
+			device.Version = info.Version
+			device.Fingerprint["modbus"] = true
+			device.Fingerprint["modbus_port"] = port.Port
+			return true
+		}
+	}
+	
 	return false
 }
 
+// checkDNP3 checks if the device supports DNP3 protocol
 func (s *Scanner) checkDNP3(device *DeviceResult) bool {
-	// TODO: Implement DNP3 identification
+	detector := &protocols.DNP3Detector{}
+	
+	// Check default port
+	if info, err := detector.Detect(device.IPAddress, detector.GetDefaultPort()); err == nil {
+		device.Protocol = info.Protocol
+		device.DeviceType = info.DeviceType
+		device.Vendor = info.Vendor
+		device.Model = info.Model
+		device.Fingerprint["dnp3"] = true
+		return true
+	}
+	
+	// Check open ports
+	for _, port := range device.OpenPorts {
+		if port.Port == 20000 || port.Port == 20547 {
+			if info, err := detector.Detect(device.IPAddress, port.Port); err == nil {
+				device.Protocol = info.Protocol
+				device.DeviceType = info.DeviceType
+				device.Vendor = info.Vendor
+				device.Model = info.Model
+				device.Fingerprint["dnp3"] = true
+				device.Fingerprint["dnp3_port"] = port.Port
+				return true
+			}
+		}
+	}
+	
 	return false
 }
 
+// checkBACnet checks if the device supports BACnet protocol
 func (s *Scanner) checkBACnet(device *DeviceResult) bool {
-	// TODO: Implement BACnet identification
+	detector := &protocols.BACnetDetector{}
+	
+	if info, err := detector.Detect(device.IPAddress, detector.GetDefaultPort()); err == nil {
+		device.Protocol = info.Protocol
+		device.DeviceType = info.DeviceType
+		device.Vendor = info.Vendor
+		device.Model = info.Model
+		device.Fingerprint["bacnet"] = true
+		return true
+	}
+	
 	return false
 }
 
+// checkEtherNetIP checks if the device supports EtherNet/IP protocol
 func (s *Scanner) checkEtherNetIP(device *DeviceResult) bool {
-	// TODO: Implement EtherNet/IP identification
+	detector := &protocols.EtherNetIPDetector{}
+	
+	// Check default ports
+	ports := []uint16{44818, 2222}
+	for _, port := range ports {
+		if info, err := detector.Detect(device.IPAddress, port); err == nil {
+			device.Protocol = info.Protocol
+			device.DeviceType = info.DeviceType
+			device.Vendor = info.Vendor
+			device.Model = info.Model
+			device.Fingerprint["ethernet_ip"] = true
+			device.Fingerprint["ethernet_ip_port"] = port
+			return true
+		}
+	}
+	
 	return false
 }
 
+// checkS7 checks if the device supports Siemens S7 protocol
 func (s *Scanner) checkS7(device *DeviceResult) bool {
-	// TODO: Implement S7 identification
+	detector := &protocols.S7Detector{}
+	
+	if info, err := detector.Detect(device.IPAddress, detector.GetDefaultPort()); err == nil {
+		device.Protocol = info.Protocol
+		device.DeviceType = info.DeviceType
+		device.Vendor = info.Vendor
+		device.Model = info.Model
+		device.Version = info.Version
+		device.Fingerprint["s7"] = true
+		return true
+	}
+	
 	return false
 }
 
+// checkSNMP checks if the device supports SNMP protocol
 func (s *Scanner) checkSNMP(device *DeviceResult) bool {
-	// TODO: Implement SNMP identification
+	detector := &protocols.SNMPDetector{}
+	
+	// Check both SNMP ports
+	ports := []uint16{161, 162}
+	for _, port := range ports {
+		if info, err := detector.Detect(device.IPAddress, port); err == nil {
+			device.Protocol = info.Protocol
+			device.DeviceType = info.DeviceType
+			device.Vendor = info.Vendor
+			device.Model = info.Model
+			device.Fingerprint["snmp"] = true
+			device.Fingerprint["snmp_port"] = port
+			return true
+		}
+	}
+	
 	return false
+}
+
+// Enhanced identifyDevice method
+func (s *Scanner) identifyDevice(device *DeviceResult) {
+	// Use protocol detectors
+	detectors := protocols.GetAllDetectors()
+	
+	// Check each protocol if enabled
+	for _, protocol := range s.config.Protocols {
+		switch protocol {
+		case "modbus":
+			if s.checkModbus(device) {
+				return
+			}
+		case "dnp3":
+			if s.checkDNP3(device) {
+				return
+			}
+		case "bacnet":
+			if s.checkBACnet(device) {
+				return
+			}
+		case "ethernet_ip":
+			if s.checkEtherNetIP(device) {
+				return
+			}
+		case "s7":
+			if s.checkS7(device) {
+				return
+			}
+		case "snmp":
+			if s.checkSNMP(device) {
+				return
+			}
+		}
+	}
+	
+	// If no protocol detected, identify by ports
+	s.identifyByPorts(device)
+}
+
+// Enhanced grabBanner method
+func (s *Scanner) grabBanner(conn net.Conn) string {
+	// Set read timeout
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	
+	// Try to read initial banner
+	buffer := make([]byte, 1024)
+	n, err := conn.Read(buffer)
+	if err == nil && n > 0 {
+		// Clean and return banner
+		banner := string(buffer[:n])
+		// Remove non-printable characters
+		cleaned := ""
+		for _, r := range banner {
+			if r >= 32 && r < 127 {
+				cleaned += string(r)
+			}
+		}
+		return cleaned
+	}
+	
+	// If no initial banner, try sending a newline to trigger response
+	conn.Write([]byte("\r\n"))
+	n, err = conn.Read(buffer)
+	if err == nil && n > 0 {
+		banner := string(buffer[:n])
+		cleaned := ""
+		for _, r := range banner {
+			if r >= 32 && r < 127 {
+				cleaned += string(r)
+			}
+		}
+		return cleaned
+	}
+	
+	return ""
 }
 
 // Progress and status updates

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -317,4 +318,36 @@ func (h *DiscoveryHandler) GetProtocolPorts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, protocolPorts)
+}
+
+// GetActiveScans returns currently active scans
+// @Summary Get active scans
+// @Description Get list of currently running scans
+// @Tags discovery
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /api/discovery/active-scans [get]
+func (h *DiscoveryHandler) GetActiveScans(c *gin.Context) {
+	activeScan := h.scanService.GetActiveScan()
+	
+	if activeScan == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"active_scans": []interface{}{},
+			"count": 0,
+		})
+		return
+	}
+
+	// Return active scan info
+	c.JSON(http.StatusOK, gin.H{
+		"active_scans": []interface{}{
+			gin.H{
+				"scan_id": activeScan.ID,
+				"status": "running",
+				"start_time": activeScan.ScanDB.StartTime,
+			},
+		},
+		"count": 1,
+	})
 }

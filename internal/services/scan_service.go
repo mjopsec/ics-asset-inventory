@@ -489,3 +489,131 @@ func (s *ScanService) convertToDiscoveredDevice(result *scanner.DeviceResult) Di
 
 	return device
 }
+
+// GetActiveScan returns the currently active scan if any
+func (s *ScanService) GetActiveScan() *ActiveScan {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.activeScan
+}
+
+// CleanupOldScans removes old scan records from history
+func (s *ScanService) CleanupOldScans(daysToKeep int) error {
+	cutoffDate := time.Now().AddDate(0, 0, -daysToKeep)
+	
+	// Delete old scan records
+	if err := s.db.Where("created_at < ?", cutoffDate).Delete(&models.NetworkScan{}).Error; err != nil {
+		return fmt.Errorf("failed to cleanup old scans: %w", err)
+	}
+	
+	// Clean up in-memory history
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
+	for id, scan := range s.scanHistory {
+		if scan.CreatedAt.Before(cutoffDate) {
+			delete(s.scanHistory, id)
+		}
+	}
+	
+	return nil
+}
+
+// GetScanStatistics returns overall scan statistics
+func (s *ScanService) GetScanStatistics() (map[string]interface{}, error) {
+	stats := make(map[string]interface{})
+	
+	// Total scans
+	var totalScans int64
+	s.db.Model(&models.NetworkScan{}).Count(&totalScans)
+	stats["total_scans"] = totalScans
+	
+	// Successful scans
+	var successfulScans int64
+	s.db.Model(&models.NetworkScan{}).Where("status = ?", "completed").Count(&successfulScans)
+	stats["successful_scans"] = successfulScans
+	
+	// Failed scans
+	var failedScans int64
+	s.db.Model(&models.NetworkScan{}).Where("status = ?", "failed").Count(&failedScans)
+	stats["failed_scans"] = failedScans
+	
+	// Total devices discovered
+	var totalDevices int64
+	s.db.Model(&models.NetworkScan{}).Select("SUM(devices_found)").Scan(&totalDevices)
+	stats["total_devices_discovered"] = totalDevices
+	
+	// Average scan duration
+	var avgDuration float64
+	s.db.Model(&models.NetworkScan{}).Where("duration > 0").Select("AVG(duration)").Scan(&avgDuration)
+	stats["average_scan_duration"] = avgDuration
+	
+	// Most common protocols
+	var protocols []struct {
+		Protocol string
+		Count    int64
+	}
+	s.db.Model(&models.Asset{}).
+		Select("protocol, count(*) as count").
+		Where("protocol != ''").
+		Group("protocol").
+		Order("count DESC").
+		Limit(5).
+		Scan(&protocols)
+	stats["top_protocols"] = protocols
+	
+	return stats, nil
+}
+
+// ValidateIPRange validates if the IP range is valid and accessible
+func (s *ScanService) ValidateIPRange(ipRange string) error {
+	// Parse and validate IP range
+	hosts, err := s.parseIPRange(ipRange)
+	if err != nil {
+		return fmt.Errorf("invalid IP range: %w", err)
+	}
+	
+	if len(hosts) == 0 {
+		return fmt.Errorf("no valid hosts in IP range")
+	}
+	
+	if len(hosts) > 65536 {
+		return fmt.Errorf("IP range too large (max 65536 hosts)")
+	}
+	
+	return nil
+}
+
+// parseIPRange is a helper method to parse IP ranges
+func (s *ScanService) parseIPRange(ipRange string) ([]string, error) {
+	var hosts []string
+
+	// Check if it's a CIDR notation
+	if _, ipNet, err := net.ParseCIDR(ipRange); err == nil {
+		for ip := ipNet.IP.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
+			// Skip network and broadcast addresses for /24 and smaller
+			ones, _ := ipNet.Mask.Size()
+			if ones >= 24 && (ip[3] == 0 || ip[3] == 255) {
+				continue
+			}
+			hosts = append(hosts, ip.String())
+		}
+	} else if ip := net.ParseIP(ipRange); ip != nil {
+		// Single IP
+		hosts = append(hosts, ip.String())
+	} else {
+		return nil, fmt.Errorf("invalid IP range format: %s", ipRange)
+	}
+
+	return hosts, nil
+}
+
+// incrementIP increments an IP address
+func incrementIP(ip net.IP) {
+	for j := len(ip) - 1; j >= 0; j-- {
+		ip[j]++
+		if ip[j] > 0 {
+			break
+		}
+	}
+}

@@ -242,6 +242,7 @@ func SetupAllRoutes(
 	assetHandler *handlers.AssetHandler,
 	groupHandler *handlers.GroupHandler,
 	dashboardHandler *handlers.DashboardHandler,
+	discoveryHandler *handlers.DiscoveryHandler, // Add this parameter
 ) {
 	// Setup static routes first (public)
 	SetupStaticRoutes(router)
@@ -249,7 +250,7 @@ func SetupAllRoutes(
 	// Setup auth routes (mixed public/protected)
 	SetupAuthRoutes(router, authHandler)
 	
-	// Setup health routes (public) - use the one from health.go
+	// Setup health routes (public)
 	SetupHealthRoutes(router)
 	
 	// Setup protected system routes
@@ -265,7 +266,11 @@ func SetupAllRoutes(
 	SetupAssetRoutes(router, assetHandler)
 	SetupGroupRoutes(router, groupHandler)
 	SetupDashboardRoutes(router, dashboardHandler)
+	SetupDiscoveryRoutes(router, discoveryHandler) // Add this line
 	SetupTagRoutes(router)
+	
+	// Setup WebSocket route (protected)
+	SetupWebSocketRoute(router)
 	
 	// Catch-all route - redirect to login
 	router.NoRoute(func(c *gin.Context) {
@@ -281,6 +286,16 @@ func SetupAllRoutes(
 		// For web routes, redirect to login
 		c.Redirect(http.StatusTemporaryRedirect, "/login")
 	})
+}
+
+// Add this new function for WebSocket routes
+func SetupWebSocketRoute(router *gin.Engine) {
+	// WebSocket endpoint requires authentication
+	ws := router.Group("/ws")
+	ws.Use(middleware.AuthRequired())
+	{
+		ws.GET("/events", handlers.HandleWebSocket)
+	}
 }
 
 // Basic tag handlers (placeholder implementations)
