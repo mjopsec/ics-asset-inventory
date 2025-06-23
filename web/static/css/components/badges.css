@@ -1,0 +1,432 @@
+/* web/static/css/components/badges.css */
+
+/* Base Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.online {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.status-badge.offline {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.status-badge.warning {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.status-badge.unknown {
+    background-color: #F3F4F6;
+    color: #374151;
+}
+
+.status-badge.active {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.status-badge.paused {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.status-badge.inactive {
+    background-color: #F3F4F6;
+    color: #6B7280;
+}
+
+.status-badge.open {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.status-badge.acknowledged {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.status-badge.resolved {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.status-badge.new {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.status-badge.existing {
+    background-color: #F3F4F6;
+    color: #374151;
+}
+
+/* Status Indicator Dots */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+.status-dot.online {
+    background-color: var(--success-color);
+}
+
+.status-dot.offline {
+    background-color: var(--text-tertiary);
+}
+
+.status-dot.warning {
+    background-color: var(--warning-color);
+}
+
+/* Severity Badges */
+.severity-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.severity-badge.critical {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.severity-badge.high {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.severity-badge.medium {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.severity-badge.low {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+/* Criticality Badges */
+.criticality-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.criticality-badge.critical {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.criticality-badge.high {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.criticality-badge.medium {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.criticality-badge.low {
+    background-color: #F3F4F6;
+    color: #374151;
+}
+
+/* CVSS Score Badges */
+.cvss-score {
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-tertiary);
+    font-size: 12px;
+}
+
+.cvss-score.critical {
+    color: var(--danger-color);
+    background-color: #FEE2E2;
+}
+
+.cvss-score.high {
+    color: var(--warning-color);
+    background-color: #FEF3C7;
+}
+
+.cvss-score.medium {
+    color: var(--info-color);
+    background-color: #DBEAFE;
+}
+
+.cvss-score.low {
+    color: var(--success-color);
+    background-color: #D1FAE5;
+}
+
+/* Schedule Badges */
+.schedule-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.schedule-badge.daily {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.schedule-badge.weekly {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.schedule-badge.monthly {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+/* Scan Type Badges */
+.scan-type-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.scan-type-badge.network {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.scan-type-badge.protocol {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.scan-type-badge.quick {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.scan-type-badge.full {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+/* Scan Status */
+.scan-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.scan-status.completed {
+    color: var(--success-color);
+}
+
+.scan-status.running {
+    color: var(--primary-color);
+}
+
+.scan-status.failed {
+    color: var(--danger-color);
+}
+
+.scan-status.paused {
+    color: var(--warning-color);
+}
+
+/* Tag Styles (for reports and general use) */
+.tag {
+    padding: 4px 12px;
+    background-color: var(--bg-tertiary);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+}
+
+.tag.primary {
+    background-color: #DBEAFE;
+    color: var(--primary-color);
+    border-color: #93C5FD;
+}
+
+.tag.success {
+    background-color: #D1FAE5;
+    color: var(--success-color);
+    border-color: #A7F3D0;
+}
+
+.tag.warning {
+    background-color: #FEF3C7;
+    color: var(--warning-color);
+    border-color: #FDE68A;
+}
+
+.tag.danger {
+    background-color: #FEE2E2;
+    color: var(--danger-color);
+    border-color: #FECACA;
+}
+
+/* Protocol Badges */
+.protocol-badge {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.protocol-badge.modbus {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+    border-color: #93C5FD;
+}
+
+.protocol-badge.dnp3 {
+    background-color: #D1FAE5;
+    color: #065F46;
+    border-color: #A7F3D0;
+}
+
+.protocol-badge.ethernet-ip {
+    background-color: #FEF3C7;
+    color: #92400E;
+    border-color: #FDE68A;
+}
+
+.protocol-badge.bacnet {
+    background-color: #E0E7FF;
+    color: #3730A3;
+    border-color: #C7D2FE;
+}
+
+/* User Role Badges */
+.role-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-badge.admin {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.role-badge.operator {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.role-badge.viewer {
+    background-color: #F3F4F6;
+    color: #374151;
+}
+
+/* Badge with Icons */
+.badge-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-with-icon i {
+    font-size: 10px;
+}
+
+/* Animated Badges */
+.badge-pulse {
+    animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Badge Group */
+.badge-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Responsive Badge Adjustments */
+@media (max-width: 768px) {
+    .badge-group {
+        gap: 4px;
+    }
+    
+    .badge,
+    .status-badge,
+    .severity-badge,
+    .criticality-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+    
+    .tag {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+}
