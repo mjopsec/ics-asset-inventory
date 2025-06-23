@@ -1,228 +1,405 @@
-<!-- web/templates/pages/dashboard.html -->
-<div class="page-header">
-    <h1 class="page-title">Industrial Control System Dashboard</h1>
-    <p class="page-subtitle">Real-time monitoring and management of your ICS/OT infrastructure</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ICS Asset Inventory</title>
+    
+    <!-- External CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Application CSS -->
+    <link rel="stylesheet" href="/static/css/variables.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/components/sidebar.css">
+    <link rel="stylesheet" href="/static/css/components/topbar.css">
+    <link rel="stylesheet" href="/static/css/components/buttons.css">
+    <link rel="stylesheet" href="/static/css/components/cards.css">
+    <link rel="stylesheet" href="/static/css/components/tables.css">
+    <link rel="stylesheet" href="/static/css/components/badges.css">
+    <link rel="stylesheet" href="/static/css/components/modals.css">
+    <link rel="stylesheet" href="/static/css/components/charts.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Toggle for Mobile -->
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
 
-<!-- Stats Cards -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-header">
-            <div>
-                <div class="stat-value" id="totalAssets">0</div>
-                <div class="stat-label">Total Assets</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    12% from last month
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-network-wired"></i>
+                    <span>ICS Inventory</span>
                 </div>
             </div>
-            <div class="stat-icon primary">
-                <i class="fas fa-cube"></i>
-            </div>
-        </div>
-    </div>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="/assets" class="nav-item">
+                    <i class="fas fa-cube"></i>
+                    Assets
+                </a>
+                <a href="/discovery" class="nav-item">
+                    <i class="fas fa-search-location"></i>
+                    Discovery
+                </a>
+                <a href="/security" class="nav-item">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </a>
+                <a href="/reports" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    Reports
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
 
-    <div class="stat-card">
-        <div class="stat-header">
-            <div>
-                <div class="stat-value" id="onlineAssets">0</div>
-                <div class="stat-label">Online Devices</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    95% uptime
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search assets, vulnerabilities, reports...">
+                </div>
+
+                <div class="topbar-actions">
+                    <button class="notification-btn" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </button>
+
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div>
+                            <div class="text-sm font-semibold" id="userName">Admin User</div>
+                            <div class="text-xs text-tertiary" id="userRole">Administrator</div>
+                        </div>
+                        <i class="fas fa-chevron-down text-xs" style="margin-left: 8px;"></i>
+                        
+                        <!-- Profile Dropdown -->
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="dropdown-header">
+                                <div class="dropdown-avatar" id="dropdownAvatar">A</div>
+                                <div class="dropdown-info">
+                                    <div class="dropdown-name" id="dropdownName">Admin User</div>
+                                    <div class="dropdown-email" id="dropdownEmail">admin@localhost</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" onclick="openProfileModal(); return false;">
+                                <i class="fas fa-user"></i>
+                                My Profile
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openAccountSettings(); return false;">
+                                <i class="fas fa-cog"></i>
+                                Account Settings
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openChangePassword(); return false;">
+                                <i class="fas fa-key"></i>
+                                Change Password
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" onclick="showActivityLog(); return false;">
+                                <i class="fas fa-history"></i>
+                                Activity Log
+                            </a>
+                            <a href="/settings" class="dropdown-item">
+                                <i class="fas fa-sliders-h"></i>
+                                System Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item logout" onclick="handleLogout(); return false;">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content" id="dashboard-content">
+                <div class="page-header">
+                    <h1 class="page-title">Industrial Control System Dashboard</h1>
+                    <p class="page-subtitle">Real-time monitoring and management of your ICS/OT infrastructure</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalAssets">0</div>
+                                <div class="stat-label">Total Assets</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>12% from last month</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon primary">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="onlineAssets">0</div>
+                                <div class="stat-label">Online Devices</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>95% uptime</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="criticalAlerts">0</div>
+                                <div class="stat-label">Critical Alerts</div>
+                                <div class="stat-change negative">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>3 new today</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="recentScans">0</div>
+                                <div class="stat-label">Recent Scans</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-check"></i>
+                                    <span>All completed</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon warning">
+                                <i class="fas fa-radar"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Asset Distribution by Type</h3>
+                            <div class="chart-actions">
+                                <button class="chart-action-btn active">Chart</button>
+                                <button class="chart-action-btn">Table</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="assetTypeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Device Status Overview</h3>
+                            <div class="chart-actions">
+                                <button class="chart-action-btn active">Real-time</button>
+                                <button class="chart-action-btn">History</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Assets Table -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3 class="table-title">Recently Discovered Assets</h3>
+                        <a href="/assets" class="view-all-btn">
+                            View all assets
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Protocol</th>
+                                    <th>Criticality</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assetsTableBody">
+                                <!-- Dynamic content will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div class="stat-icon success">
-                <i class="fas fa-check-circle"></i>
-            </div>
-        </div>
+        </main>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-header">
-            <div>
-                <div class="stat-value" id="criticalAlerts">0</div>
-                <div class="stat-label">Critical Alerts</div>
-                <div class="stat-change negative">
-                    <i class="fas fa-arrow-up"></i>
-                    3 new today
-                </div>
-            </div>
-            <div class="stat-icon danger">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
+    <!-- Quick Actions FAB -->
+    <div class="quick-actions">
+        <div class="fab-menu" id="fabMenu">
+            <a href="#" class="fab-menu-item">
+                <i class="fas fa-plus"></i>
+                Add Asset
+            </a>
+            <a href="#" class="fab-menu-item">
+                <i class="fas fa-search"></i>
+                Start Scan
+            </a>
+            <a href="#" class="fab-menu-item">
+                <i class="fas fa-file-export"></i>
+                Export Report
+            </a>
         </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-header">
-            <div>
-                <div class="stat-value" id="recentScans">0</div>
-                <div class="stat-label">Recent Scans</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-check"></i>
-                    All completed
-                </div>
-            </div>
-            <div class="stat-icon warning">
-                <i class="fas fa-radar"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts Section -->
-<div class="charts-grid">
-    <div class="chart-card">
-        <div class="chart-header">
-            <h3 class="chart-title">Asset Distribution by Type</h3>
-            <div class="chart-actions">
-                <button class="chart-action-btn active">Chart</button>
-                <button class="chart-action-btn">Table</button>
-            </div>
-        </div>
-        <div class="chart-container">
-            <canvas id="assetTypeChart"></canvas>
-        </div>
-    </div>
-
-    <div class="chart-card">
-        <div class="chart-header">
-            <h3 class="chart-title">Device Status Overview</h3>
-            <div class="chart-actions">
-                <button class="chart-action-btn active">Real-time</button>
-                <button class="chart-action-btn">History</button>
-            </div>
-        </div>
-        <div class="chart-container">
-            <canvas id="statusChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Assets Table -->
-<div class="table-card">
-    <div class="table-header">
-        <h3 class="table-title">Recently Discovered Assets</h3>
-        <a href="/assets" class="view-all-btn">
-            View all assets
-            <i class="fas fa-arrow-right"></i>
-        </a>
-    </div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Asset</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Protocol</th>
-                <th>Criticality</th>
-                <th>Last Seen</th>
-            </tr>
-        </thead>
-        <tbody id="assetsTableBody">
-            <!-- Dynamic content will be inserted here -->
-        </tbody>
-    </table>
-</div>
-
-<!-- Quick Actions FAB -->
-<div class="quick-actions">
-    <div class="fab-menu" id="fabMenu">
-        <a href="#" class="fab-menu-item">
+        <button class="fab-button" id="fabButton">
             <i class="fas fa-plus"></i>
-            Add Asset
-        </a>
-        <a href="#" class="fab-menu-item">
-            <i class="fas fa-search"></i>
-            Start Scan
-        </a>
-        <a href="#" class="fab-menu-item">
-            <i class="fas fa-file-export"></i>
-            Export Report
-        </a>
+        </button>
     </div>
-    <button class="fab-button" id="fabButton">
-        <i class="fas fa-plus"></i>
-    </button>
-</div>
 
-<!-- Profile Modal -->
-<div class="modal-backdrop" id="profileModal">
-    <div class="modal" style="max-width: 500px;">
-        <div class="modal-header">
-            <h2 class="modal-title">My Profile</h2>
-            <button class="modal-close" onclick="closeProfileModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="text-center mb-6">
-                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary text-white text-2xl font-semibold flex items-center justify-center mx-auto mb-4" id="profileAvatarLarge">A</div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Username</label>
-                        <div class="text-base font-medium" id="profileUsername">admin</div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Email</label>
-                        <div class="text-base" id="profileEmail">admin@localhost</div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Role</label>
-                        <div class="text-base" id="profileRole">Administrator</div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Last Login</label>
-                        <div class="text-base" id="profileLastLogin">-</div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Member Since</label>
-                        <div class="text-base" id="profileCreated">-</div>
-                    </div>
-                </div>
+    <!-- Profile Modal -->
+    <div class="modal-backdrop" id="profileModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">My Profile</h2>
+                <button class="modal-close" onclick="closeProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
-            <button class="btn btn-primary" onclick="openAccountSettings()">
-                <i class="fas fa-edit"></i> Edit Profile
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Change Password Modal -->
-<div class="modal-backdrop" id="changePasswordModal">
-    <div class="modal" style="max-width: 450px;">
-        <div class="modal-header">
-            <h2 class="modal-title">Change Password</h2>
-            <button class="modal-close" onclick="closeChangePasswordModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form id="changePasswordForm">
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Current Password</label>
-                    <input type="password" class="form-input" name="currentPassword" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">New Password</label>
-                    <input type="password" class="form-input" name="newPassword" required minlength="8">
-                    <span class="form-hint">Minimum 8 characters</span>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Confirm New Password</label>
-                    <input type="password" class="form-input" name="confirmPassword" required>
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary text-white text-2xl font-semibold flex items-center justify-center mx-auto mb-4" id="profileAvatarLarge">A</div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Username</label>
+                            <div class="text-base font-medium" id="profileUsername">admin</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Email</label>
+                            <div class="text-base" id="profileEmail">admin@localhost</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Role</label>
+                            <div class="text-base" id="profileRole">Administrator</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Last Login</label>
+                            <div class="text-base" id="profileLastLogin">-</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Member Since</label>
+                            <div class="text-base" id="profileCreated">-</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Update Password
+                <button class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
+                <button class="btn btn-primary" onclick="openAccountSettings()">
+                    <i class="fas fa-edit"></i> Edit Profile
                 </button>
             </div>
-        </form>
+        </div>
     </div>
-</div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-backdrop" id="changePasswordModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Change Password</h2>
+                <button class="modal-close" onclick="closeChangePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="changePasswordForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-input" name="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-input" name="newPassword" required minlength="8">
+                        <span class="form-hint">Minimum 8 characters</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-input" name="confirmPassword" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- External Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+    <!-- Application Scripts -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/ui-components.js"></script>
+    <script src="/static/js/pages/dashboard.js"></script>
+
+    <script>
+        // Global functions for sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close sidebar on outside click (mobile)
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.sidebar-toggle');
+            
+            if (window.innerWidth <= 1024 && 
+                sidebar.classList.contains('active') && 
+                !sidebar.contains(e.target) && 
+                !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 1024) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,410 +1,93 @@
-<!-- web/templates/pages/security.html -->
-<div class="page-header">
-    <h1 class="page-title">Security Assessment</h1>
-    <p class="page-subtitle">Monitor vulnerabilities, compliance status, and security risks across your ICS infrastructure</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security - ICS Asset Inventory</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/variables.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/components/sidebar.css">
+    <link rel="stylesheet" href="/static/css/components/topbar.css">
+    <link rel="stylesheet" href="/static/css/components/buttons.css">
+    <link rel="stylesheet" href="/static/css/components/cards.css">
+    <link rel="stylesheet" href="/static/css/components/tables.css">
+    <link rel="stylesheet" href="/static/css/components/badges.css">
+    <link rel="stylesheet" href="/static/css/components/charts.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-network-wired"></i>
+                    <span>ICS Inventory</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="/assets" class="nav-item">
+                    <i class="fas fa-cube"></i>
+                    Assets
+                </a>
+                <a href="/discovery" class="nav-item">
+                    <i class="fas fa-search-location"></i>
+                    Discovery
+                </a>
+                <a href="/security" class="nav-item active">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </a>
+                <a href="/reports" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    Reports
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
 
-<!-- Security Overview -->
-<div class="security-overview">
-    <div class="security-card">
-        <div class="security-icon critical">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <div class="security-value">3</div>
-        <div class="security-label">Critical Vulnerabilities</div>
-    </div>
-    <div class="security-card">
-        <div class="security-icon high">
-            <i class="fas fa-exclamation-circle"></i>
-        </div>
-        <div class="security-value">12</div>
-        <div class="security-label">High Risk Issues</div>
-    </div>
-    <div class="security-card">
-        <div class="security-icon medium">
-            <i class="fas fa-info-circle"></i>
-        </div>
-        <div class="security-value">28</div>
-        <div class="security-label">Medium Risk Issues</div>
-    </div>
-    <div class="security-card">
-        <div class="security-icon low">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="security-value">89%</div>
-        <div class="security-label">Overall Security Score</div>
-    </div>
-</div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="page-header">
+                    <h1 class="page-title">Security Assessment</h1>
+                    <p class="page-subtitle">Monitor vulnerabilities, compliance status, and security risks</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar">A</div>
+                        <div>
+                            <div class="text-sm font-semibold">Admin User</div>
+                            <div class="text-xs text-tertiary">Administrator</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-<!-- Tabs -->
-<div class="tabs">
-    <div class="tab active" onclick="switchTab('vulnerabilities')">
-        <i class="fas fa-bug"></i> Vulnerabilities
-    </div>
-    <div class="tab" onclick="switchTab('compliance')">
-        <i class="fas fa-clipboard-check"></i> Compliance
-    </div>
-    <div class="tab" onclick="switchTab('risk')">
-        <i class="fas fa-chart-line"></i> Risk Analysis
-    </div>
-</div>
-
-<!-- Vulnerabilities Tab -->
-<div id="vulnerabilitiesTab" class="tab-content active">
-    <!-- Vulnerability Distribution Chart -->
-    <div class="chart-section">
-        <div class="section-header">
-            <h2 class="section-title">Vulnerability Distribution</h2>
-            <button class="btn btn-primary">
-                <i class="fas fa-sync"></i> Run Security Scan
-            </button>
-        </div>
-        <div class="chart-grid">
-            <div class="chart-container">
-                <canvas id="vulnChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="trendChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Vulnerabilities Table -->
-    <div class="vulnerabilities-table">
-        <div class="table-filters">
-            <select class="filter-select">
-                <option value="">All Severities</option>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-            </select>
-            <select class="filter-select">
-                <option value="">All Assets</option>
-                <option value="plc">PLCs</option>
-                <option value="hmi">HMIs</option>
-                <option value="rtu">RTUs</option>
-                <option value="server">Servers</option>
-            </select>
-            <select class="filter-select">
-                <option value="">All Status</option>
-                <option value="open">Open</option>
-                <option value="acknowledged">Acknowledged</option>
-                <option value="resolved">Resolved</option>
-            </select>
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search vulnerabilities...">
-            </div>
-        </div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>CVE ID</th>
-                    <th>Title</th>
-                    <th>Asset</th>
-                    <th>Severity</th>
-                    <th>CVSS</th>
-                    <th>Status</th>
-                    <th>Discovered</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>CVE-2023-32315</td>
-                    <td>Remote Code Execution in Modbus Implementation</td>
-                    <td>Main PLC Controller</td>
-                    <td><span class="severity-badge critical">CRITICAL</span></td>
-                    <td><span class="cvss-score critical">9.8</span></td>
-                    <td><span class="status-badge open"><i class="fas fa-circle"></i> Open</span></td>
-                    <td>2024-01-20</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CVE-2023-28456</td>
-                    <td>Authentication Bypass in HMI Web Interface</td>
-                    <td>HMI Panel Line 1</td>
-                    <td><span class="severity-badge high">HIGH</span></td>
-                    <td><span class="cvss-score high">8.2</span></td>
-                    <td><span class="status-badge acknowledged"><i class="fas fa-circle"></i> Acknowledged</span></td>
-                    <td>2024-01-18</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CVE-2023-25789</td>
-                    <td>Buffer Overflow in DNP3 Parser</td>
-                    <td>Remote Terminal Unit 3</td>
-                    <td><span class="severity-badge critical">CRITICAL</span></td>
-                    <td><span class="cvss-score critical">9.1</span></td>
-                    <td><span class="status-badge open"><i class="fas fa-circle"></i> Open</span></td>
-                    <td>2024-01-19</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CVE-2023-22145</td>
-                    <td>Weak Encryption in Configuration Files</td>
-                    <td>SCADA Server Primary</td>
-                    <td><span class="severity-badge medium">MEDIUM</span></td>
-                    <td><span class="cvss-score">6.5</span></td>
-                    <td><span class="status-badge resolved"><i class="fas fa-check-circle"></i> Resolved</span></td>
-                    <td>2024-01-15</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Compliance Tab -->
-<div id="complianceTab" class="tab-content">
-    <div class="compliance-grid">
-        <!-- IEC 62443 Compliance -->
-        <div class="compliance-card">
-            <div class="compliance-header">
-                <h3 class="compliance-title">IEC 62443 Compliance</h3>
-                <span class="compliance-score warning">78%</span>
-            </div>
-            <div class="compliance-progress">
-                <div class="compliance-progress-bar warning" style="width: 78%;"></div>
-            </div>
-            <div class="compliance-items">
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Network Segmentation</span>
-                </div>
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Access Control</span>
-                </div>
-                <div class="compliance-item failed">
-                    <i class="fas fa-times-circle"></i>
-                    <span>Secure Remote Access</span>
-                </div>
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Patch Management</span>
-                </div>
-                <div class="compliance-item failed">
-                    <i class="fas fa-times-circle"></i>
-                    <span>Security Monitoring</span>
+            <!-- Content Area -->
+            <div class="content">
+                <div class="card">
+                    <h2>Security Dashboard</h2>
+                    <p>Security features will be implemented in Phase 2</p>
                 </div>
             </div>
-            <div class="action-buttons">
-                <button class="btn btn-secondary">
-                    <i class="fas fa-file-alt"></i> View Report
-                </button>
-                <button class="btn btn-primary">
-                    <i class="fas fa-download"></i> Export
-                </button>
-            </div>
-        </div>
-
-        <!-- NIST Framework -->
-        <div class="compliance-card">
-            <div class="compliance-header">
-                <h3 class="compliance-title">NIST Cybersecurity Framework</h3>
-                <span class="compliance-score good">92%</span>
-            </div>
-            <div class="compliance-progress">
-                <div class="compliance-progress-bar good" style="width: 92%;"></div>
-            </div>
-            <div class="compliance-items">
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Identify</span>
-                </div>
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Protect</span>
-                </div>
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Detect</span>
-                </div>
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Respond</span>
-                </div>
-                <div class="compliance-item failed">
-                    <i class="fas fa-times-circle"></i>
-                    <span>Recover</span>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button class="btn btn-secondary">
-                    <i class="fas fa-file-alt"></i> View Report
-                </button>
-                <button class="btn btn-primary">
-                    <i class="fas fa-download"></i> Export
-                </button>
-            </div>
-        </div>
-
-        <!-- Custom Security Policy -->
-        <div class="compliance-card">
-            <div class="compliance-header">
-                <h3 class="compliance-title">Corporate Security Policy</h3>
-                <span class="compliance-score poor">65%</span>
-            </div>
-            <div class="compliance-progress">
-                <div class="compliance-progress-bar poor" style="width: 65%;"></div>
-            </div>
-            <div class="compliance-items">
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Password Policy</span>
-                </div>
-                <div class="compliance-item failed">
-                    <i class="fas fa-times-circle"></i>
-                    <span>Encryption Standards</span>
-                </div>
-                <div class="compliance-item failed">
-                    <i class="fas fa-times-circle"></i>
-                    <span>Backup Procedures</span>
-                </div>
-                <div class="compliance-item passed">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Incident Response</span>
-                </div>
-                <div class="compliance-item failed">
-                    <i class="fas fa-times-circle"></i>
-                    <span>Security Training</span>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button class="btn btn-secondary">
-                    <i class="fas fa-file-alt"></i> View Report
-                </button>
-                <button class="btn btn-primary">
-                    <i class="fas fa-download"></i> Export
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Risk Analysis Tab -->
-<div id="riskTab" class="tab-content">
-    <div class="chart-section">
-        <div class="section-header">
-            <h2 class="section-title">Risk Matrix</h2>
-            <button class="btn btn-secondary">
-                <i class="fas fa-cog"></i> Configure Risk Parameters
-            </button>
-        </div>
-        
-        <div style="text-align: center; margin-bottom: 20px;">
-            <p style="color: var(--text-secondary); margin-bottom: 20px;">Risk = Likelihood × Impact</p>
-            <div class="risk-matrix">
-                <div class="risk-cell critical">5</div>
-                <div class="risk-cell critical">10</div>
-                <div class="risk-cell critical">15</div>
-                <div class="risk-cell critical">20</div>
-                <div class="risk-cell critical">25</div>
-                <div class="risk-cell high">4</div>
-                <div class="risk-cell high">8</div>
-                <div class="risk-cell high">12</div>
-                <div class="risk-cell critical">16</div>
-                <div class="risk-cell critical">20</div>
-                <div class="risk-cell medium">3</div>
-                <div class="risk-cell medium">6</div>
-                <div class="risk-cell high">9</div>
-                <div class="risk-cell high">12</div>
-                <div class="risk-cell critical">15</div>
-                <div class="risk-cell low">2</div>
-                <div class="risk-cell medium">4</div>
-                <div class="risk-cell medium">6</div>
-                <div class="risk-cell high">8</div>
-                <div class="risk-cell high">10</div>
-                <div class="risk-cell low">1</div>
-                <div class="risk-cell low">2</div>
-                <div class="risk-cell medium">3</div>
-                <div class="risk-cell medium">4</div>
-                <div class="risk-cell medium">5</div>
-            </div>
-            <div class="risk-labels">
-                <span>Very Low</span>
-                <span>Low</span>
-                <span>Medium</span>
-                <span>High</span>
-                <span>Very High</span>
-            </div>
-            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">Impact →</p>
-        </div>
+        </main>
     </div>
 
-    <!-- Top Risks -->
-    <div class="chart-section">
-        <div class="section-header">
-            <h2 class="section-title">Top Security Risks</h2>
-            <button class="btn btn-primary">
-                <i class="fas fa-file-export"></i> Generate Risk Report
-            </button>
-        </div>
-        <div class="vulnerabilities-table">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Risk</th>
-                        <th>Asset</th>
-                        <th>Likelihood</th>
-                        <th>Impact</th>
-                        <th>Risk Score</th>
-                        <th>Mitigation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Unpatched Critical Vulnerability</td>
-                        <td>Main PLC Controller</td>
-                        <td>High</td>
-                        <td>Critical</td>
-                        <td><span class="severity-badge critical">20</span></td>
-                        <td>Apply security patch immediately</td>
-                    </tr>
-                    <tr>
-                        <td>Weak Authentication</td>
-                        <td>HMI Panel Line 1</td>
-                        <td>Medium</td>
-                        <td>High</td>
-                        <td><span class="severity-badge high">12</span></td>
-                        <td>Implement multi-factor authentication</td>
-                    </tr>
-                    <tr>
-                        <td>Exposed Network Services</td>
-                        <td>Remote Terminal Unit 3</td>
-                        <td>High</td>
-                        <td>Medium</td>
-                        <td><span class="severity-badge high">12</span></td>
-                        <td>Configure firewall rules</td>
-                    </tr>
-                    <tr>
-                        <td>Outdated Firmware</td>
-                        <td>Industrial Switch A</td>
-                        <td>Low</td>
-                        <td>Medium</td>
-                        <td><span class="severity-badge medium">6</span></td>
-                        <td>Schedule firmware update</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/ui-components.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="/static/js/pages/security.js"></script>
+</body>
+</html>

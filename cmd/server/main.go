@@ -141,13 +141,11 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	router.Use(middleware.Security())
 	router.Use(middleware.RateLimit(cfg))
 	router.Use(middleware.RequestID())
-	router.Use(middleware.ErrorHandler())
-
-	// Load HTML templates with proper pattern
-	// Only load actual HTML files, not directories
+	
+	// Load HTML templates
 	router.LoadHTMLGlob("web/templates/*.html")
 
-	// Serve static files ONCE
+	// Serve static files
 	router.Static("/static", "./web/static")
 	router.StaticFile("/favicon.ico", "./web/static/favicon.ico")
 
@@ -157,53 +155,33 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	groupHandler := handlers.NewGroupHandler()
 	dashboardHandler := handlers.NewDashboardHandler()
 
-	// Setup all routes WITHOUT static routes (already configured above)
-	routes.SetupAuthRoutes(router, authHandler)
-	routes.SetupHealthRoutes(router)
-	routes.SetupProtectedSystemRoutes(router)
-	routes.SetupAPIInfoRoutes(router)
-	routes.SetupAssetRoutes(router, assetHandler)
-	routes.SetupGroupRoutes(router, groupHandler)
-	routes.SetupDashboardRoutes(router, dashboardHandler)
-	routes.SetupTagRoutes(router)
-	
-	// Setup web page routes
-	setupWebPageRoutes(router)
-
-	// Catch-all route - redirect to login
-	router.NoRoute(func(c *gin.Context) {
-		// For API routes, return 404
-		if len(c.Request.URL.Path) > 4 && c.Request.URL.Path[:5] == "/api/" {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Endpoint not found",
-				"path": c.Request.URL.Path,
-			})
-			return
-		}
-		
-		// For web routes, redirect to login
-		c.Redirect(http.StatusTemporaryRedirect, "/login")
-	})
-
-	return router
-}
-
-// setupWebPageRoutes handles web page rendering
-func setupWebPageRoutes(router *gin.Engine) {
-	// Public routes
+	// Public routes (no middleware)
+	// Login page
 	router.GET("/login", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.html", gin.H{
 			"title": "ICS Asset Inventory - Login",
 		})
 	})
 
+	// Register page
 	router.GET("/register", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "register.html", gin.H{
 			"title": "ICS Asset Inventory - Register",
 		})
 	})
 
-	// Protected routes - using middleware for auth
+	// Auth API routes (public)
+	auth := router.Group("/api/auth")
+	{
+		auth.POST("/login", authHandler.Login)
+		auth.POST("/register", authHandler.Register)
+		auth.POST("/logout", authHandler.Logout)
+	}
+
+	// Health check routes (public)
+	routes.SetupHealthRoutes(router)
+
+	// Protected web routes - require authentication
 	protected := router.Group("/")
 	protected.Use(middleware.WebAuthRequired())
 	{
@@ -249,4 +227,95 @@ func setupWebPageRoutes(router *gin.Engine) {
 			c.File("web/templates/settings.html")
 		})
 	}
+
+	// Protected API routes - require authentication
+	apiProtected := router.Group("/api")
+	apiProtected.Use(middleware.AuthRequired())
+	apiProtected.Use(middleware.ErrorHandler())
+	{
+		// Auth routes that need authentication
+		apiProtected.GET("/auth/me", authHandler.Me)
+		apiProtected.POST("/auth/refresh", authHandler.RefreshToken)
+
+		// Asset routes
+		assets := apiProtected.Group("/assets")
+		{
+			assets.GET("", assetHandler.GetAssets)
+			assets.POST("", assetHandler.CreateAsset)
+			assets.GET("/stats", assetHandler.GetAssetStats)
+			assets.GET("/:id", assetHandler.GetAsset)
+			assets.PUT("/:id", assetHandler.UpdateAsset)
+			assets.DELETE("/:id", assetHandler.DeleteAsset)
+			assets.PATCH("/:id/status", assetHandler.UpdateAssetStatus)
+			assets.PATCH("/bulk", assetHandler.BulkUpdateAssets)
+			assets.POST("/:id/tags/:tag_id", assetHandler.AddAssetTag)
+			assets.DELETE("/:id/tags/:tag_id", assetHandler.RemoveAssetTag)
+		}
+
+		// Group routes
+		groups := apiProtected.Group("/groups")
+		{
+			groups.GET("", groupHandler.GetGroups)
+			groups.POST("", groupHandler.CreateGroup)
+			groups.GET("/:id", groupHandler.GetGroup)
+			groups.PUT("/:id", groupHandler.UpdateGroup)
+			groups.DELETE("/:id", groupHandler.DeleteGroup)
+		}
+
+		// Dashboard routes
+		dashboard := apiProtected.Group("/dashboard")
+		{
+			dashboard.GET("/overview", dashboardHandler.GetOverview)
+			dashboard.GET("/metrics", dashboardHandler.GetMetrics)
+			dashboard.GET("/alerts", dashboardHandler.GetAlerts)
+		}
+
+		// System info routes
+		apiProtected.GET("/system/info", routes.SystemInfo)
+		apiProtected.GET("/system/database", routes.DatabaseStatus)
+
+		// Tag routes (placeholder)
+		tags := apiProtected.Group("/tags")
+		{
+			tags.GET("", routes.GetTagsHandler)
+			tags.POST("", routes.CreateTagHandler)
+			tags.GET("/:id", routes.GetTagHandler)
+			tags.PUT("/:id", routes.UpdateTagHandler)
+			tags.DELETE("/:id", routes.DeleteTagHandler)
+		}
+	}
+
+	// API info route (public)
+	router.GET("/api", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"name":        "ICS Asset Inventory API",
+			"version":     "1.0.0",
+			"description": "Industrial Control Systems Asset Management API",
+			"endpoints": gin.H{
+				"auth":      "/api/auth",
+				"assets":    "/api/assets (requires auth)",
+				"groups":    "/api/groups (requires auth)", 
+				"dashboard": "/api/dashboard (requires auth)",
+				"health":    "/health",
+				"system":    "/api/system (requires auth)",
+			},
+		})
+	})
+
+	// Catch-all route - redirect to login
+	router.NoRoute(func(c *gin.Context) {
+		// For API routes, return 404
+		if len(c.Request.URL.Path) > 4 && c.Request.URL.Path[:5] == "/api/" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Endpoint not found",
+				"path": c.Request.URL.Path,
+			})
+			return
+		}
+		
+		// For web routes, redirect to login
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
+	})
+
+	return router
 }

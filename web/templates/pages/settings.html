@@ -1,773 +1,90 @@
-<!-- web/templates/pages/settings.html -->
-<div class="page-header">
-    <h1 class="page-title">Settings</h1>
-    <p class="page-subtitle">Configure system preferences, manage users, and customize your ICS inventory</p>
-</div>
-
-<!-- Settings Container -->
-<div class="settings-container">
-    <!-- Settings Navigation -->
-    <nav class="settings-nav">
-        <div class="settings-nav-item active" onclick="switchSettingsTab('general')">
-            <i class="fas fa-sliders-h"></i>
-            General
-        </div>
-        <div class="settings-nav-item" onclick="switchSettingsTab('network')">
-            <i class="fas fa-network-wired"></i>
-            Network & Discovery
-        </div>
-        <div class="settings-nav-item" onclick="switchSettingsTab('security')">
-            <i class="fas fa-lock"></i>
-            Security
-        </div>
-        <div class="settings-nav-item" onclick="switchSettingsTab('notifications')">
-            <i class="fas fa-bell"></i>
-            Notifications
-        </div>
-        <div class="settings-nav-item" onclick="switchSettingsTab('users')">
-            <i class="fas fa-users"></i>
-            Users & Teams
-        </div>
-        <div class="settings-nav-item" onclick="switchSettingsTab('api')">
-            <i class="fas fa-key"></i>
-            API & Integrations
-        </div>
-        <div class="settings-nav-item" onclick="switchSettingsTab('backup')">
-            <i class="fas fa-database"></i>
-            Backup & Restore
-        </div>
-        <div class="settings-nav-item" onclick="switchSettingsTab('system')">
-            <i class="fas fa-server"></i>
-            System Info
-        </div>
-    </nav>
-
-    <!-- Settings Content -->
-    <div class="settings-content">
-        <!-- General Settings -->
-        <div id="generalSettings" class="settings-section active">
-            <h2 class="section-title">General Settings</h2>
-            <p class="section-description">Configure basic system preferences and display options</p>
-
-            <form>
-                <div class="form-group">
-                    <label class="form-label">Organization Name</label>
-                    <input type="text" class="form-input" value="Industrial Corp" placeholder="Enter organization name">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Time Zone</label>
-                        <select class="form-input">
-                            <option>UTC+00:00 - UTC</option>
-                            <option>UTC-05:00 - Eastern Time</option>
-                            <option>UTC-06:00 - Central Time</option>
-                            <option>UTC-07:00 - Mountain Time</option>
-                            <option>UTC-08:00 - Pacific Time</option>
-                            <option selected>UTC+07:00 - Jakarta</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Date Format</label>
-                        <select class="form-input">
-                            <option>MM/DD/YYYY</option>
-                            <option selected>DD/MM/YYYY</option>
-                            <option>YYYY-MM-DD</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Language</label>
-                    <select class="form-input">
-                        <option selected>English</option>
-                        <option>Bahasa Indonesia</option>
-                        <option>Spanish</option>
-                        <option>French</option>
-                        <option>German</option>
-                    </select>
-                </div>
-
-                <div style="margin-top: 32px;">
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Display Preferences</h3>
-                    
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Enable DNP3 Scanning</div>
-                            <div class="toggle-description">Scan for DNP3 devices on port 20000</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Enable EtherNet/IP Scanning</div>
-                            <div class="toggle-description">Scan for EtherNet/IP devices on port 44818</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Passive Scanning Mode</div>
-                            <div class="toggle-description">Monitor network traffic without active probing</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                    <button type="button" class="btn btn-secondary">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Security Settings -->
-        <div id="securitySettings" class="settings-section">
-            <h2 class="section-title">Security Settings</h2>
-            <p class="section-description">Manage authentication, access control, and security policies</p>
-
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <div>
-                    <strong>Two-Factor Authentication</strong><br>
-                    Enhance account security by enabling 2FA for all users
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - ICS Asset Inventory</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/variables.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/components/sidebar.css">
+    <link rel="stylesheet" href="/static/css/components/topbar.css">
+    <link rel="stylesheet" href="/static/css/components/forms.css">
+    <link rel="stylesheet" href="/static/css/components/buttons.css">
+    <link rel="stylesheet" href="/static/css/components/cards.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-network-wired"></i>
+                    <span>ICS Inventory</span>
                 </div>
             </div>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="/assets" class="nav-item">
+                    <i class="fas fa-cube"></i>
+                    Assets
+                </a>
+                <a href="/discovery" class="nav-item">
+                    <i class="fas fa-search-location"></i>
+                    Discovery
+                </a>
+                <a href="/security" class="nav-item">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </a>
+                <a href="/reports" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    Reports
+                </a>
+                <a href="/settings" class="nav-item active">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
 
-            <form>
-                <div style="margin-bottom: 32px;">
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Authentication</h3>
-                    
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Require Two-Factor Authentication</div>
-                            <div class="toggle-description">All users must enable 2FA to access the system</div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="page-header">
+                    <h1 class="page-title">Settings</h1>
+                    <p class="page-subtitle">Configure system preferences and manage users</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar">A</div>
+                        <div>
+                            <div class="text-sm font-semibold">Admin User</div>
+                            <div class="text-xs text-tertiary">Administrator</div>
                         </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Single Sign-On (SSO)</div>
-                            <div class="toggle-description">Allow users to authenticate via corporate SSO</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
                     </div>
                 </div>
+            </header>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Session Timeout (minutes)</label>
-                        <input type="number" class="form-input" value="60" min="5" max="480">
-                        <span class="form-hint">Automatically logout after inactivity</span>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Password Expiry (days)</label>
-                        <input type="number" class="form-input" value="90" min="0" max="365">
-                        <span class="form-hint">0 = passwords never expire</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Password Policy</label>
-                    <div class="form-checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" checked>
-                            <span>Minimum 8 characters</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" checked>
-                            <span>Require uppercase letters</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" checked>
-                            <span>Require lowercase letters</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" checked>
-                            <span>Require numbers</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox">
-                            <span>Require special characters</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                    <button type="button" class="btn btn-secondary">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Notifications Settings -->
-        <div id="notificationsSettings" class="settings-section">
-            <h2 class="section-title">Notification Settings</h2>
-            <p class="section-description">Configure how and when you receive system notifications</p>
-
-            <form>
-                <div style="margin-bottom: 32px;">
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Email Notifications</h3>
-                    
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Critical Security Alerts</div>
-                            <div class="toggle-description">Immediate notification for critical vulnerabilities</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Device Status Changes</div>
-                            <div class="toggle-description">When devices go online or offline</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Scan Completion</div>
-                            <div class="toggle-description">Notification when network scans complete</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Report Generation</div>
-                            <div class="toggle-description">When scheduled reports are ready</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-input" value="admin@industrial-corp.com">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Notification Frequency</label>
-                        <select class="form-input">
-                            <option>Real-time</option>
-                            <option selected>Hourly Digest</option>
-                            <option>Daily Summary</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                    <button type="button" class="btn btn-secondary">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Users & Teams -->
-        <div id="usersSettings" class="settings-section">
-            <h2 class="section-title">Users & Teams</h2>
-            <p class="section-description">Manage user accounts, roles, and team permissions</p>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h3 style="font-size: 16px; font-weight: 600;">Active Users</h3>
-                <button class="btn btn-primary">
-                    <i class="fas fa-user-plus"></i> Add User
-                </button>
-            </div>
-
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Role</th>
-                        <th>Last Active</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <div>
-                                <div style="font-weight: 500;">Admin User</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">admin@industrial-corp.com</div>
-                            </div>
-                        </td>
-                        <td>Administrator</td>
-                        <td>2 minutes ago</td>
-                        <td>
-                            <div class="status-indicator">
-                                <span class="status-dot online"></span>
-                                <span>Active</span>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div>
-                                <div style="font-weight: 500;">John Operator</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">john.op@industrial-corp.com</div>
-                            </div>
-                        </td>
-                        <td>Operator</td>
-                        <td>1 hour ago</td>
-                        <td>
-                            <div class="status-indicator">
-                                <span class="status-dot online"></span>
-                                <span>Active</span>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div>
-                                <div style="font-weight: 500;">Sarah Viewer</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">sarah.v@industrial-corp.com</div>
-                            </div>
-                        </td>
-                        <td>Viewer</td>
-                        <td>3 days ago</td>
-                        <td>
-                            <div class="status-indicator">
-                                <span class="status-dot offline"></span>
-                                <span>Inactive</span>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- API & Integrations -->
-        <div id="apiSettings" class="settings-section">
-            <h2 class="section-title">API & Integrations</h2>
-            <p class="section-description">Manage API keys and third-party integrations</p>
-
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                <div>
-                    <strong>Keep your API keys secure</strong><br>
-                    Never share API keys or commit them to version control
+            <!-- Content Area -->
+            <div class="content">
+                <div class="card">
+                    <h2>System Settings</h2>
+                    <p>Settings management will be implemented in Phase 2</p>
                 </div>
             </div>
-
-            <div style="margin-bottom: 32px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="font-size: 16px; font-weight: 600;">API Keys</h3>
-                    <button class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Generate New Key
-                    </button>
-                </div>
-
-                <div class="api-key-row">
-                    <div class="api-key-info">
-                        <div class="api-key-name">Production API Key</div>
-                        <div class="api-key-value">sk_live_************HG7k</div>
-                    </div>
-                    <div class="api-key-actions">
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-eye"></i> Show
-                        </button>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-sync"></i> Regenerate
-                        </button>
-                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="api-key-row">
-                    <div class="api-key-info">
-                        <div class="api-key-name">Development API Key</div>
-                        <div class="api-key-value">sk_test_************Xm2p</div>
-                    </div>
-                    <div class="api-key-actions">
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-eye"></i> Show
-                        </button>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-sync"></i> Regenerate
-                        </button>
-                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Integrations</h3>
-                
-                <div class="toggle-group">
-                    <div class="toggle-info">
-                        <div class="toggle-label">SIEM Integration</div>
-                        <div class="toggle-description">Send security events to your SIEM platform</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="toggle-group">
-                    <div class="toggle-info">
-                        <div class="toggle-label">Slack Notifications</div>
-                        <div class="toggle-description">Send alerts to Slack channels</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="toggle-group">
-                    <div class="toggle-info">
-                        <div class="toggle-label">Webhook Events</div>
-                        <div class="toggle-description">Send events to custom webhook endpoints</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Backup & Restore -->
-        <div id="backupSettings" class="settings-section">
-            <h2 class="section-title">Backup & Restore</h2>
-            <p class="section-description">Manage system backups and data recovery options</p>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
-                <div style="background-color: var(--bg-tertiary); padding: 24px; border-radius: var(--radius-lg);">
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">
-                        <i class="fas fa-download" style="margin-right: 8px;"></i>
-                        Backup
-                    </h3>
-                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
-                        Create a complete backup of your system data including assets, configurations, and reports.
-                    </p>
-                    <button class="btn btn-primary" style="width: 100%;">
-                        <i class="fas fa-download"></i> Create Backup
-                    </button>
-                </div>
-
-                <div style="background-color: var(--bg-tertiary); padding: 24px; border-radius: var(--radius-lg);">
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">
-                        <i class="fas fa-upload" style="margin-right: 8px;"></i>
-                        Restore
-                    </h3>
-                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
-                        Restore system data from a previous backup file. This will overwrite current data.
-                    </p>
-                    <button class="btn btn-secondary" style="width: 100%;">
-                        <i class="fas fa-upload"></i> Restore from Backup
-                    </button>
-                </div>
-            </div>
-
-            <div>
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Automated Backups</h3>
-                
-                <div class="toggle-group">
-                    <div class="toggle-info">
-                        <div class="toggle-label">Enable Automated Backups</div>
-                        <div class="toggle-description">Automatically backup system data on schedule</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="form-row" style="margin-top: 16px;">
-                    <div class="form-group">
-                        <label class="form-label">Backup Frequency</label>
-                        <select class="form-input">
-                            <option>Daily</option>
-                            <option selected>Weekly</option>
-                            <option>Monthly</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Retention Period</label>
-                        <select class="form-input">
-                            <option>7 days</option>
-                            <option>14 days</option>
-                            <option selected>30 days</option>
-                            <option>90 days</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 32px;">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Recent Backups</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Backup Name</th>
-                            <th>Date</th>
-                            <th>Size</th>
-                            <th>Type</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>backup_2024_01_20_auto.zip</td>
-                            <td>2024-01-20 02:00</td>
-                            <td>45.3 MB</td>
-                            <td>Automated</td>
-                            <td>
-                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                    <i class="fas fa-undo"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>backup_2024_01_15_manual.zip</td>
-                            <td>2024-01-15 14:30</td>
-                            <td>42.1 MB</td>
-                            <td>Manual</td>
-                            <td>
-                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                    <i class="fas fa-undo"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- System Info -->
-        <div id="systemSettings" class="settings-section">
-            <h2 class="section-title">System Information</h2>
-            <p class="section-description">View system status, version information, and activity logs</p>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px;">
-                <div style="background-color: var(--bg-tertiary); padding: 20px; border-radius: var(--radius-lg);">
-                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">Version</div>
-                    <div style="font-size: 20px; font-weight: 600;">1.0.0</div>
-                </div>
-                <div style="background-color: var(--bg-tertiary); padding: 20px; border-radius: var(--radius-lg);">
-                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">Database Size</div>
-                    <div style="font-size: 20px; font-weight: 600;">156 MB</div>
-                </div>
-                <div style="background-color: var(--bg-tertiary); padding: 20px; border-radius: var(--radius-lg);">
-                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">Uptime</div>
-                    <div style="font-size: 20px; font-weight: 600;">15 days</div>
-                </div>
-            </div>
-
-            <div>
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Recent Activity</h3>
-                
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">User login</div>
-                        <div class="activity-details">Admin User logged in from 192.168.1.100</div>
-                    </div>
-                    <div class="activity-time">2 minutes ago</div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Security scan completed</div>
-                        <div class="activity-details">Found 3 critical vulnerabilities</div>
-                    </div>
-                    <div class="activity-time">1 hour ago</div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-database"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Automated backup</div>
-                        <div class="activity-details">System backup completed successfully</div>
-                    </div>
-                    <div class="activity-time">3 hours ago</div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-network-wired"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Network scan</div>
-                        <div class="activity-details">Discovered 5 new devices on 192.168.1.0/24</div>
-                    </div>
-                    <div class="activity-time">5 hours ago</div>
-                </div>
-            </div>
-
-            <div style="margin-top: 32px;">
-                <button class="btn btn-secondary">
-                    <i class="fas fa-download"></i> Download System Logs
-                </button>
-            </div>
-        </div>
-        
-        <!-- Network Settings -->
-        <div id="networkSettings" class="settings-section">
-            <h2 class="section-title">Network & Discovery Settings</h2>
-            <p class="section-description">Configure network scanning parameters and discovery options</p>
-
-            <form>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Default Scan Timeout (seconds)</label>
-                        <input type="number" class="form-input" value="30" min="10" max="300">
-                        <span class="form-hint">Connection timeout per device</span>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Max Concurrent Scans</label>
-                        <input type="number" class="form-input" value="50" min="1" max="100">
-                        <span class="form-hint">Number of parallel scan threads</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Default IP Ranges</label>
-                    <textarea class="form-input" rows="4" placeholder="192.168.1.0/24&#10;10.0.0.0/16">192.168.1.0/24
-10.0.0.0/16
-172.16.0.0/12</textarea>
-                    <span class="form-hint">One IP range per line in CIDR notation</span>
-                </div>
-
-                <div style="margin-top: 32px;">
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Protocol Settings</h3>
-                    
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Enable Modbus Scanning</div>
-                            <div class="toggle-description">Scan for Modbus TCP/RTU devices on port 502</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Dark Mode</div>
-                            <div class="toggle-description">Enable dark theme for reduced eye strain</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Compact View</div>
-                            <div class="toggle-description">Show more items with reduced spacing</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-group">
-                        <div class="toggle-info">
-                            <div class="toggle-label">Show Asset Icons</div>
-                            <div class="toggle-description">Display icons next to asset names</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                    <button type="button" class="btn btn-secondary">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
+        </main>
     </div>
-</div>
-                        
 
-        
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/ui-components.js"></script>
+    <script src="/static/js/pages/settings.js"></script>
+</body>
+</html>

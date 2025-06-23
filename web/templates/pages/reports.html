@@ -1,304 +1,91 @@
-<!-- web/templates/pages/reports.html -->
-<div class="page-header">
-    <h1 class="page-title">Reports & Analytics</h1>
-    <p class="page-subtitle">Generate comprehensive reports and analyze your ICS infrastructure data</p>
-</div>
-
-<!-- Report Templates -->
-<h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px;">Report Templates</h2>
-<div class="templates-grid">
-    <div class="template-card" onclick="generateReport('inventory')">
-        <div class="template-icon inventory">
-            <i class="fas fa-boxes"></i>
-        </div>
-        <div class="template-name">Asset Inventory Report</div>
-        <div class="template-description">Complete inventory of all industrial control system assets with detailed specifications</div>
-        <div class="template-tags">
-            <span class="tag">Asset Details</span>
-            <span class="tag">Network Info</span>
-            <span class="tag">Vendor Data</span>
-        </div>
-    </div>
-
-    <div class="template-card" onclick="generateReport('security')">
-        <div class="template-icon security">
-            <i class="fas fa-shield-virus"></i>
-        </div>
-        <div class="template-name">Security Assessment Report</div>
-        <div class="template-description">Comprehensive security analysis including vulnerabilities and risk assessment</div>
-        <div class="template-tags">
-            <span class="tag">Vulnerabilities</span>
-            <span class="tag">Risk Matrix</span>
-            <span class="tag">CVE Details</span>
-        </div>
-    </div>
-
-    <div class="template-card" onclick="generateReport('compliance')">
-        <div class="template-icon compliance">
-            <i class="fas fa-clipboard-check"></i>
-        </div>
-        <div class="template-name">Compliance Status Report</div>
-        <div class="template-description">Detailed compliance assessment against IEC 62443, NIST, and custom policies</div>
-        <div class="template-tags">
-            <span class="tag">IEC 62443</span>
-            <span class="tag">NIST Framework</span>
-            <span class="tag">Audit Trail</span>
-        </div>
-    </div>
-
-    <div class="template-card" onclick="generateReport('executive')">
-        <div class="template-icon executive">
-            <i class="fas fa-chart-pie"></i>
-        </div>
-        <div class="template-name">Executive Summary</div>
-        <div class="template-description">High-level overview designed for management with key metrics and trends</div>
-        <div class="template-tags">
-            <span class="tag">KPIs</span>
-            <span class="tag">Trends</span>
-            <span class="tag">Risk Summary</span>
-        </div>
-    </div>
-
-    <div class="template-card" onclick="generateReport('custom')">
-        <div class="template-icon custom">
-            <i class="fas fa-file-alt"></i>
-        </div>
-        <div class="template-name">Custom Report</div>
-        <div class="template-description">Create a customized report with selected data points and visualizations</div>
-        <div class="template-tags">
-            <span class="tag">Customizable</span>
-            <span class="tag">Flexible</span>
-        </div>
-    </div>
-</div>
-
-<!-- Scheduled Reports -->
-<div class="section-card">
-    <div class="section-header">
-        <h2 class="section-title">Scheduled Reports</h2>
-        <button class="btn btn-primary" onclick="openScheduleModal()">
-            <i class="fas fa-plus"></i> Schedule Report
-        </button>
-    </div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Report Name</th>
-                <th>Type</th>
-                <th>Schedule</th>
-                <th>Recipients</th>
-                <th>Next Run</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Weekly Security Summary</td>
-                <td>Security Assessment</td>
-                <td><span class="schedule-badge weekly">Weekly</span></td>
-                <td>security-team@company.com</td>
-                <td>2024-01-27 08:00</td>
-                <td><span class="status-badge active"><i class="fas fa-circle"></i> Active</span></td>
-                <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-pause"></i>
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td>Monthly Compliance Report</td>
-                <td>Compliance Status</td>
-                <td><span class="schedule-badge monthly">Monthly</span></td>
-                <td>compliance@company.com, ciso@company.com</td>
-                <td>2024-02-01 09:00</td>
-                <td><span class="status-badge active"><i class="fas fa-circle"></i> Active</span></td>
-                <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-pause"></i>
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td>Daily Asset Changes</td>
-                <td>Asset Inventory</td>
-                <td><span class="schedule-badge daily">Daily</span></td>
-                <td>operations@company.com</td>
-                <td>2024-01-21 06:00</td>
-                <td><span class="status-badge paused"><i class="fas fa-pause-circle"></i> Paused</span></td>
-                <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-play"></i>
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-<!-- Report History -->
-<div class="section-card">
-    <div class="section-header">
-        <h2 class="section-title">Report History</h2>
-    </div>
-    <div class="history-filters">
-        <select class="filter-select">
-            <option value="">All Types</option>
-            <option value="inventory">Asset Inventory</option>
-            <option value="security">Security Assessment</option>
-            <option value="compliance">Compliance Status</option>
-            <option value="executive">Executive Summary</option>
-        </select>
-        <div class="date-range">
-            <input type="date" class="date-input" value="2024-01-01">
-            <span>to</span>
-            <input type="date" class="date-input" value="2024-01-20">
-        </div>
-        <button class="btn btn-secondary">
-            <i class="fas fa-filter"></i> Apply Filters
-        </button>
-    </div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Report Name</th>
-                <th>Type</th>
-                <th>Generated By</th>
-                <th>Date</th>
-                <th>Size</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Security_Assessment_2024_01_20.pdf</td>
-                <td>Security Assessment</td>
-                <td>Admin User</td>
-                <td>2024-01-20 14:30</td>
-                <td>2.3 MB</td>
-                <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-download"></i> Download
-                    </button>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td>Asset_Inventory_Complete_2024_01_18.xlsx</td>
-                <td>Asset Inventory</td>
-                <td>System (Scheduled)</td>
-                <td>2024-01-18 08:00</td>
-                <td>1.8 MB</td>
-                <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-download"></i> Download
-                    </button>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td>Executive_Summary_Q4_2023.pdf</td>
-                <td>Executive Summary</td>
-                <td>Admin User</td>
-                <td>2024-01-15 16:45</td>
-                <td>856 KB</td>
-                <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-download"></i> Download
-                    </button>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-<!-- Report Generation Modal -->
-<div class="modal-backdrop" id="reportModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h2 class="modal-title" id="modalTitle">Generate Report</h2>
-            <button class="modal-close" onclick="closeReportModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form id="reportForm">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Report Name</label>
-                    <input type="text" class="form-input" name="reportName" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Date Range</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <input type="date" class="form-input" name="startDate" required>
-                        <input type="date" class="form-input" name="endDate" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Format</label>
-                    <select class="form-input" name="format">
-                        <option value="pdf">PDF</option>
-                        <option value="excel">Excel</option>
-                        <option value="csv">CSV</option>
-                        <option value="html">HTML</option>
-                    </select>
-                </div>
-
-                <div class="form-group" id="dataPointsGroup">
-                    <label class="form-label">Include Data Points</label>
-                    <div class="form-checkbox-group">
-                        <label class="form-checkbox">
-                            <input type="checkbox" name="dataPoints" value="assets" checked>
-                            <span>Asset Information</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" name="dataPoints" value="vulnerabilities">
-                            <span>Vulnerabilities</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" name="dataPoints" value="compliance">
-                            <span>Compliance Status</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" name="dataPoints" value="network">
-                            <span>Network Topology</span>
-                        </label>
-                        <label class="form-checkbox">
-                            <input type="checkbox" name="dataPoints" value="trends">
-                            <span>Historical Trends</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Additional Notes</label>
-                    <textarea class="form-input form-textarea" name="notes"></textarea>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - ICS Asset Inventory</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/variables.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/components/sidebar.css">
+    <link rel="stylesheet" href="/static/css/components/topbar.css">
+    <link rel="stylesheet" href="/static/css/components/buttons.css">
+    <link rel="stylesheet" href="/static/css/components/cards.css">
+    <link rel="stylesheet" href="/static/css/components/tables.css">
+    <link rel="stylesheet" href="/static/css/components/modals.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-network-wired"></i>
+                    <span>ICS Inventory</span>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeReportModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-file-export"></i> Generate Report
-                </button>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="/assets" class="nav-item">
+                    <i class="fas fa-cube"></i>
+                    Assets
+                </a>
+                <a href="/discovery" class="nav-item">
+                    <i class="fas fa-search-location"></i>
+                    Discovery
+                </a>
+                <a href="/security" class="nav-item">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </a>
+                <a href="/reports" class="nav-item active">
+                    <i class="fas fa-chart-line"></i>
+                    Reports
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="page-header">
+                    <h1 class="page-title">Reports & Analytics</h1>
+                    <p class="page-subtitle">Generate comprehensive reports and analyze your ICS infrastructure</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar">A</div>
+                        <div>
+                            <div class="text-sm font-semibold">Admin User</div>
+                            <div class="text-xs text-tertiary">Administrator</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content">
+                <div class="card">
+                    <h2>Report Templates</h2>
+                    <p>Report generation features will be implemented in Phase 2</p>
+                </div>
             </div>
-        </form>
+        </main>
     </div>
-</div>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/ui-components.js"></script>
+    <script src="/static/js/pages/reports.js"></script>
+</body>
+</html>
