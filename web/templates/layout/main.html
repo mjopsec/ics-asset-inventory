@@ -1,0 +1,279 @@
+<!-- web/templates/layout/main.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - ICS Asset Inventory</title>
+    
+    <!-- External CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Application CSS -->
+    <link rel="stylesheet" href="/static/css/variables.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/components/sidebar.css">
+    <link rel="stylesheet" href="/static/css/components/topbar.css">
+    <link rel="stylesheet" href="/static/css/components/forms.css">
+    <link rel="stylesheet" href="/static/css/components/buttons.css">
+    <link rel="stylesheet" href="/static/css/components/tables.css">
+    <link rel="stylesheet" href="/static/css/components/modals.css">
+    <link rel="stylesheet" href="/static/css/components/cards.css">
+    
+    <!-- Page specific CSS -->
+    {{ page_css | safe if page_css }}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Toggle for Mobile -->
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-network-wired"></i>
+                    <span>ICS Inventory</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item {{ 'active' if current_page == 'dashboard' }}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="/assets" class="nav-item {{ 'active' if current_page == 'assets' }}">
+                    <i class="fas fa-cube"></i>
+                    Assets
+                </a>
+                <a href="/discovery" class="nav-item {{ 'active' if current_page == 'discovery' }}">
+                    <i class="fas fa-search-location"></i>
+                    Discovery
+                </a>
+                <a href="/security" class="nav-item {{ 'active' if current_page == 'security' }}">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </a>
+                <a href="/reports" class="nav-item {{ 'active' if current_page == 'reports' }}">
+                    <i class="fas fa-chart-line"></i>
+                    Reports
+                </a>
+                <a href="/settings" class="nav-item {{ 'active' if current_page == 'settings' }}">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                {% if show_search %}
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="{{ search_placeholder or 'Search...' }}">
+                </div>
+                {% else %}
+                <div class="page-header">
+                    <h1 class="page-title">{{ page_title }}</h1>
+                    {% if page_subtitle %}
+                    <p class="page-subtitle">{{ page_subtitle }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="topbar-actions">
+                    {% if show_search %}
+                    <div class="page-actions">
+                        {{ page_actions | safe if page_actions }}
+                    </div>
+                    {% endif %}
+
+                    <button class="notification-btn" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" style="display: none;"></span>
+                    </button>
+
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div>
+                            <div class="text-sm font-semibold" id="userName">Admin User</div>
+                            <div class="text-xs text-tertiary" id="userRole">Administrator</div>
+                        </div>
+                        <i class="fas fa-chevron-down text-xs" style="margin-left: 8px;"></i>
+                        
+                        <!-- Profile Dropdown -->
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="dropdown-header">
+                                <div class="dropdown-avatar" id="dropdownAvatar">A</div>
+                                <div class="dropdown-info">
+                                    <div class="dropdown-name" id="dropdownName">Admin User</div>
+                                    <div class="dropdown-email" id="dropdownEmail">admin@localhost</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" onclick="openProfileModal(); return false;">
+                                <i class="fas fa-user"></i>
+                                My Profile
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openAccountSettings(); return false;">
+                                <i class="fas fa-cog"></i>
+                                Account Settings
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openChangePassword(); return false;">
+                                <i class="fas fa-key"></i>
+                                Change Password
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" onclick="showActivityLog(); return false;">
+                                <i class="fas fa-history"></i>
+                                Activity Log
+                            </a>
+                            <a href="/settings" class="dropdown-item">
+                                <i class="fas fa-sliders-h"></i>
+                                System Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item logout" onclick="handleLogout(); return false;">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content" id="main-content">
+                {{ content | safe }}
+            </div>
+        </main>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-backdrop" id="profileModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">My Profile</h2>
+                <button class="modal-close" onclick="closeProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary text-white text-2xl font-semibold flex items-center justify-center mx-auto mb-4" id="profileAvatarLarge">A</div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Username</label>
+                            <div class="text-base font-medium" id="profileUsername">admin</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Email</label>
+                            <div class="text-base" id="profileEmail">admin@localhost</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Role</label>
+                            <div class="text-base" id="profileRole">Administrator</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Last Login</label>
+                            <div class="text-base" id="profileLastLogin">-</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-tertiary uppercase tracking-wide">Member Since</label>
+                            <div class="text-base" id="profileCreated">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
+                <button class="btn btn-primary" onclick="openAccountSettings()">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-backdrop" id="changePasswordModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Change Password</h2>
+                <button class="modal-close" onclick="closeChangePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="changePasswordForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-input" name="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-input" name="newPassword" required minlength="8">
+                        <span class="form-hint">Minimum 8 characters</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-input" name="confirmPassword" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- External Scripts -->
+    {% if include_charts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    {% endif %}
+
+    <!-- Application Scripts -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/ui-components.js"></script>
+
+    <!-- Page specific JavaScript -->
+    {{ page_js | safe if page_js }}
+
+    <script>
+        // Global functions for sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close sidebar on outside click (mobile)
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.sidebar-toggle');
+            
+            if (window.innerWidth <= 1024 && 
+                sidebar.classList.contains('active') && 
+                !sidebar.contains(e.target) && 
+                !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 1024) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
