@@ -147,7 +147,7 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	// Only load actual HTML files, not directories
 	router.LoadHTMLGlob("web/templates/*.html")
 
-	// Serve static files
+	// Serve static files ONCE
 	router.Static("/static", "./web/static")
 	router.StaticFile("/favicon.ico", "./web/static/favicon.ico")
 
@@ -157,17 +157,33 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	groupHandler := handlers.NewGroupHandler()
 	dashboardHandler := handlers.NewDashboardHandler()
 
-	// Setup all routes with authentication
-	routes.SetupAllRoutes(
-		router,
-		authHandler,
-		assetHandler,
-		groupHandler,
-		dashboardHandler,
-	)
-
-	// Add web page routes directly here (since we're not using layout system yet)
+	// Setup all routes WITHOUT static routes (already configured above)
+	routes.SetupAuthRoutes(router, authHandler)
+	routes.SetupHealthRoutes(router)
+	routes.SetupProtectedSystemRoutes(router)
+	routes.SetupAPIInfoRoutes(router)
+	routes.SetupAssetRoutes(router, assetHandler)
+	routes.SetupGroupRoutes(router, groupHandler)
+	routes.SetupDashboardRoutes(router, dashboardHandler)
+	routes.SetupTagRoutes(router)
+	
+	// Setup web page routes
 	setupWebPageRoutes(router)
+
+	// Catch-all route - redirect to login
+	router.NoRoute(func(c *gin.Context) {
+		// For API routes, return 404
+		if len(c.Request.URL.Path) > 4 && c.Request.URL.Path[:5] == "/api/" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Endpoint not found",
+				"path": c.Request.URL.Path,
+			})
+			return
+		}
+		
+		// For web routes, redirect to login
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
+	})
 
 	return router
 }
@@ -233,19 +249,4 @@ func setupWebPageRoutes(router *gin.Engine) {
 			c.File("web/templates/settings.html")
 		})
 	}
-
-	// Catch-all route for 404
-	router.NoRoute(func(c *gin.Context) {
-		// For API routes, return JSON 404
-		if len(c.Request.URL.Path) > 4 && c.Request.URL.Path[:5] == "/api/" {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Endpoint not found",
-				"path": c.Request.URL.Path,
-			})
-			return
-		}
-		
-		// For web routes, redirect to login
-		c.Redirect(http.StatusTemporaryRedirect, "/login")
-	})
 }
