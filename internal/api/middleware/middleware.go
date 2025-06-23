@@ -85,7 +85,16 @@ func RequestID() gin.HandlerFunc {
 // AuthRequired middleware for protected routes
 func AuthRequired() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
+		// Try to get token from Authorization header first
 		token := extractToken(c)
+		
+		// If no header token, try cookie (for web requests)
+		if token == "" {
+			if cookieToken, err := c.Cookie("auth_token"); err == nil {
+				token = cookieToken
+			}
+		}
+		
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Authorization token required",
@@ -98,6 +107,9 @@ func AuthRequired() gin.HandlerFunc {
 		// Validate session
 		session, err := auth.ValidateSession(token)
 		if err != nil {
+			// Clear invalid cookie if exists
+			c.SetCookie("auth_token", "", -1, "/", "", false, true)
+			
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": err.Error(),
 				"code": "INVALID_SESSION",

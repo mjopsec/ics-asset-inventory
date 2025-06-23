@@ -99,15 +99,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	// Update last login
 	h.db.Model(&user).Update("last_login", time.Now())
 
-	// Set cookie for web authentication
+	// Set cookie for web authentication with proper settings
 	c.SetCookie(
-		"auth_token",           // name
-		session.Token,          // value
-		int(sessionDuration.Seconds()), // maxAge
-		"/",                    // path
-		"",                     // domain
-		false,                  // secure (set to true in production with HTTPS)
-		true,                   // httpOnly
+		"auth_token",                     // name
+		session.Token,                    // value
+		int(sessionDuration.Seconds()),   // maxAge (in seconds)
+		"/",                             // path
+		"",                              // domain (empty for current domain)
+		false,                           // secure (set to true in production with HTTPS)
+		true,                            // httpOnly (prevents XSS)
 	)
 
 	// Build response

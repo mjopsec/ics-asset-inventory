@@ -421,16 +421,67 @@
         // Get asset ID from URL
         const assetId = window.location.pathname.split('/').pop();
         
+        // Helper function to get cookie value - DEFINISIKAN DULU SEBELUM DIGUNAKAN
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
         // Load asset details
         async function loadAssetDetails() {
             try {
-                const response = await fetch(`/api/assets/${assetId}`);
+                // Get token from localStorage or cookie (prioritize cookie for web auth)
+                let token = getCookie('auth_token');
+                if (!token) {
+                    token = localStorage.getItem('token');
+                }
+                
+                if (!token) {
+                    console.error('No authentication token found');
+                    showError('Authentication required. Please login again.');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                    return;
+                }
+
+                console.log('Loading asset details for ID:', assetId);
+
+                const response = await fetch(`/api/assets/${assetId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include'
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.status === 401) {
+                    console.error('Authentication failed - token may be expired');
+                    // Clear invalid tokens
+                    localStorage.removeItem('token');
+                    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    
+                    showError('Session expired. Please login again.');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                    return;
+                }
                 
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error:', response.status, errorText);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const asset = await response.json();
+                console.log('Asset data received:', asset);
                 displayAssetDetails(asset);
                 
             } catch (error) {
@@ -501,6 +552,7 @@
         }
 
         function capitalizeFirst(str) {
+            if (!str) return '';
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
@@ -514,8 +566,14 @@
 
         function deleteAsset() {
             if (confirm('Are you sure you want to delete this asset?')) {
+                let token = getCookie('auth_token') || localStorage.getItem('token');
+                
                 fetch(`/api/assets/${assetId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 })
                 .then(response => {
                     if (response.ok) {
@@ -532,8 +590,65 @@
             }
         }
 
+        // Debug function to check authentication status
+        function debugAuth() {
+            console.log('=== Authentication Debug ===');
+            
+            // Check localStorage token
+            const localToken = localStorage.getItem('token');
+            console.log('localStorage token:', localToken ? 'Present' : 'Not found');
+            
+            // Check cookie token
+            const cookieToken = getCookie('auth_token');
+            console.log('Cookie token:', cookieToken ? 'Present' : 'Not found');
+            
+            // Check if user data exists
+            const userData = localStorage.getItem('user');
+            console.log('User data:', userData ? JSON.parse(userData) : 'Not found');
+            
+            // Check all cookies
+            console.log('All cookies:', document.cookie);
+            
+            // Test API call
+            testApiCall();
+        }
+
+        // Test API call to verify authentication
+        async function testApiCall() {
+            try {
+                let token = getCookie('auth_token') || localStorage.getItem('token');
+                
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Auth test response:', response.status);
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    console.log('Auth test successful:', user);
+                } else {
+                    console.log('Auth test failed:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Auth test error:', error);
+            }
+        }
+
         // Load asset details when page loads
-        document.addEventListener('DOMContentLoaded', loadAssetDetails);
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, loading asset details...');
+            console.log('Asset ID:', assetId);
+            
+            // Debug authentication first
+            debugAuth();
+            
+            // Then load asset details
+            loadAssetDetails();
+        });
     </script>
 </body>
 </html>
