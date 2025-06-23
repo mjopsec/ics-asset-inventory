@@ -142,8 +142,8 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	router.Use(middleware.RateLimit(cfg))
 	router.Use(middleware.RequestID())
 	
-	// Load HTML templates
-	router.LoadHTMLGlob("web/templates/*.html")
+	// COMMENT OUT OR REMOVE THESE LINES - We're not using Go templates
+	// router.LoadHTMLGlob("web/templates/*.html")
 
 	// Serve static files
 	router.Static("/static", "./web/static")
@@ -158,16 +158,12 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	// Public routes (no middleware)
 	// Login page
 	router.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{
-			"title": "ICS Asset Inventory - Login",
-		})
+		c.File("web/templates/login.html")
 	})
 
 	// Register page
 	router.GET("/register", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "register.html", gin.H{
-			"title": "ICS Asset Inventory - Register",
-		})
+		c.File("web/templates/register.html")
 	})
 
 	// Auth API routes (public)
@@ -187,24 +183,17 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	{
 		// Dashboard
 		protected.GET("/", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "dashboard.html", gin.H{
-				"title": "ICS Asset Inventory - Dashboard",
-			})
+			c.File("web/templates/dashboard.html")
 		})
 
 		// Assets
 		protected.GET("/assets", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "assets.html", gin.H{
-				"title": "ICS Asset Inventory - Assets",
-			})
+			c.File("web/templates/assets.html")
 		})
 
 		// Asset detail page
 		protected.GET("/assets/:id", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "asset-detail.html", gin.H{
-				"title": "ICS Asset Inventory - Asset Details",
-				"assetId": c.Param("id"),
-			})
+			c.File("web/templates/asset-detail.html")
 		})
 
 		// Discovery
