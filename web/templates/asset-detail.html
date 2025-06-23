@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICS Asset Inventory - Asset Details</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Root Variables - Same as Dashboard */
+        :root {
+            --primary-color: #0EA5E9;
+            --primary-dark: #0284C7;
+            --secondary-color: #06B6D4;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+            
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F5F9;
+            
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-tertiary: #94A3B8;
+            
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            gap: 12px;
+        }
+
+        .asset-header {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .asset-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+
+        .asset-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .asset-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .asset-meta h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .asset-meta p {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .asset-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 12px;
+        }
+
+        .status-badge.online {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-badge.offline {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status-badge.unknown {
+            background-color: #F3F4F6;
+            color: #374151;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .detail-card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+        }
+
+        .detail-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            background-color: #FEE2E2;
+            color: #991B1B;
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .asset-title {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .asset-actions {
+                width: 100%;
+            }
+            
+            .asset-actions .btn {
+                flex: 1;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/assets" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Back to Assets
+        </a>
+
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>Loading asset details...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="error-message">Failed to load asset details</span>
+        </div>
+
+        <div id="asset-content" style="display: none;">
+            <div class="asset-header">
+                <div class="asset-title">
+                    <div class="asset-info">
+                        <div class="asset-icon" id="asset-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div class="asset-meta">
+                            <h1 id="asset-name">Asset Name</h1>
+                            <p id="asset-description">Asset description</p>
+                            <div class="status-badge" id="asset-status">
+                                <span class="status-dot"></span>
+                                <span>Unknown</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="asset-actions">
+                        <button class="btn btn-primary" onclick="editAsset()">
+                            <i class="fas fa-edit"></i>
+                            Edit Asset
+                        </button>
+                        <button class="btn btn-secondary" onclick="scanAsset()">
+                            <i class="fas fa-search"></i>
+                            Scan Device
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteAsset()">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-grid">
+                <div class="detail-card">
+                    <h3>
+                        <i class="fas fa-info-circle"></i>
+                        Basic Information
+                    </h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Asset Type</span>
+                        <span class="detail-value" id="asset-type">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Vendor</span>
+                        <span class="detail-value" id="asset-vendor">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Model</span>
+                        <span class="detail-value" id="asset-model">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Version</span>
+                        <span class="detail-value" id="asset-version">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Serial Number</span>
+                        <span class="detail-value" id="asset-serial">-</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <i class="fas fa-network-wired"></i>
+                        Network Information
+                    </h3>
+                    <div class="detail-item">
+                        <span class="detail-label">IP Address</span>
+                        <span class="detail-value" id="asset-ip">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">MAC Address</span>
+                        <span class="detail-value" id="asset-mac">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Port</span>
+                        <span class="detail-value" id="asset-port">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Protocol</span>
+                        <span class="detail-value" id="asset-protocol">-</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <i class="fas fa-map-marker-alt"></i>
+                        Location & Organization
+                    </h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Location</span>
+                        <span class="detail-value" id="asset-location">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Zone</span>
+                        <span class="detail-value" id="asset-zone">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Site</span>
+                        <span class="detail-value" id="asset-site">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Department</span>
+                        <span class="detail-value" id="asset-department">-</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <i class="fas fa-shield-alt"></i>
+                        Security & Status
+                    </h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Criticality</span>
+                        <span class="detail-value" id="asset-criticality">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Last Seen</span>
+                        <span class="detail-value" id="asset-last-seen">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Created</span>
+                        <span class="detail-value" id="asset-created">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Updated</span>
+                        <span class="detail-value" id="asset-updated">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get asset ID from URL
+        const assetId = window.location.pathname.split('/').pop();
+        
+        // Load asset details
+        async function loadAssetDetails() {
+            try {
+                const response = await fetch(`/api/assets/${assetId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const asset = await response.json();
+                displayAssetDetails(asset);
+                
+            } catch (error) {
+                console.error('Error loading asset:', error);
+                showError(`Failed to load asset: ${error.message}`);
+            }
+        }
+
+        function displayAssetDetails(asset) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('asset-content').style.display = 'block';
+            
+            // Basic info
+            document.getElementById('asset-name').textContent = asset.name || 'Unknown Asset';
+            document.getElementById('asset-description').textContent = asset.description || 'No description available';
+            
+            // Status
+            const statusElement = document.getElementById('asset-status');
+            const status = asset.status || 'unknown';
+            statusElement.className = `status-badge ${status}`;
+            statusElement.querySelector('span:last-child').textContent = capitalizeFirst(status);
+            
+            // Icon based on asset type
+            const iconElement = document.getElementById('asset-icon');
+            const icon = getAssetIcon(asset.asset_type);
+            iconElement.innerHTML = `<i class="fas fa-${icon}"></i>`;
+            
+            // Details
+            document.getElementById('asset-type').textContent = asset.asset_type || '-';
+            document.getElementById('asset-vendor').textContent = asset.vendor || '-';
+            document.getElementById('asset-model').textContent = asset.model || '-';
+            document.getElementById('asset-version').textContent = asset.version || '-';
+            document.getElementById('asset-serial').textContent = asset.serial_number || '-';
+            
+            document.getElementById('asset-ip').textContent = asset.ip_address || '-';
+            document.getElementById('asset-mac').textContent = asset.mac_address || '-';
+            document.getElementById('asset-port').textContent = asset.port || '-';
+            document.getElementById('asset-protocol').textContent = asset.protocol || '-';
+            
+            document.getElementById('asset-location').textContent = asset.location || '-';
+            document.getElementById('asset-zone').textContent = asset.zone || '-';
+            document.getElementById('asset-site').textContent = asset.site || '-';
+            document.getElementById('asset-department').textContent = asset.department || '-';
+            
+            document.getElementById('asset-criticality').textContent = asset.criticality || '-';
+            document.getElementById('asset-last-seen').textContent = asset.last_seen ? new Date(asset.last_seen).toLocaleString() : '-';
+            document.getElementById('asset-created').textContent = asset.created_at ? new Date(asset.created_at).toLocaleString() : '-';
+            document.getElementById('asset-updated').textContent = asset.updated_at ? new Date(asset.updated_at).toLocaleString() : '-';
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function getAssetIcon(type) {
+            const icons = {
+                'PLC': 'microchip',
+                'HMI': 'desktop',
+                'RTU': 'broadcast-tower',
+                'Switch': 'network-wired',
+                'Server': 'server',
+                'Sensor': 'thermometer-half',
+                'Actuator': 'cogs'
+            };
+            return icons[type] || 'cube';
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function editAsset() {
+            window.location.href = `/assets?edit=${assetId}`;
+        }
+
+        function scanAsset() {
+            alert('Scan functionality - coming soon in Phase 2');
+        }
+
+        function deleteAsset() {
+            if (confirm('Are you sure you want to delete this asset?')) {
+                fetch(`/api/assets/${assetId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Asset deleted successfully');
+                        window.location.href = '/assets';
+                    } else {
+                        alert('Failed to delete asset');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting asset');
+                });
+            }
+        }
+
+        // Load asset details when page loads
+        document.addEventListener('DOMContentLoaded', loadAssetDetails);
+    </script>
+</body>
+</html>

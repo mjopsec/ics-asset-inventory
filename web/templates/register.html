@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICS Asset Inventory - Register</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0EA5E9;
+            --primary-dark: #0284C7;
+            --secondary-color: #06B6D4;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+            
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F5F9;
+            
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-tertiary: #94A3B8;
+            
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+        }
+
+        .register-container {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 480px;
+            padding: 40px;
+            border: 1px solid var(--border-color);
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .logo i {
+            font-size: 32px;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-label .required {
+            color: var(--danger-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .form-input.error {
+            border-color: var(--danger-color);
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+        }
+
+        .password-toggle .toggle-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .password-strength {
+            margin-top: 8px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background-color: var(--bg-tertiary);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+            border-radius: 999px;
+        }
+
+        .strength-fill.weak {
+            width: 33%;
+            background-color: var(--danger-color);
+        }
+
+        .strength-fill.medium {
+            width: 66%;
+            background-color: var(--warning-color);
+        }
+
+        .strength-fill.strong {
+            width: 100%;
+            background-color: var(--success-color);
+        }
+
+        .strength-text {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-primary:disabled {
+            background-color: var(--text-tertiary);
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background-color: #FEE2E2;
+            color: #991B1B;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-message i {
+            font-size: 16px;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .success-message {
+            background-color: #D1FAE5;
+            color: #065F46;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .success-message i {
+            font-size: 16px;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .terms-section {
+            margin-bottom: 24px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: start;
+            gap: 8px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .checkbox-wrapper label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-wrapper a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .checkbox-wrapper a:hover {
+            text-decoration: underline;
+        }
+
+        .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-primary.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-primary.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .footer-text a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        @media (max-width: 480px) {
+            .register-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo-section">
+            <div class="logo">
+                <i class="fas fa-network-wired"></i>
+                <span>ICS Inventory</span>
+            </div>
+            <p class="tagline">Create your account to get started</p>
+        </div>
+
+        <form id="registerForm">
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText">Registration failed</span>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i>
+                <span id="successText">Registration successful!</span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input" 
+                        placeholder="Choose a username"
+                        required
+                        autocomplete="username"
+                        minlength="3"
+                        maxlength="20"
+                    >
+                    <span class="form-hint">3-20 characters, letters and numbers only</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email <span class="required">*</span></label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-input" 
+                        placeholder="your@email.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password <span class="required">*</span></label>
+                <div class="password-toggle">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input" 
+                        placeholder="Create a strong password"
+                        required
+                        autocomplete="new-password"
+                        minlength="8"
+                    >
+                    <button type="button" class="toggle-btn" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="password-strength">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <span class="strength-text" id="strengthText">Enter a password</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">Confirm Password <span class="required">*</span></label>
+                <div class="password-toggle">
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        class="form-input" 
+                        placeholder="Confirm your password"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="toggle-btn" id="toggleConfirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="role" class="form-label">Role <span class="required">*</span></label>
+                <select id="role" name="role" class="form-input" required>
+                    <option value="">Select your role</option>
+                    <option value="viewer">Viewer (Read-only access)</option>
+                    <option value="operator">Operator (Read & Write access)</option>
+                    <option value="admin">Administrator (Full access)</option>
+                </select>
+            </div>
+
+            <div class="terms-section">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        I agree to the <a href="#" target="_blank">Terms of Service</a> and 
+                        <a href="#" target="_blank">Privacy Policy</a>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="registerBtn">
+                <span class="spinner"></span>
+                <span class="btn-text">Create Account</span>
+            </button>
+        </form>
+
+        <div class="footer-text">
+            Already have an account? <a href="/login">Sign in</a>
+        </div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+
+        // Toggle confirm password visibility
+        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        
+        toggleConfirmPassword.addEventListener('click', function() {
+            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordInput.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            return strength;
+        }
+
+        // Update password strength indicator
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            if (password.length === 0) {
+                strengthFill.className = 'strength-fill';
+                strengthText.textContent = 'Enter a password';
+                return;
+            }
+            
+            const strength = checkPasswordStrength(password);
+            
+            if (strength <= 2) {
+                strengthFill.className = 'strength-fill weak';
+                strengthText.textContent = 'Weak password';
+            } else if (strength <= 4) {
+                strengthFill.className = 'strength-fill medium';
+                strengthText.textContent = 'Medium strength';
+            } else {
+                strengthFill.className = 'strength-fill strong';
+                strengthText.textContent = 'Strong password';
+            }
+        });
+
+        // Handle form submission
+        const registerForm = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const successMessage = document.getElementById('successMessage');
+        const successText = document.getElementById('successText');
+
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Clear previous messages
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+            document.querySelectorAll('.form-input').forEach(input => {
+                input.classList.remove('error');
+            });
+            
+            // Get form data
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const role = document.getElementById('role').value;
+            const termsAccepted = document.getElementById('terms').checked;
+            
+            // Validation
+            if (!username || !email || !password || !confirmPassword || !role) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            // Username validation
+            if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                showError('Username must be 3-20 characters and contain only letters, numbers, and underscores');
+                document.getElementById('username').classList.add('error');
+                return;
+            }
+            
+            // Email validation
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('Please enter a valid email address');
+                document.getElementById('email').classList.add('error');
+                return;
+            }
+            
+            // Password validation
+            if (password.length < 8) {
+                showError('Password must be at least 8 characters long');
+                document.getElementById('password').classList.add('error');
+                return;
+            }
+            
+            // Password match validation
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                document.getElementById('confirmPassword').classList.add('error');
+                return;
+            }
+            
+            // Terms validation
+            if (!termsAccepted) {
+                showError('You must accept the terms and conditions');
+                return;
+            }
+            
+            // Show loading state
+            registerBtn.classList.add('loading');
+            registerBtn.disabled = true;
+            
+            try {
+                // Make API request
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password,
+                        role: role
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Show success message
+                    showSuccess('Registration successful! Redirecting to login...');
+                    
+                    // Redirect to login after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    // Show error
+                    showError(data.error || 'Registration failed. Please try again.');
+                    
+                    // Highlight fields based on error
+                    if (data.field) {
+                        document.getElementById(data.field).classList.add('error');
+                    }
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showError('Connection error. Please try again.');
+            } finally {
+                // Reset button state
+                registerBtn.classList.remove('loading');
+                registerBtn.disabled = false;
+            }
+        });
+
+        // Show error message
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            successText.textContent = message;
+            successMessage.classList.add('show');
+        }
+
+        // Clear error states on input
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('error');
+                errorMessage.classList.remove('show');
+            });
+        });
+
+        // Username validation on blur
+        document.getElementById('username').addEventListener('blur', function() {
+            const username = this.value.trim();
+            if (username && !/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                this.classList.add('error');
+                showError('Username must be 3-20 characters and contain only letters, numbers, and underscores');
+            }
+        });
+
+        // Email validation on blur
+        document.getElementById('email').addEventListener('blur', function() {
+            const email = this.value.trim();
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                this.classList.add('error');
+                showError('Please enter a valid email address');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICS Asset Inventory - Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+    /* Root Variables */
+    :root {
+        --primary-color: #0EA5E9;
+        --primary-dark: #0284C7;
+        --secondary-color: #06B6D4;
+        --success-color: #10B981;
+        --warning-color: #F59E0B;
+        --danger-color: #EF4444;
+        --info-color: #3B82F6;
+        
+        --bg-primary: #F8FAFC;
+        --bg-secondary: #FFFFFF;
+        --bg-tertiary: #F1F5F9;
+        
+        --text-primary: #1E293B;
+        --text-secondary: #64748B;
+        --text-tertiary: #94A3B8;
+        
+        --border-color: #E2E8F0;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
+    }
+
+    /* Layout Container */
+    .app-container {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 280px;
+        background-color: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .logo i {
+        font-size: 28px;
+    }
+
+    .nav-menu {
+        flex: 1;
+        padding: 16px 12px;
+        overflow-y: auto;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        margin-bottom: 4px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+        font-size: 15px;
+    }
+
+    .nav-item:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .nav-item.active {
+        background-color: #DBEAFE;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .nav-item i {
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Top Bar */
+    .topbar {
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        background-color: var(--bg-tertiary);
+        border-radius: var(--radius-lg);
+        padding: 0 16px;
+        width: 400px;
+    }
+
+    .search-box input {
+        border: none;
+        background: none;
+        outline: none;
+        padding: 12px;
+        flex: 1;
+        font-size: 14px;
+    }
+
+    .search-box i {
+        color: var(--text-tertiary);
+    }
+
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .notification-btn {
+        position: relative;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 20px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+
+    .notification-btn:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 8px;
+        height: 8px;
+        background-color: var(--danger-color);
+        border-radius: 50%;
+        border: 2px solid var(--bg-secondary);
+    }
+
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+        position: relative; /* PENTING: Tambahkan ini */
+    }
+
+    .user-profile:hover {
+        background-color: var(--bg-tertiary);
+    }
+
+    /* Profile Dropdown Styles - UPDATED */
+    .profile-dropdown {
+        position: absolute;
+        top: calc(100% + 8px); /* Adjust positioning */
+        right: 0;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        min-width: 240px;
+        display: none;
+        z-index: 9999; /* Increase z-index */
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+    }
+
+    .profile-dropdown.active {
+        display: block !important;
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+
+    /* Ensure dropdown is visible above everything */
+    .topbar {
+        position: relative;
+        z-index: 100;
+    }
+
+    .topbar-actions {
+        position: relative;
+        z-index: 101;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Profile Dropdown Styles */
+    .profile-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 8px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        min-width: 240px;
+        display: none;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .profile-dropdown.active {
+        display: block !important;
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+
+    .dropdown-header {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .dropdown-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+
+    .dropdown-info {
+        flex: 1;
+    }
+
+    .dropdown-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .dropdown-email {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background-color: var(--border-color);
+        margin: 0;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 14px;
+    }
+
+    .dropdown-item:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .dropdown-item.logout {
+        color: var(--danger-color);
+    }
+
+    .dropdown-item.logout:hover {
+        background-color: #FEE2E2;
+    }
+
+    .dropdown-item i {
+        width: 16px;
+        text-align: center;
+    }
+
+    /* Content Area */
+    .content {
+        flex: 1;
+        padding: 32px;
+        overflow-y: auto;
+    }
+
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+        color: var(--text-secondary);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+
+    .stat-icon.primary {
+        background-color: #DBEAFE;
+        color: var(--primary-color);
+    }
+
+    .stat-icon.success {
+        background-color: #D1FAE5;
+        color: var(--success-color);
+    }
+
+    .stat-icon.warning {
+        background-color: #FEF3C7;
+        color: var(--warning-color);
+    }
+
+    .stat-icon.danger {
+        background-color: #FEE2E2;
+        color: var(--danger-color);
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+    }
+
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .stat-change.positive {
+        color: var(--success-color);
+    }
+
+    .stat-change.negative {
+        color: var(--danger-color);
+    }
+
+    /* Charts Section */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .chart-card {
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        padding: 24px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .chart-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .chart-action-btn {
+        padding: 6px 12px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .chart-action-btn:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .chart-action-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+
+    /* Recent Assets Table */
+    .table-card {
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .view-all-btn {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .view-all-btn:hover {
+        gap: 8px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        text-align: left;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-tertiary);
+        background-color: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table td {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 14px;
+    }
+
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .data-table tr:hover {
+        background-color: var(--bg-tertiary);
+    }
+
+    .asset-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .asset-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        background-color: var(--bg-tertiary);
+        color: var(--text-secondary);
+    }
+
+    .asset-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .asset-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .asset-ip {
+        font-size: 12px;
+        color: var(--text-tertiary);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-badge.online {
+        background-color: #D1FAE5;
+        color: #065F46;
+    }
+
+    .status-badge.offline {
+        background-color: #FEE2E2;
+        color: #991B1B;
+    }
+
+    .status-badge.warning {
+        background-color: #FEF3C7;
+        color: #92400E;
+    }
+
+    .status-indicator {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: currentColor;
+    }
+
+    .criticality-badge {
+        padding: 4px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .criticality-badge.high {
+        background-color: #FEE2E2;
+        color: #991B1B;
+    }
+
+    .criticality-badge.medium {
+        background-color: #FEF3C7;
+        color: #92400E;
+    }
+
+    .criticality-badge.low {
+        background-color: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-end;
+    }
+
+    .fab-button {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+    }
+
+    .fab-button:hover {
+        background-color: var(--primary-dark);
+        transform: scale(1.1);
+    }
+
+    .fab-menu {
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .fab-menu.active {
+        display: flex;
+    }
+
+    .fab-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        white-space: nowrap;
+        font-size: 14px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .fab-menu-item:hover {
+        transform: translateX(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    /* Button Styles */
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+        background-color: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    /* Modal Styles */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-backdrop.active {
+        display: flex;
+    }
+
+    .modal {
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .modal-footer {
+        padding: 20px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* Profile Specific Styles */
+    .profile-section {
+        text-align: center;
+    }
+
+    .profile-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 40px;
+        font-weight: 600;
+        margin: 0 auto 24px;
+    }
+
+    .profile-details {
+        text-align: left;
+    }
+
+    .profile-field {
+        margin-bottom: 16px;
+    }
+
+    .profile-field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .profile-field div {
+        font-size: 16px;
+        color: var(--text-primary);
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        color: var(--text-primary);
+        background-color: var(--bg-secondary);
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .form-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    .form-hint {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+    }
+
+    /* Password Requirements */
+    .password-requirements {
+        background-color: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        padding: 12px;
+        margin-top: 12px;
+        font-size: 13px;
+    }
+
+    .password-requirements p {
+        margin: 0 0 8px 0;
+        font-weight: 600;
+    }
+
+    .password-requirements ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .password-requirements li {
+        padding: 4px 0;
+        color: var(--text-secondary);
+    }
+
+    .password-requirements li i {
+        width: 16px;
+        margin-right: 8px;
+    }
+
+    .password-requirements li i.fa-check {
+        color: var(--success-color);
+    }
+
+    .password-requirements li i.fa-times {
+        color: var(--danger-color);
+    }
+
+    /* Notification Styles */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 400px;
+    }
+
+    .notification.success {
+        background-color: var(--success-color);
+        color: white;
+    }
+
+    .notification.error {
+        background-color: var(--danger-color);
+        color: white;
+    }
+
+    .notification.info {
+        background-color: var(--info-color);
+        color: white;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .sidebar {
+            position: absolute;
+            left: -280px;
+            height: 100%;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .content {
+            padding: 20px;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+    }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-network-wired"></i>
+                    <span>ICS Inventory</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="/assets" class="nav-item">
+                    <i class="fas fa-cube"></i>
+                    Assets
+                </a>
+                <a href="/discovery" class="nav-item">
+                    <i class="fas fa-search-location"></i>
+                    Discovery
+                </a>
+                <a href="/security" class="nav-item">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </a>
+                <a href="/reports" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    Reports
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search assets, protocols, or locations...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </button>
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 600;" id="userName">Admin User</div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);" id="userRole">Administrator</div>
+                        </div>
+                        <i class="fas fa-chevron-down" style="margin-left: 8px; font-size: 12px;"></i>
+                        
+                        <!-- Profile Dropdown Menu - PASTIKAN ADA DI DALAM user-profile -->
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="dropdown-header">
+                                <div class="dropdown-avatar" id="dropdownAvatar">A</div>
+                                <div class="dropdown-info">
+                                    <div class="dropdown-name" id="dropdownName">Admin User</div>
+                                    <div class="dropdown-email" id="dropdownEmail">admin@localhost</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" onclick="openProfileModal(); return false;">
+                                <i class="fas fa-user"></i>
+                                My Profile
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openAccountSettings(); return false;">
+                                <i class="fas fa-cog"></i>
+                                Account Settings
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openChangePassword(); return false;">
+                                <i class="fas fa-key"></i>
+                                Change Password
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" onclick="showActivityLog(); return false;">
+                                <i class="fas fa-history"></i>
+                                Activity Log
+                            </a>
+                            <a href="/settings" class="dropdown-item">
+                                <i class="fas fa-sliders-h"></i>
+                                System Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item logout" onclick="handleLogout(); return false;">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content">
+                <div class="page-header">
+                    <h1 class="page-title">Industrial Control System Dashboard</h1>
+                    <p class="page-subtitle">Real-time monitoring and management of your ICS/OT infrastructure</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalAssets">0</div>
+                                <div class="stat-label">Total Assets</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    12% from last month
+                                </div>
+                            </div>
+                            <div class="stat-icon primary">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="onlineAssets">0</div>
+                                <div class="stat-label">Online Devices</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    95% uptime
+                                </div>
+                            </div>
+                            <div class="stat-icon success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="criticalAlerts">0</div>
+                                <div class="stat-label">Critical Alerts</div>
+                                <div class="stat-change negative">
+                                    <i class="fas fa-arrow-up"></i>
+                                    3 new today
+                                </div>
+                            </div>
+                            <div class="stat-icon danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="recentScans">0</div>
+                                <div class="stat-label">Recent Scans</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-check"></i>
+                                    All completed
+                                </div>
+                            </div>
+                            <div class="stat-icon warning">
+                                <i class="fas fa-radar"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Asset Distribution by Type</h3>
+                            <div class="chart-actions">
+                                <button class="chart-action-btn active">Chart</button>
+                                <button class="chart-action-btn">Table</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="assetTypeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Device Status Overview</h3>
+                            <div class="chart-actions">
+                                <button class="chart-action-btn active">Real-time</button>
+                                <button class="chart-action-btn">History</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Assets Table -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3 class="table-title">Recently Discovered Assets</h3>
+                        <a href="/assets" class="view-all-btn">
+                            View all assets
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Protocol</th>
+                                <th>Criticality</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetsTableBody">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <div class="fab-menu" id="fabMenu">
+            <a href="#" class="fab-menu-item">
+                <i class="fas fa-plus"></i>
+                Add Asset
+            </a>
+            <a href="#" class="fab-menu-item">
+                <i class="fas fa-search"></i>
+                Start Scan
+            </a>
+            <a href="#" class="fab-menu-item">
+                <i class="fas fa-file-export"></i>
+                Export Report
+            </a>
+        </div>
+        <button class="fab-button" id="fabButton">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-backdrop" id="profileModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">My Profile</h2>
+                <button class="modal-close" onclick="closeProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-section">
+                    <div class="profile-avatar-large" id="profileAvatarLarge">A</div>
+                    <div class="profile-details">
+                        <div class="profile-field">
+                            <label>Username</label>
+                            <div id="profileUsername">admin</div>
+                        </div>
+                        <div class="profile-field">
+                            <label>Email</label>
+                            <div id="profileEmail">admin@localhost</div>
+                        </div>
+                        <div class="profile-field">
+                            <label>Role</label>
+                            <div id="profileRole">Administrator</div>
+                        </div>
+                        <div class="profile-field">
+                            <label>Last Login</label>
+                            <div id="profileLastLogin">-</div>
+                        </div>
+                        <div class="profile-field">
+                            <label>Member Since</label>
+                            <div id="profileCreated">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
+                <button class="btn btn-primary" onclick="openAccountSettings()">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-backdrop" id="changePasswordModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Change Password</h2>
+                <button class="modal-close" onclick="closeChangePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="changePasswordForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-input" name="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-input" name="newPassword" id="newPassword" required minlength="8">
+                        <span class="form-hint">Minimum 8 characters</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-input" name="confirmPassword" id="confirmPassword" required>
+                    </div>
+                    <div class="password-requirements">
+                        <p>Password must contain:</p>
+                        <ul>
+                            <li id="reqLength"><i class="fas fa-times"></i> At least 8 characters</li>
+                            <li id="reqUpper"><i class="fas fa-times"></i> One uppercase letter</li>
+                            <li id="reqLower"><i class="fas fa-times"></i> One lowercase letter</li>
+                            <li id="reqNumber"><i class="fas fa-times"></i> One number</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing dashboard...'); // Debug log
+            
+            // Load dashboard data
+            loadDashboardData();
+            
+            // Initialize charts
+            initCharts();
+            
+            // Initialize user profile
+            loadUserProfile();
+            
+            // Setup dropdown menu - with a small delay to ensure all elements are ready
+            setupDropdownMenu();
+            console.log('Dropdown menu setup completed'); // Debug log
+            
+            // Setup FAB menu
+            setupFABMenu();
+            
+            // Setup password validation
+            setupPasswordValidation();
+            
+            // Setup form handlers
+            setupFormHandlers();
+        });
+
+        // Setup dropdown menu
+        function setupDropdownMenu() {
+            const userProfile = document.getElementById('userProfile');
+            const profileDropdown = document.getElementById('profileDropdown');
+            
+            if (!userProfile || !profileDropdown) {
+                console.error('Profile elements not found', {userProfile, profileDropdown});
+                return;
+            }
+            
+            console.log('Setting up dropdown menu...');
+            
+            // Make sure userProfile is clickable
+            userProfile.style.cursor = 'pointer';
+            
+            // Clear any existing listeners
+            const newUserProfile = userProfile.cloneNode(true);
+            userProfile.parentNode.replaceChild(newUserProfile, userProfile);
+            
+            // Get fresh references
+            const clickableProfile = document.getElementById('userProfile');
+            const dropdown = document.getElementById('profileDropdown');
+            
+            // Add click handler
+            clickableProfile.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('Profile clicked');
+                
+                const isActive = dropdown.classList.contains('active');
+                
+                if (!isActive) {
+                    // Show dropdown
+                    dropdown.style.display = 'block';
+                    dropdown.style.opacity = '0';
+                    dropdown.style.transform = 'translateY(-10px)';
+                    
+                    // Force reflow
+                    dropdown.offsetHeight;
+                    
+                    // Add active class and animate
+                    dropdown.classList.add('active');
+                    dropdown.style.opacity = '1';
+                    dropdown.style.transform = 'translateY(0)';
+                    
+                    console.log('Dropdown opened');
+                } else {
+                    // Hide dropdown
+                    dropdown.classList.remove('active');
+                    dropdown.style.opacity = '0';
+                    dropdown.style.transform = 'translateY(-10px)';
+                    
+                    setTimeout(() => {
+                        dropdown.style.display = 'none';
+                    }, 200);
+                    
+                    console.log('Dropdown closed');
+                }
+            });
+            
+            // Prevent dropdown from closing when clicking inside
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // Close on outside click
+            document.addEventListener('click', function(e) {
+                if (!clickableProfile.contains(e.target) && !dropdown.contains(e.target)) {
+                    if (dropdown.classList.contains('active')) {
+                        dropdown.classList.remove('active');
+                        dropdown.style.opacity = '0';
+                        dropdown.style.transform = 'translateY(-10px)';
+                        
+                        setTimeout(() => {
+                            dropdown.style.display = 'none';
+                        }, 200);
+                    }
+                }
+            });
+            
+            // Close on escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && dropdown.classList.contains('active')) {
+                    dropdown.classList.remove('active');
+                    dropdown.style.opacity = '0';
+                    dropdown.style.transform = 'translateY(-10px)';
+                    
+                    setTimeout(() => {
+                        dropdown.style.display = 'none';
+                    }, 200);
+                }
+            });
+        }
+
+        // Manual test function
+        function forceShowDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown) {
+                dropdown.style.display = 'block';
+                dropdown.style.opacity = '1';
+                dropdown.style.transform = 'translateY(0)';
+                dropdown.style.position = 'absolute';
+                dropdown.style.top = '100%';
+                dropdown.style.right = '0';
+                dropdown.style.zIndex = '9999';
+                dropdown.classList.add('active');
+                console.log('Dropdown forced to show');
+            } else {
+                console.error('Dropdown element not found!');
+            }
+        }
+
+        // Debug function to check dropdown position
+        function debugDropdown() {
+            const userProfile = document.getElementById('userProfile');
+            const dropdown = document.getElementById('profileDropdown');
+            
+            console.log('User Profile:', userProfile);
+            console.log('Dropdown:', dropdown);
+            
+            if (dropdown) {
+                const rect = dropdown.getBoundingClientRect();
+                console.log('Dropdown position:', {
+                    top: rect.top,
+                    left: rect.left,
+                    width: rect.width,
+                    height: rect.height,
+                    display: window.getComputedStyle(dropdown).display,
+                    opacity: window.getComputedStyle(dropdown).opacity,
+                    zIndex: window.getComputedStyle(dropdown).zIndex
+                });
+            }
+        }
+
+        // Close all dropdowns
+        function closeAllDropdowns() {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('active');
+                // Reset inline styles
+                dropdown.style.display = '';
+                dropdown.style.opacity = '';
+                dropdown.style.transform = '';
+            }
+        }
+
+        // Setup FAB menu
+        function setupFABMenu() {
+            const fabButton = document.getElementById('fabButton');
+            const fabMenu = document.getElementById('fabMenu');
+            
+            if (!fabButton || !fabMenu) return;
+            
+            let menuOpen = false;
+            
+            fabButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menuOpen = !menuOpen;
+                fabMenu.classList.toggle('active');
+                fabButton.innerHTML = menuOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-plus"></i>';
+            });
+            
+            // Close FAB menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!fabButton.contains(e.target) && !fabMenu.contains(e.target)) {
+                    menuOpen = false;
+                    fabMenu.classList.remove('active');
+                    fabButton.innerHTML = '<i class="fas fa-plus"></i>';
+                }
+            });
+            
+            // FAB menu actions
+            document.querySelectorAll('.fab-menu-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const action = this.textContent.trim();
+                    
+                    switch (action) {
+                        case 'Add Asset':
+                            window.location.href = '/assets';
+                            break;
+                        case 'Start Scan':
+                            window.location.href = '/discovery';
+                            break;
+                        case 'Export Report':
+                            showNotification('Report export feature coming soon', 'info');
+                            break;
+                    }
+                    
+                    // Close FAB menu
+                    menuOpen = false;
+                    fabMenu.classList.remove('active');
+                    fabButton.innerHTML = '<i class="fas fa-plus"></i>';
+                });
+            });
+        }
+
+        // Setup password validation
+        function setupPasswordValidation() {
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            
+            if (newPasswordInput) {
+                newPasswordInput.addEventListener('input', validatePassword);
+            }
+            
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+            }
+        }
+
+        // Setup form handlers
+        function setupFormHandlers() {
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            if (changePasswordForm) {
+                changePasswordForm.addEventListener('submit', handleChangePassword);
+            }
+        }
+
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Load dashboard data from API
+        async function loadDashboardData() {
+            try {
+                const token = localStorage.getItem('token') || getCookie('auth_token');
+                
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                // Fetch overview data
+                const overviewResponse = await fetch('/api/dashboard/overview', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (overviewResponse.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const overview = await overviewResponse.json();
+                
+                // Update stats with real data
+                document.getElementById('totalAssets').textContent = overview.total_assets || 0;
+                document.getElementById('onlineAssets').textContent = overview.online_assets || 0;
+                document.getElementById('criticalAlerts').textContent = overview.critical_alerts || 0;
+                document.getElementById('recentScans').textContent = overview.recent_scans || 0;
+                
+                // Update change indicators based on real data
+                updateChangeIndicators(overview);
+                
+                // Fetch metrics for charts
+                const metricsResponse = await fetch('/api/dashboard/metrics', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const metrics = await metricsResponse.json();
+                
+                // Update charts with real data
+                updateCharts(metrics);
+                
+                // Load recent assets
+                loadRecentAssets();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showNotification('Failed to load dashboard data', 'error');
+            }
+        }
+
+        // Update change indicators
+        function updateChangeIndicators(overview) {
+            // Calculate percentages based on real data
+            const totalAssetsChange = document.querySelector('.stat-card:nth-child(1) .stat-change');
+            if (overview.new_assets_today > 0) {
+                totalAssetsChange.innerHTML = `
+                    <i class="fas fa-arrow-up"></i>
+                    ${overview.new_assets_today} new today
+                `;
+                totalAssetsChange.classList.add('positive');
+                totalAssetsChange.classList.remove('negative');
+            } else {
+                totalAssetsChange.innerHTML = `
+                    <i class="fas fa-minus"></i>
+                    No new assets today
+                `;
+                totalAssetsChange.classList.remove('positive', 'negative');
+            }
+            
+            // Online devices percentage
+            const onlinePercentage = overview.total_assets > 0 
+                ? Math.round((overview.online_assets / overview.total_assets) * 100) 
+                : 0;
+            const onlineChange = document.querySelector('.stat-card:nth-child(2) .stat-change');
+            onlineChange.innerHTML = `
+                <i class="fas fa-check"></i>
+                ${onlinePercentage}% online
+            `;
+            
+            // Critical alerts change
+            const criticalChange = document.querySelector('.stat-card:nth-child(3) .stat-change');
+            if (overview.critical_alerts > 0) {
+                criticalChange.innerHTML = `
+                    <i class="fas fa-exclamation"></i>
+                    Requires attention
+                `;
+                criticalChange.classList.add('negative');
+            } else {
+                criticalChange.innerHTML = `
+                    <i class="fas fa-check"></i>
+                    No critical issues
+                `;
+                criticalChange.classList.add('positive');
+            }
+            
+            // Recent scans status
+            const scansChange = document.querySelector('.stat-card:nth-child(4) .stat-change');
+            if (overview.recent_scans > 0) {
+                scansChange.innerHTML = `
+                    <i class="fas fa-check"></i>
+                    Active scanning
+                `;
+                scansChange.classList.add('positive');
+            } else {
+                scansChange.innerHTML = `
+                    <i class="fas fa-clock"></i>
+                    No recent scans
+                `;
+                scansChange.classList.remove('positive', 'negative');
+            }
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Asset Type Chart
+            const assetTypeCtx = document.getElementById('assetTypeChart').getContext('2d');
+            window.assetTypeChart = new Chart(assetTypeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#0EA5E9',
+                            '#10B981',
+                            '#F59E0B',
+                            '#8B5CF6',
+                            '#EF4444',
+                            '#06B6D4',
+                            '#EC4899'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    label += context.parsed + ' (' + percentage + '%)';
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            window.statusChart = new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Device Status',
+                        data: [],
+                        backgroundColor: [
+                            '#10B981',
+                            '#EF4444',
+                            '#F59E0B',
+                            '#6B7280'
+                        ],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update charts with real data
+        function updateCharts(metrics) {
+            // Update asset type chart
+            if (metrics.asset_distribution && Object.keys(metrics.asset_distribution).length > 0) {
+                const labels = Object.keys(metrics.asset_distribution);
+                const data = Object.values(metrics.asset_distribution);
+                
+                window.assetTypeChart.data.labels = labels;
+                window.assetTypeChart.data.datasets[0].data = data;
+                window.assetTypeChart.update();
+            } else {
+                // Show empty state
+                window.assetTypeChart.data.labels = ['No Data'];
+                window.assetTypeChart.data.datasets[0].data = [1];
+                window.assetTypeChart.data.datasets[0].backgroundColor = ['#E5E7EB'];
+                window.assetTypeChart.update();
+            }
+            
+            // Update status chart
+            if (metrics.status_distribution && Object.keys(metrics.status_distribution).length > 0) {
+                const labels = Object.keys(metrics.status_distribution).map(s => capitalizeFirst(s));
+                const data = Object.values(metrics.status_distribution);
+                
+                window.statusChart.data.labels = labels;
+                window.statusChart.data.datasets[0].data = data;
+                window.statusChart.update();
+            } else {
+                // Show empty state
+                window.statusChart.data.labels = ['No Data'];
+                window.statusChart.data.datasets[0].data = [0];
+                window.statusChart.update();
+            }
+        }
+
+        // Load recent assets from API
+        async function loadRecentAssets() {
+            try {
+                const token = localStorage.getItem('token') || getCookie('auth_token');
+                
+                const response = await fetch('/api/assets?limit=5&sort_by=created_at&sort_order=DESC', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    displayAssets(data.data);
+                } else {
+                    displayEmptyAssets();
+                }
+            } catch (error) {
+                console.error('Error loading assets:', error);
+                displayEmptyAssets();
+            }
+        }
+
+        // Display assets in table
+        function displayAssets(assets) {
+            const tbody = document.getElementById('assetsTableBody');
+            tbody.innerHTML = '';
+            
+            assets.forEach(asset => {
+                const row = createAssetRow(asset);
+                tbody.appendChild(row);
+            });
+        }
+
+        // Display empty state for assets
+        function displayEmptyAssets() {
+            const tbody = document.getElementById('assetsTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                        <i class="fas fa-cube" style="font-size: 32px; opacity: 0.3; margin-bottom: 12px; display: block;"></i>
+                        No assets found. Start by adding your industrial devices to the inventory.
+                        <br><br>
+                        <a href="/assets" class="btn btn-primary" style="text-decoration: none;">
+                            <i class="fas fa-plus"></i> Add Assets
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Create asset table row
+        function createAssetRow(asset) {
+            const row = document.createElement('tr');
+            const statusClass = asset.status || 'unknown';
+            const criticalityClass = asset.criticality || 'medium';
+            const lastSeen = asset.last_seen ? new Date(asset.last_seen).toLocaleString() : 'Never';
+            
+            row.innerHTML = `
+                <td>
+                    <div class="asset-info">
+                        <div class="asset-icon">
+                            <i class="fas fa-${getAssetIcon(asset.asset_type)}"></i>
+                        </div>
+                        <div class="asset-details">
+                            <div class="asset-name">${asset.name}</div>
+                            <div class="asset-ip">${asset.ip_address || 'No IP'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${asset.asset_type || 'Unknown'}</td>
+                <td>
+                    <span class="status-badge ${statusClass}">
+                        <span class="status-indicator"></span>
+                        ${capitalizeFirst(statusClass)}
+                    </span>
+                </td>
+                <td>${asset.protocol || '-'}</td>
+                <td>
+                    <span class="criticality-badge ${criticalityClass}">
+                        ${criticalityClass}
+                    </span>
+                </td>
+                <td>${lastSeen}</td>
+            `;
+            
+            row.style.cursor = 'pointer';
+            row.onclick = () => {
+                window.location.href = `/assets/${asset.id}`;
+            };
+            
+            return row;
+        }
+
+        // Get icon for asset type
+        function getAssetIcon(type) {
+            const icons = {
+                'PLC': 'microchip',
+                'HMI': 'desktop',
+                'RTU': 'broadcast-tower',
+                'Switch': 'network-wired',
+                'Server': 'server',
+                'Sensor': 'thermometer-half',
+                'Actuator': 'cogs'
+            };
+            return icons[type] || 'cube';
+        }
+
+        // Capitalize first letter
+        function capitalizeFirst(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Load user profile data
+        async function loadUserProfile() {
+            try {
+                const token = localStorage.getItem('token') || getCookie('auth_token');
+                
+                if (!token) {
+                    console.error('No auth token found');
+                    return;
+                }
+                
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    updateUserDisplay(user);
+                } else {
+                    console.error('Failed to load user profile:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+            }
+        }
+
+        // Update user display
+        function updateUserDisplay(user) {
+            // Update topbar
+            const initial = user.username.charAt(0).toUpperCase();
+            
+            const userAvatar = document.getElementById('userAvatar');
+            if (userAvatar) userAvatar.textContent = initial;
+            
+            const userName = document.getElementById('userName');
+            if (userName) userName.textContent = user.username;
+            
+            const userRole = document.getElementById('userRole');
+            if (userRole) userRole.textContent = capitalizeFirst(user.role);
+            
+            // Update dropdown
+            const dropdownAvatar = document.getElementById('dropdownAvatar');
+            if (dropdownAvatar) dropdownAvatar.textContent = initial;
+            
+            const dropdownName = document.getElementById('dropdownName');
+            if (dropdownName) dropdownName.textContent = user.username;
+            
+            const dropdownEmail = document.getElementById('dropdownEmail');
+            if (dropdownEmail) dropdownEmail.textContent = user.email;
+            
+            // Update profile modal
+            const profileAvatarLarge = document.getElementById('profileAvatarLarge');
+            if (profileAvatarLarge) profileAvatarLarge.textContent = initial;
+            
+            const profileUsername = document.getElementById('profileUsername');
+            if (profileUsername) profileUsername.textContent = user.username;
+            
+            const profileEmail = document.getElementById('profileEmail');
+            if (profileEmail) profileEmail.textContent = user.email;
+            
+            const profileRole = document.getElementById('profileRole');
+            if (profileRole) profileRole.textContent = capitalizeFirst(user.role);
+            
+            const profileLastLogin = document.getElementById('profileLastLogin');
+            if (profileLastLogin) {
+                profileLastLogin.textContent = user.last_login ? new Date(user.last_login).toLocaleString() : 'Never';
+            }
+            
+            const profileCreated = document.getElementById('profileCreated');
+            if (profileCreated) {
+                profileCreated.textContent = new Date(user.created_at).toLocaleDateString();
+            }
+        }
+
+        // Profile modal functions
+        window.openProfileModal = function() {
+            console.log('Opening profile modal');
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+            closeAllDropdowns();
+        }
+
+        window.closeProfileModal = function() {
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Change password modal
+        window.openChangePassword = function() {
+            console.log('Opening change password modal');
+            const modal = document.getElementById('changePasswordModal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+            closeAllDropdowns();
+        }
+
+        window.closeChangePasswordModal = function() {
+            const modal = document.getElementById('changePasswordModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            const form = document.getElementById('changePasswordForm');
+            if (form) {
+                form.reset();
+            }
+            resetPasswordValidation();
+        }
+
+        // Account settings (placeholder)
+        window.openAccountSettings = function() {
+            showNotification('Account settings will be available in the next update', 'info');
+            closeAllDropdowns();
+            closeProfileModal();
+        }
+
+        // Activity log (placeholder)
+        window.showActivityLog = function() {
+            showNotification('Activity log will be available in the next update', 'info');
+            closeAllDropdowns();
+        }
+
+        // Password validation
+        function validatePassword() {
+            const password = this.value;
+            
+            // Length
+            updateRequirement('reqLength', password.length >= 8);
+            
+            // Uppercase
+            updateRequirement('reqUpper', /[A-Z]/.test(password));
+            
+            // Lowercase
+            updateRequirement('reqLower', /[a-z]/.test(password));
+            
+            // Number
+            updateRequirement('reqNumber', /[0-9]/.test(password));
+        }
+
+        function validatePasswordMatch() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && newPassword !== confirmPassword) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        }
+
+        function updateRequirement(id, isValid) {
+            const element = document.getElementById(id);
+            if (!element) return;
+            
+            const icon = element.querySelector('i');
+            if (!icon) return;
+            
+            if (isValid) {
+                icon.className = 'fas fa-check';
+                element.style.color = 'var(--success-color)';
+            } else {
+                icon.className = 'fas fa-times';
+                element.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        function resetPasswordValidation() {
+            ['reqLength', 'reqUpper', 'reqLower', 'reqNumber'].forEach(id => {
+                updateRequirement(id, false);
+            });
+        }
+
+        // Handle change password
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                current_password: formData.get('currentPassword'),
+                new_password: formData.get('newPassword')
+            };
+            
+            try {
+                const token = localStorage.getItem('token') || getCookie('auth_token');
+                
+                // Note: This endpoint needs to be implemented in the backend
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showNotification('Password changed successfully', 'success');
+                    closeChangePasswordModal();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Failed to change password', 'error');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showNotification('Failed to change password', 'error');
+            }
+        }
+
+        // Handle logout
+        window.handleLogout = async function() {
+            try {
+                const token = localStorage.getItem('token') || getCookie('auth_token');
+                
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // Clear local storage and cookies
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                
+                // Redirect to login
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                // Even if logout fails, clear local data and redirect
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let icon = '';
+            switch (type) {
+                case 'success':
+                    icon = '<i class="fas fa-check-circle"></i>';
+                    break;
+                case 'error':
+                    icon = '<i class="fas fa-exclamation-circle"></i>';
+                    break;
+                case 'info':
+                    icon = '<i class="fas fa-info-circle"></i>';
+                    break;
+                default:
+                    icon = '<i class="fas fa-bell"></i>';
+            }
+            
+            notification.innerHTML = `${icon} ${message}`;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Modal close on backdrop click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-backdrop')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        // Auto-refresh dashboard data every 30 seconds
+        setInterval(loadDashboardData, 30000);
+
+        // Force re-initialization after everything loads
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                setupDropdownMenu();
+                console.log('Dropdown re-initialized on window load');
+            }, 500);
+        });
+
+        // Debug function untuk test manual
+        function testDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('active');
+                dropdown.style.display = dropdown.classList.contains('active') ? 'block' : 'none';
+                dropdown.style.opacity = dropdown.classList.contains('active') ? '1' : '0';
+                console.log('Dropdown toggled manually');
+            }
+        }
+    </script>
+</body>
+</html>

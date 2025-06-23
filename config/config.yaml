@@ -1,0 +1,61 @@
+# ICS Asset Inventory Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: "debug"  # debug, release
+  read_timeout: 30
+  write_timeout: 30
+  shutdown_timeout: 30
+  enable_cors: true
+  trusted_proxies: []
+
+database:
+  driver: "sqlite"  # sqlite, postgres
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: ""
+  name: "ics_inventory"
+  ssl_mode: "disable"
+  timezone: "UTC"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 24  # hours
+  debug: false
+
+security:
+  jwt_secret: "your-secret-key-change-in-production-make-it-at-least-32-chars"
+  jwt_expiry: 24  # hours
+  password_min_length: 8
+  enable_auth: true
+  session_timeout: 3600  # seconds
+  rate_limit: 100  # requests per minute
+
+logging:
+  level: "info"  # debug, info, warn, error, fatal
+  format: "json"  # json, console
+  output: "stdout"  # stdout, file
+  filename: "logs/app.log"
+  max_size: 100  # MB
+  max_backups: 3
+  max_age: 28  # days
+  compress: true
+
+scanner:
+  default_timeout: 30  # seconds
+  max_concurrent: 50
+  retry_attempts: 3
+  enable_protocols:
+    - "modbus"
+    - "dnp3"
+    - "bacnet"
+    - "ethernet_ip"
+  port_ranges:
+    - "1-1024"
+    - "502"      # Modbus
+    - "20000"    # DNP3
+    - "44818"    # EtherNet/IP
+    - "47808"    # BACnet
+  scan_interval: 3600  # seconds
+  enable_passive_scan: true

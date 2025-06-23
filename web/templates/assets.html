@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICS Asset Inventory - Assets</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Root Variables - Same as Dashboard */
+        :root {
+            --primary-color: #0EA5E9;
+            --primary-dark: #0284C7;
+            --secondary-color: #06B6D4;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+            
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F5F9;
+            
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-tertiary: #94A3B8;
+            
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Layout Container */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar - Reuse from Dashboard */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .logo i {
+            font-size: 28px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+            font-size: 15px;
+        }
+
+        .nav-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background-color: #DBEAFE;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar */
+        .topbar {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-input {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            padding: 0 16px;
+            width: 300px;
+        }
+
+        .search-input input {
+            border: none;
+            background: none;
+            outline: none;
+            padding: 10px;
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .search-input i {
+            color: var(--text-tertiary);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        /* Filters Bar */
+        .filters-bar {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: var(--bg-secondary);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .view-toggle button {
+            padding: 6px 12px;
+            border: none;
+            background: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-toggle button.active {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Assets Grid View */
+        .assets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .asset-card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .asset-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .asset-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .asset-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .asset-icon-lg {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .asset-icon-lg.plc {
+            background-color: #DBEAFE;
+            color: var(--primary-color);
+        }
+
+        .asset-icon-lg.hmi {
+            background-color: #D1FAE5;
+            color: var(--success-color);
+        }
+
+        .asset-icon-lg.rtu {
+            background-color: #FEF3C7;
+            color: var(--warning-color);
+        }
+
+        .asset-meta {
+            flex: 1;
+        }
+
+        .asset-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .asset-type {
+            font-size: 14px;
+            color: var(--text-tertiary);
+        }
+
+        .asset-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .asset-status.online {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .asset-status.offline {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .asset-status.unknown {
+            background-color: #F3F4F6;
+            color: #374151;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        .asset-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .asset-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .asset-actions button {
+            flex: 1;
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .asset-actions button:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Assets List View */
+        .assets-table {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-tertiary);
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .data-table th:hover {
+            color: var(--text-secondary);
+        }
+
+        .data-table th i {
+            margin-left: 8px;
+            font-size: 10px;
+        }
+
+        .data-table td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .criticality-badge {
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .criticality-badge.critical {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .criticality-badge.high {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .criticality-badge.medium {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .criticality-badge.low {
+            background-color: #F3F4F6;
+            color: #374151;
+        }
+
+        /* Enhanced Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .modal {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-lg);
+            margin: auto;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Form Grid for Modals */
+        .form-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            outline: none;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Modal Tab Styles */
+        .modal-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .modal-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .modal-tab i {
+            font-size: 16px;
+        }
+
+        .modal-tab span {
+            display: inline;
+        }
+
+        /* Tab Panels */
+        .modal-tab-content {
+            min-height: 300px;
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: absolute;
+                left: -280px;
+                height: 100%;
+                z-index: 1000;
+                box-shadow: var(--shadow-lg);
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .assets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            .page-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .modal-backdrop {
+                padding: 0;
+                align-items: flex-end;
+            }
+            
+            .modal {
+                max-width: 100%;
+                max-height: 100vh;
+                margin: 0;
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            }
+            
+            .modal-header {
+                padding: 16px 20px;
+            }
+            
+            .modal-body {
+                padding: 16px 20px;
+            }
+            
+            /* Single column layout on mobile */
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-footer {
+                padding: 16px 20px;
+                flex-direction: column-reverse;
+            }
+            
+            .modal-footer .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modal-tab span {
+                display: none;
+            }
+            
+            .modal-tab {
+                padding: 10px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--text-tertiary);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-network-wired"></i>
+                    <span>ICS Inventory</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+                <a href="/assets" class="nav-item active">
+                    <i class="fas fa-cube"></i>
+                    Assets
+                </a>
+                <a href="/discovery" class="nav-item">
+                    <i class="fas fa-search-location"></i>
+                    Discovery
+                </a>
+                <a href="/security" class="nav-item">
+                    <i class="fas fa-shield-alt"></i>
+                    Security
+                </a>
+                <a href="/reports" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    Reports
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="page-actions">
+                    <div class="search-input">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="assetSearch" placeholder="Search assets...">
+                    </div>
+                    <div class="view-toggle">
+                        <button class="active" onclick="setView('grid')">
+                            <i class="fas fa-th"></i> Grid
+                        </button>
+                        <button onclick="setView('list')">
+                            <i class="fas fa-list"></i> List
+                        </button>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    <button class="btn btn-primary" onclick="openAddAssetModal()">
+                        <i class="fas fa-plus"></i>
+                        Add Asset
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content">
+                <!-- Filters Bar -->
+                <div class="filters-bar">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">Asset Type</label>
+                            <select class="filter-select" id="filterType">
+                                <option value="">All Types</option>
+                                <option value="PLC">PLC</option>
+                                <option value="HMI">HMI</option>
+                                <option value="RTU">RTU</option>
+                                <option value="Switch">Switch</option>
+                                <option value="Server">Server</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Status</label>
+                            <select class="filter-select" id="filterStatus">
+                                <option value="">All Status</option>
+                                <option value="online">Online</option>
+                                <option value="offline">Offline</option>
+                                <option value="warning">Warning</option>
+                                <option value="unknown">Unknown</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Criticality</label>
+                            <select class="filter-select" id="filterCriticality">
+                                <option value="">All Levels</option>
+                                <option value="critical">Critical</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Protocol</label>
+                            <select class="filter-select" id="filterProtocol">
+                                <option value="">All Protocols</option>
+                                <option value="Modbus">Modbus</option>
+                                <option value="DNP3">DNP3</option>
+                                <option value="EtherNet/IP">EtherNet/IP</option>
+                                <option value="BACnet">BACnet</option>
+                                <option value="SNMP">SNMP</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assets Grid View -->
+                <div id="gridView" class="assets-grid">
+                    <!-- Asset cards will be dynamically inserted here -->
+                </div>
+
+                <!-- Assets List View -->
+                <div id="listView" class="assets-table" style="display: none;">
+                    <div class="table-header">
+                        <h3 class="table-title">All Assets</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Asset Name <i class="fas fa-sort"></i></th>
+                                <th>Type <i class="fas fa-sort"></i></th>
+                                <th>IP Address <i class="fas fa-sort"></i></th>
+                                <th>Status <i class="fas fa-sort"></i></th>
+                                <th>Protocol</th>
+                                <th>Criticality <i class="fas fa-sort"></i></th>
+                                <th>Last Seen <i class="fas fa-sort"></i></th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetsTableBody">
+                            <!-- Table rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Asset Modal -->
+    <div class="modal-backdrop" id="addAssetModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Add New Asset</h2>
+                <button class="modal-close" onclick="closeAddAssetModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addAssetForm">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Asset Name *</label>
+                                <input type="text" class="form-input" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Asset Type *</label>
+                                <select class="form-input" name="asset_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="PLC">PLC</option>
+                                    <option value="HMI">HMI</option>
+                                    <option value="RTU">RTU</option>
+                                    <option value="Switch">Switch</option>
+                                    <option value="Server">Server</option>
+                                    <option value="Sensor">Sensor</option>
+                                    <option value="Actuator">Actuator</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">IP Address</label>
+                                <input type="text" class="form-input" name="ip_address" placeholder="192.168.1.100">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">MAC Address</label>
+                                <input type="text" class="form-input" name="mac_address" placeholder="00:00:00:00:00:00">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Vendor</label>
+                                <input type="text" class="form-input" name="vendor">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-input" name="model">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Protocol</label>
+                                <select class="form-input" name="protocol">
+                                    <option value="">Select Protocol</option>
+                                    <option value="Modbus TCP">Modbus TCP</option>
+                                    <option value="Modbus RTU">Modbus RTU</option>
+                                    <option value="DNP3">DNP3</option>
+                                    <option value="EtherNet/IP">EtherNet/IP</option>
+                                    <option value="BACnet">BACnet</option>
+                                    <option value="SNMP">SNMP</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Criticality</label>
+                                <select class="form-input" name="criticality">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-input" name="location">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Zone</label>
+                                <select class="form-input" name="zone">
+                                    <option value="">Select Zone</option>
+                                    <option value="DMZ">DMZ</option>
+                                    <option value="Control Network">Control Network</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                    <option value="Field">Field</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-input form-textarea" name="description"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddAssetModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="loading-spinner" style="display: none;"></span>
+                        Add Asset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Asset Modal -->
+    <div class="modal-backdrop" id="editAssetModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Asset</h2>
+                <button class="modal-close" onclick="closeEditAssetModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editAssetForm">
+                <input type="hidden" id="editAssetId" name="id">
+                <div class="modal-body">
+                    <!-- Tab Navigation -->
+                    <div class="modal-tabs">
+                        <button type="button" class="modal-tab active" onclick="switchModalTab('basic')">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Basic Info</span>
+                        </button>
+                        <button type="button" class="modal-tab" onclick="switchModalTab('network')">
+                            <i class="fas fa-network-wired"></i>
+                            <span>Network</span>
+                        </button>
+                        <button type="button" class="modal-tab" onclick="switchModalTab('location')">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location</span>
+                        </button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="modal-tab-content">
+                        <!-- Basic Info Tab -->
+                        <div id="basicTab" class="tab-panel active">
+                            <div class="form-grid">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Asset Name *</label>
+                                        <input type="text" class="form-input" name="name" id="editAssetName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Asset Type *</label>
+                                        <select class="form-input" name="asset_type" id="editAssetType" required>
+                                            <option value="">Select Type</option>
+                                            <option value="PLC">PLC</option>
+                                            <option value="HMI">HMI</option>
+                                            <option value="RTU">RTU</option>
+                                            <option value="Switch">Switch</option>
+                                            <option value="Server">Server</option>
+                                            <option value="Sensor">Sensor</option>
+                                            <option value="Actuator">Actuator</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Vendor</label>
+                                        <input type="text" class="form-input" name="vendor" id="editAssetVendor">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Model</label>
+                                        <input type="text" class="form-input" name="model" id="editAssetModel">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Version</label>
+                                        <input type="text" class="form-input" name="version" id="editAssetVersion">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Serial Number</label>
+                                        <input type="text" class="form-input" name="serial_number" id="editAssetSerial">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Criticality</label>
+                                        <select class="form-input" name="criticality" id="editAssetCriticality">
+                                            <option value="low">Low</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="high">High</option>
+                                            <option value="critical">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-input form-textarea" name="description" id="editAssetDescription" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Network Tab -->
+                        <div id="networkTab" class="tab-panel">
+                            <div class="form-grid">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">IP Address</label>
+                                        <input type="text" class="form-input" name="ip_address" id="editAssetIP" placeholder="192.168.1.100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">MAC Address</label>
+                                        <input type="text" class="form-input" name="mac_address" id="editAssetMAC" placeholder="00:00:00:00:00:00">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Protocol</label>
+                                        <select class="form-input" name="protocol" id="editAssetProtocol">
+                                            <option value="">Select Protocol</option>
+                                            <option value="Modbus TCP">Modbus TCP</option>
+                                            <option value="Modbus RTU">Modbus RTU</option>
+                                            <option value="DNP3">DNP3</option>
+                                            <option value="EtherNet/IP">EtherNet/IP</option>
+                                            <option value="BACnet">BACnet</option>
+                                            <option value="SNMP">SNMP</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Port</label>
+                                        <input type="number" class="form-input" name="port" id="editAssetPort">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Tab -->
+                        <div id="locationTab" class="tab-panel">
+                            <div class="form-grid">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Location</label>
+                                        <input type="text" class="form-input" name="location" id="editAssetLocation">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Zone</label>
+                                        <select class="form-input" name="zone" id="editAssetZone">
+                                            <option value="">Select Zone</option>
+                                            <option value="DMZ">DMZ</option>
+                                            <option value="Control Network">Control Network</option>
+                                            <option value="Enterprise">Enterprise</option>
+                                            <option value="Field">Field</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Site</label>
+                                        <input type="text" class="form-input" name="site" id="editAssetSite">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Department</label>
+                                        <input type="text" class="form-input" name="department" id="editAssetDepartment">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditAssetModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="loading-spinner" style="display: none;"></span>
+                        Update Asset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentView = 'grid';
+        let assets = [];
+        let filteredAssets = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAssets();
+            setupFilters();
+            setupSearch();
+            setupForms();
+        });
+
+        // Load assets from API with proper authentication
+        async function loadAssets() {
+            try {
+                // Get token from localStorage or cookie
+                const token = localStorage.getItem('token') || getCookie('auth_token');
+                
+                const response = await fetch('/api/assets', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 401) {
+                    // Token expired or invalid, redirect to login
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.data) {
+                    assets = data.data;
+                    filteredAssets = [...assets];
+                    renderAssets();
+                } else {
+                    // No data, show empty state
+                    assets = [];
+                    filteredAssets = [];
+                    renderAssets();
+                }
+            } catch (error) {
+                console.error('Error loading assets:', error);
+                showNotification('Failed to load assets', 'error');
+            }
+        }
+
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Render assets based on current view
+        function renderAssets() {
+            if (currentView === 'grid') {
+                renderGridView();
+            } else {
+                renderListView();
+            }
+        }
+
+        // Render grid view
+        function renderGridView() {
+            const gridContainer = document.getElementById('gridView');
+            gridContainer.innerHTML = '';
+            
+            if (filteredAssets.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                        <i class="fas fa-cube" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                        <h3 style="font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">No Assets Found</h3>
+                        <p style="color: var(--text-tertiary); margin-bottom: 20px;">Start by adding your first asset to the inventory</p>
+                        <button class="btn btn-primary" onclick="openAddAssetModal()">
+                            <i class="fas fa-plus"></i> Add Your First Asset
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredAssets.forEach(asset => {
+                const card = createAssetCard(asset);
+                gridContainer.appendChild(card);
+            });
+        }
+
+        // Setup forms with authentication
+        function setupForms() {
+            // Add asset form
+            const addForm = document.getElementById('addAssetForm');
+            addForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await handleAssetSubmission(addForm, 'POST', '/api/assets');
+            });
+
+            // Edit asset form
+            const editForm = document.getElementById('editAssetForm');
+            editForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const assetId = document.getElementById('editAssetId').value;
+                await handleAssetSubmission(editForm, 'PUT', `/api/assets/${assetId}`);
+            });
+        }
+
+        // Handle asset form submission with authentication
+        async function handleAssetSubmission(form, method, url) {
+            const formData = new FormData(form);
+            const assetData = Object.fromEntries(formData);
+            
+            // Convert port to integer if it exists and is not empty
+            if (assetData.port && assetData.port !== '') {
+                assetData.port = parseInt(assetData.port, 10);
+            } else {
+                delete assetData.port;
+            }
+            
+            // Remove empty fields
+            Object.keys(assetData).forEach(key => {
+                if (assetData[key] === '' || assetData[key] === null || assetData[key] === undefined) {
+                    delete assetData[key];
+                }
+            });
+            
+            // Show loading spinner
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const spinner = submitBtn.querySelector('.loading-spinner');
+            spinner.style.display = 'inline-block';
+            submitBtn.disabled = true;
+            
+            try {
+                const token = localStorage.getItem('token') || getCookie('auth_token');
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(assetData)
+                });
+                
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                if (response.ok) {
+                    closeAddAssetModal();
+                    closeEditAssetModal();
+                    loadAssets(); // Reload assets
+                    showNotification(method === 'POST' ? 'Asset added successfully' : 'Asset updated successfully', 'success');
+                } else {
+                    const errorData = await response.json();
+                    showNotification(errorData.error || 'Failed to save asset', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving asset:', error);
+                showNotification('Error saving asset', 'error');
+            } finally {
+                spinner.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Edit asset function with authentication
+        function editAsset(assetId) {
+            const asset = assets.find(a => a.id === assetId);
+            if (!asset) {
+                showNotification('Asset not found', 'error');
+                return;
+            }
+            
+            // Reset tabs to first tab
+            document.querySelectorAll('.modal-tab').forEach((tab, index) => {
+                tab.classList.toggle('active', index === 0);
+            });
+            document.querySelectorAll('.tab-panel').forEach((panel, index) => {
+                panel.classList.toggle('active', index === 0);
+            });
+            
+            // Populate form fields
+            document.getElementById('editAssetId').value = asset.id;
+            document.getElementById('editAssetName').value = asset.name || '';
+            document.getElementById('editAssetType').value = asset.asset_type || '';
+            document.getElementById('editAssetIP').value = asset.ip_address || '';
+            document.getElementById('editAssetMAC').value = asset.mac_address || '';
+            document.getElementById('editAssetVendor').value = asset.vendor || '';
+            document.getElementById('editAssetModel').value = asset.model || '';
+            document.getElementById('editAssetVersion').value = asset.version || '';
+            document.getElementById('editAssetSerial').value = asset.serial_number || '';
+            document.getElementById('editAssetProtocol').value = asset.protocol || '';
+            document.getElementById('editAssetPort').value = asset.port || '';
+            document.getElementById('editAssetCriticality').value = asset.criticality || 'medium';
+            document.getElementById('editAssetLocation').value = asset.location || '';
+            document.getElementById('editAssetZone').value = asset.zone || '';
+            document.getElementById('editAssetSite').value = asset.site || '';
+            document.getElementById('editAssetDepartment').value = asset.department || '';
+            document.getElementById('editAssetDescription').value = asset.description || '';
+            
+            // Show edit modal
+            document.getElementById('editAssetModal').classList.add('active');
+        }
+
+        // View asset details with authentication
+        function viewAssetDetails(assetId) {
+            window.location.href = `/assets/${assetId}`;
+        }
+
+        // Scan asset function
+        function scanAsset(assetId) {
+            console.log('Scan asset:', assetId);
+            showNotification('Scan functionality will be implemented in Phase 2', 'info');
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                background: ${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                z-index: 9999;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Create asset card
+        function createAssetCard(asset) {
+            const card = document.createElement('div');
+            card.className = 'asset-card';
+            card.onclick = () => viewAssetDetails(asset.id);
+            
+            const iconClass = getAssetIconClass(asset.asset_type);
+            const statusClass = asset.status || 'unknown';
+            const criticalityClass = asset.criticality || 'medium';
+            
+            card.innerHTML = `
+                <div class="asset-card-header">
+                    <div class="asset-info">
+                        <div class="asset-icon-lg ${iconClass}">
+                            <i class="fas fa-${getAssetIcon(asset.asset_type)}"></i>
+                        </div>
+                        <div class="asset-meta">
+                            <div class="asset-name">${asset.name}</div>
+                            <div class="asset-type">${asset.asset_type}</div>
+                        </div>
+                    </div>
+                    <div class="asset-status ${statusClass}">
+                        <span class="status-dot"></span>
+                        ${capitalizeFirst(statusClass)}
+                    </div>
+                </div>
+                
+                <div class="asset-details">
+                    <div class="detail-item">
+                        <div class="detail-label">IP Address</div>
+                        <div class="detail-value">${asset.ip_address || 'Not assigned'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Protocol</div>
+                        <div class="detail-value">${asset.protocol || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Vendor</div>
+                        <div class="detail-value">${asset.vendor || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Criticality</div>
+                        <div class="detail-value">${capitalizeFirst(criticalityClass)}</div>
+                    </div>
+                </div>
+                
+                <div class="asset-actions">
+                    <button onclick="event.stopPropagation(); editAsset('${asset.id}')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button onclick="event.stopPropagation(); scanAsset('${asset.id}')">
+                        <i class="fas fa-search"></i> Scan
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Render list view
+        function renderListView() {
+            const tbody = document.getElementById('assetsTableBody');
+            tbody.innerHTML = '';
+            
+            if (filteredAssets.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 60px 20px;">
+                            <i class="fas fa-cube" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px; display: block;"></i>
+                            <h3 style="font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">No Assets Found</h3>
+                            <p style="color: var(--text-tertiary); margin-bottom: 20px;">Start by adding your first asset to the inventory</p>
+                            <button class="btn btn-primary" onclick="openAddAssetModal()">
+                                <i class="fas fa-plus"></i> Add Your First Asset
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filteredAssets.forEach(asset => {
+                const row = createAssetRow(asset);
+                tbody.appendChild(row);
+            });
+        }
+
+        // Create asset table row
+        function createAssetRow(asset) {
+            const row = document.createElement('tr');
+            const statusClass = asset.status || 'unknown';
+            const criticalityClass = asset.criticality || 'medium';
+            const lastSeen = asset.last_seen ? new Date(asset.last_seen).toLocaleString() : 'Never';
+            
+            row.innerHTML = `
+                <td>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 36px; height: 36px; background-color: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                            <i class="fas fa-${getAssetIcon(asset.asset_type)}"></i>
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 600;">${asset.name}</span>
+                            <span style="font-size: 12px; color: var(--text-tertiary);">${asset.vendor || ''} ${asset.model || ''}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>${asset.asset_type}</td>
+                <td>${asset.ip_address || '-'}</td>
+                <td>
+                    <span class="asset-status ${statusClass}">
+                        <span class="status-dot"></span>
+                        ${capitalizeFirst(statusClass)}
+                    </span>
+                </td>
+                <td>${asset.protocol || '-'}</td>
+                <td>
+                    <span class="criticality-badge ${criticalityClass}">
+                        ${criticalityClass}
+                    </span>
+                </td>
+                <td>${lastSeen}</td>
+                <td>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="viewAssetDetails('${asset.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editAsset('${asset.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        // Helper functions
+        function getAssetIcon(type) {
+            const icons = {
+                'PLC': 'microchip',
+                'HMI': 'desktop',
+                'RTU': 'broadcast-tower',
+                'Switch': 'network-wired',
+                'Server': 'server',
+                'Sensor': 'thermometer-half',
+                'Actuator': 'cogs'
+            };
+            return icons[type] || 'cube';
+        }
+
+        function getAssetIconClass(type) {
+            const classes = {
+                'PLC': 'plc',
+                'HMI': 'hmi',
+                'RTU': 'rtu'
+            };
+            return classes[type] || '';
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Setup filters
+        function setupFilters() {
+            const filters = ['filterType', 'filterStatus', 'filterCriticality', 'filterProtocol'];
+            
+            filters.forEach(filterId => {
+                document.getElementById(filterId).addEventListener('change', applyFilters);
+            });
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const type = document.getElementById('filterType').value;
+            const status = document.getElementById('filterStatus').value;
+            const criticality = document.getElementById('filterCriticality').value;
+            const protocol = document.getElementById('filterProtocol').value;
+            const searchTerm = document.getElementById('assetSearch').value.toLowerCase();
+            
+            filteredAssets = assets.filter(asset => {
+                const matchType = !type || asset.asset_type === type;
+                const matchStatus = !status || asset.status === status;
+                const matchCriticality = !criticality || asset.criticality === criticality;
+                const matchProtocol = !protocol || asset.protocol === protocol;
+                const matchSearch = !searchTerm || 
+                    asset.name.toLowerCase().includes(searchTerm) ||
+                    (asset.ip_address && asset.ip_address.includes(searchTerm)) ||
+                    (asset.vendor && asset.vendor.toLowerCase().includes(searchTerm));
+                
+                return matchType && matchStatus && matchCriticality && matchProtocol && matchSearch;
+            });
+            
+            renderAssets();
+        }
+
+        // Setup search
+        function setupSearch() {
+            const searchInput = document.getElementById('assetSearch');
+            let searchTimeout;
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300);
+            });
+        }
+
+        // Switch between grid and list view
+        function setView(view) {
+            currentView = view;
+            
+            // Update toggle buttons
+            document.querySelectorAll('.view-toggle button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('button').classList.add('active');
+            
+            // Show/hide views
+            if (view === 'grid') {
+                document.getElementById('gridView').style.display = 'grid';
+                document.getElementById('listView').style.display = 'none';
+            } else {
+                document.getElementById('gridView').style.display = 'none';
+                document.getElementById('listView').style.display = 'block';
+            }
+            
+            renderAssets();
+        }
+
+        // Modal functions
+        function openAddAssetModal() {
+            document.getElementById('addAssetModal').classList.add('active');
+        }
+
+        function closeAddAssetModal() {
+            document.getElementById('addAssetModal').classList.remove('active');
+            document.getElementById('addAssetForm').reset();
+        }
+
+        function closeEditAssetModal() {
+            document.getElementById('editAssetModal').classList.remove('active');
+            document.getElementById('editAssetForm').reset();
+        }
+
+        // Modal Tab Switching
+        function switchModalTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.modal-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.closest('.modal-tab').classList.add('active');
+            
+            // Update tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Protocol selection
+        function toggleProtocol(card) {
+            card.classList.toggle('selected');
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+        }
+
+        // Auto-refresh assets every 30 seconds
+        setInterval(loadAssets, 30000);
+    </script>
+</body>
+</html>
