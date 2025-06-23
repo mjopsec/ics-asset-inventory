@@ -143,8 +143,13 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	router.Use(middleware.RequestID())
 	router.Use(middleware.ErrorHandler())
 
-	// Load HTML templates
-	router.LoadHTMLGlob("web/templates/*")
+	// Load HTML templates with proper pattern
+	// Only load actual HTML files, not directories
+	router.LoadHTMLGlob("web/templates/*.html")
+
+	// Serve static files
+	router.Static("/static", "./web/static")
+	router.StaticFile("/favicon.ico", "./web/static/favicon.ico")
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler()
@@ -161,5 +166,86 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 		dashboardHandler,
 	)
 
+	// Add web page routes directly here (since we're not using layout system yet)
+	setupWebPageRoutes(router)
+
 	return router
+}
+
+// setupWebPageRoutes handles web page rendering
+func setupWebPageRoutes(router *gin.Engine) {
+	// Public routes
+	router.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"title": "ICS Asset Inventory - Login",
+		})
+	})
+
+	router.GET("/register", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "register.html", gin.H{
+			"title": "ICS Asset Inventory - Register",
+		})
+	})
+
+	// Protected routes - using middleware for auth
+	protected := router.Group("/")
+	protected.Use(middleware.WebAuthRequired())
+	{
+		// Dashboard
+		protected.GET("/", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "dashboard.html", gin.H{
+				"title": "ICS Asset Inventory - Dashboard",
+			})
+		})
+
+		// Assets
+		protected.GET("/assets", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "assets.html", gin.H{
+				"title": "ICS Asset Inventory - Assets",
+			})
+		})
+
+		// Asset detail page
+		protected.GET("/assets/:id", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "asset-detail.html", gin.H{
+				"title": "ICS Asset Inventory - Asset Details",
+				"assetId": c.Param("id"),
+			})
+		})
+
+		// Discovery
+		protected.GET("/discovery", func(c *gin.Context) {
+			c.File("web/templates/discovery.html")
+		})
+
+		// Security
+		protected.GET("/security", func(c *gin.Context) {
+			c.File("web/templates/security.html")
+		})
+
+		// Reports
+		protected.GET("/reports", func(c *gin.Context) {
+			c.File("web/templates/reports.html")
+		})
+
+		// Settings
+		protected.GET("/settings", func(c *gin.Context) {
+			c.File("web/templates/settings.html")
+		})
+	}
+
+	// Catch-all route for 404
+	router.NoRoute(func(c *gin.Context) {
+		// For API routes, return JSON 404
+		if len(c.Request.URL.Path) > 4 && c.Request.URL.Path[:5] == "/api/" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Endpoint not found",
+				"path": c.Request.URL.Path,
+			})
+			return
+		}
+		
+		// For web routes, redirect to login
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
+	})
 }
