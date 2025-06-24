@@ -578,23 +578,95 @@ func (s *Scanner) identifyProtocolByPort(port uint16) string {
 
 func (s *Scanner) parseIPRange(ipRange string) ([]string, error) {
 	var hosts []string
+	hostMap := make(map[string]bool) // To avoid duplicates
 
-	// Check if it's a CIDR notation
-	if _, ipNet, err := net.ParseCIDR(ipRange); err == nil {
-		for ip := ipNet.IP.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
-			// Skip network and broadcast addresses
-			if ip[3] != 0 && ip[3] != 255 {
-				hosts = append(hosts, ip.String())
-			}
+	// Split by comma for multiple entries
+	entries := strings.Split(ipRange, ",")
+	
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
 		}
-	} else if ip := net.ParseIP(ipRange); ip != nil {
-		// Single IP
-		hosts = append(hosts, ip.String())
-	} else {
-		return nil, fmt.Errorf("invalid IP range format: %s", ipRange)
+
+		// Check if it's a range (e.g., 192.168.1.1-192.168.1.10)
+		if strings.Contains(entry, "-") {
+			parts := strings.Split(entry, "-")
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("invalid range format: %s", entry)
+			}
+			
+			startIP := net.ParseIP(strings.TrimSpace(parts[0]))
+			endIP := net.ParseIP(strings.TrimSpace(parts[1]))
+			
+			if startIP == nil || endIP == nil {
+				return nil, fmt.Errorf("invalid IP in range: %s", entry)
+			}
+			
+			// Convert IPs to uint32 for comparison
+			start := ipToUint32(startIP.To4())
+			end := ipToUint32(endIP.To4())
+			
+			if start > end {
+				return nil, fmt.Errorf("invalid range: start IP is greater than end IP")
+			}
+			
+			// Generate all IPs in range
+			for i := start; i <= end; i++ {
+				ip := uint32ToIP(i).String()
+				if !hostMap[ip] {
+					hostMap[ip] = true
+					hosts = append(hosts, ip)
+				}
+			}
+			
+		} else if _, ipNet, err := net.ParseCIDR(entry); err == nil {
+			// CIDR notation (e.g., 192.168.1.0/24)
+			for ip := ipNet.IP.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
+				// Skip network and broadcast addresses for /24 and smaller
+				ones, _ := ipNet.Mask.Size()
+				if ones >= 24 && (ip[3] == 0 || ip[3] == 255) {
+					continue
+				}
+				ipStr := ip.String()
+				if !hostMap[ipStr] {
+					hostMap[ipStr] = true
+					hosts = append(hosts, ipStr)
+				}
+			}
+			
+		} else if ip := net.ParseIP(entry); ip != nil {
+			// Single IP (e.g., 192.168.1.100)
+			ipStr := ip.String()
+			if !hostMap[ipStr] {
+				hostMap[ipStr] = true
+				hosts = append(hosts, ipStr)
+			}
+			
+		} else {
+			return nil, fmt.Errorf("invalid IP format: %s", entry)
+		}
 	}
 
+	if len(hosts) == 0 {
+		return nil, fmt.Errorf("no valid hosts found in input")
+	}
+
+	s.logger.Info("Parsed IP range", "input", ipRange, "host_count", len(hosts))
+
 	return hosts, nil
+}
+
+// Helper functions for IP range parsing
+func ipToUint32(ip net.IP) uint32 {
+	if len(ip) == 4 {
+		return uint32(ip[0])<<24 + uint32(ip[1])<<16 + uint32(ip[2])<<8 + uint32(ip[3])
+	}
+	return 0
+}
+
+func uint32ToIP(n uint32) net.IP {
+	return net.IPv4(byte(n>>24), byte(n>>16), byte(n>>8), byte(n))
 }
 
 func incrementIP(ip net.IP) {

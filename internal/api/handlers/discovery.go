@@ -248,16 +248,29 @@ func (h *DiscoveryHandler) AddAllDevicesToInventory(c *gin.Context) {
 
 	added := 0
 	updated := 0
+	skipped := 0
 	errors := []string{}
 
 	for _, device := range devices {
+		// Skip devices already in inventory
+		if device.InInventory {
+			skipped++
+			continue
+		}
+		
 		_, err := h.scanService.AddDeviceToInventory(scanID, device.IPAddress)
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("%s: %s", device.IPAddress, err.Error()))
-		} else if device.IsNew {
-			added++
+			if err.Error() == "device already in inventory" {
+				skipped++
+			} else {
+				errors = append(errors, fmt.Sprintf("%s: %s", device.IPAddress, err.Error()))
+			}
 		} else {
-			updated++
+			if device.IsNew {
+				added++
+			} else {
+				updated++
+			}
 		}
 	}
 
@@ -265,6 +278,7 @@ func (h *DiscoveryHandler) AddAllDevicesToInventory(c *gin.Context) {
 		"message": "Devices processed",
 		"added": added,
 		"updated": updated,
+		"skipped": skipped,
 		"errors": errors,
 		"total": len(devices),
 	})

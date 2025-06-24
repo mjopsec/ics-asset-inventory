@@ -47,6 +47,10 @@ function setupEventListeners() {
 async function handleScanSubmit(e) {
     e.preventDefault();
 
+    // Clear previous scan results BEFORE starting new scan
+    scanResults = [];
+    clearDisplayedResults();
+    
     const formData = new FormData(e.target);
     
     // Get selected protocols
@@ -62,11 +66,11 @@ async function handleScanSubmit(e) {
     const scanConfig = {
         ip_range: formData.get('ipRange') || document.getElementById('ipRange').value,
         scan_type: formData.get('scanType') || document.getElementById('scanType').value,
-        scan_mode: formData.get('scanMode') || 'active', // ADD THIS LINE
+        scan_mode: formData.get('scanMode') || 'active',
         timeout: parseInt(formData.get('timeout') || document.getElementById('timeout').value),
         max_concurrent: parseInt(formData.get('concurrent') || document.getElementById('concurrent').value),
         protocols: selectedProtocols,
-        network_interface: formData.get('networkInterface') || 'eth0' // ADD THIS LINE
+        network_interface: formData.get('networkInterface') || 'eth0'
     };
 
     // Show passive indicator if needed
@@ -92,7 +96,7 @@ async function handleScanSubmit(e) {
     }
 
     if (!isValidIPRange(scanConfig.ip_range)) {
-        showNotification('Please enter a valid IP range (e.g., 192.168.1.0/24)', 'error');
+        showNotification('Please enter valid IP range(s). Examples: 192.168.1.0/24, 192.168.1.100, 192.168.1.1-192.168.1.10, or comma-separated', 'error');
         return;
     }
 
@@ -127,27 +131,46 @@ async function handleScanSubmit(e) {
         // Show progress section
         document.getElementById('scanProgress').classList.add('active');
         
-        // Clear previous results
-        scanResults = [];
-        
     } catch (error) {
         console.error('Error starting scan:', error);
         showNotification(error.message, 'error');
     }
 }
 
-// Validate IP range format
+// Clear displayed results
+function clearDisplayedResults() {
+    const deviceGrid = document.getElementById('discoveredDevices');
+    if (deviceGrid) {
+        deviceGrid.innerHTML = '';
+    }
+}
+
+// Validate IP range format - ENHANCED for multiple formats
 function isValidIPRange(ipRange) {
-    // Check for CIDR notation (e.g., 192.168.1.0/24)
-    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+    // Split by comma for multiple entries
+    const entries = ipRange.split(',').map(e => e.trim()).filter(e => e);
     
-    // Check for single IP (e.g., 192.168.1.100)
-    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (entries.length === 0) {
+        return false;
+    }
     
-    // Check for IP range (e.g., 192.168.1.1-192.168.1.254)
-    const rangeRegex = /^(\d{1,3}\.){3}\d{1,3}-(\d{1,3}\.){3}\d{1,3}$/;
+    // Check each entry
+    for (let entry of entries) {
+        // Check for CIDR notation (e.g., 192.168.1.0/24)
+        const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+        
+        // Check for single IP (e.g., 192.168.1.100)
+        const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+        
+        // Check for IP range (e.g., 192.168.1.1-192.168.1.254)
+        const rangeRegex = /^(\d{1,3}\.){3}\d{1,3}\s*-\s*(\d{1,3}\.){3}\d{1,3}$/;
+        
+        if (!cidrRegex.test(entry) && !ipRegex.test(entry) && !rangeRegex.test(entry)) {
+            return false;
+        }
+    }
     
-    return cidrRegex.test(ipRange) || ipRegex.test(ipRange) || rangeRegex.test(ipRange);
+    return true;
 }
 
 // Start monitoring scan progress
@@ -193,12 +216,16 @@ async function updateScanProgress(scanId) {
             
             if (progress.status === 'completed') {
                 showNotification('Scan completed successfully', 'success');
-                await loadScanResults(scanId);
                 
-                // Auto-switch to results tab after a short delay
-                setTimeout(() => {
-                    switchTab('results');
-                }, 1000);
+                // Wait longer to ensure results are saved
+                setTimeout(async () => {
+                    await loadScanResults(scanId);
+                    
+                    // Auto-switch to results tab
+                    setTimeout(() => {
+                        switchTab('results');
+                    }, 500);
+                }, 2000); // Increased wait time
             } else if (progress.status === 'failed') {
                 showNotification('Scan failed', 'error');
             } else if (progress.status === 'cancelled') {
@@ -212,6 +239,9 @@ async function updateScanProgress(scanId) {
             
             // Reload scan history
             loadScanHistory();
+            
+            // Clear current scan
+            currentScan = null;
         }
 
     } catch (error) {
@@ -282,10 +312,12 @@ async function stopScan() {
     }
 }
 
-// Load scan results
+// Load scan results with better error handling
 async function loadScanResults(scanId) {
     try {
         const token = getAuthToken();
+        console.log('Loading scan results for:', scanId);
+        
         const response = await fetch(`/api/discovery/scan/${scanId}/results`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -299,21 +331,16 @@ async function loadScanResults(scanId) {
         const data = await response.json();
         const devices = data.devices || [];
         
-        // Clear current scan results for fresh display
+        console.log('Loaded devices:', devices.length);
+        
+        // Clear current scan results
         scanResults = [];
         
-        // Update scanResults and merge with existing devices
+        // Process each device
         devices.forEach(device => {
-            // Add timestamp to make each scan unique
+            // Add metadata
             device.scan_timestamp = new Date().toISOString();
             device.scan_id = scanId;
-            
-            // Check if device already exists in our collection
-            const existingDevice = allDiscoveredDevices.get(device.ip_address);
-            if (existingDevice) {
-                device.is_new = false;
-                device.existing_id = existingDevice.existing_id || existingDevice.id;
-            }
             
             // Store in our Map to persist across scans
             allDiscoveredDevices.set(device.ip_address, device);
@@ -322,6 +349,9 @@ async function loadScanResults(scanId) {
             scanResults.push(device);
         });
         
+        console.log('Processed scan results:', scanResults.length);
+        
+        // Display the results
         displayScanResults();
 
     } catch (error) {
@@ -330,13 +360,18 @@ async function loadScanResults(scanId) {
     }
 }
 
-// Display scan results
+// Display scan results with better handling
 function displayScanResults() {
     const deviceGrid = document.getElementById('discoveredDevices');
-    if (!deviceGrid) return;
+    if (!deviceGrid) {
+        console.error('Device grid element not found');
+        return;
+    }
 
     // Clear existing content
     deviceGrid.innerHTML = '';
+
+    console.log('Displaying scan results:', scanResults.length);
 
     if (scanResults.length === 0) {
         deviceGrid.innerHTML = `
@@ -352,18 +387,20 @@ function displayScanResults() {
     }
 
     // Create device cards
-    scanResults.forEach(device => {
+    scanResults.forEach((device, index) => {
         const deviceCard = createDeviceCard(device);
         deviceGrid.appendChild(deviceCard);
     });
 }
 
-// Create device card element - FIXED VERSION
+// Create device card element - ENHANCED
 function createDeviceCard(device) {
     const card = document.createElement('div');
     card.className = 'device-card';
     
-    const statusClass = device.is_new ? 'new' : 'existing';
+    // Determine status based on inventory check
+    const statusClass = device.in_inventory ? 'existing' : 'new';
+    const statusText = device.in_inventory ? 'In Inventory' : 'New';
     const deviceType = device.device_type || 'Unknown Device';
     const vendor = device.vendor || 'Unknown';
     const protocol = device.protocol || 'Unknown';
@@ -390,6 +427,10 @@ function createDeviceCard(device) {
         }
     }
     
+    // Show inventory status indicator
+    const inventoryIndicator = device.in_inventory ? 
+        '<span class="inventory-indicator"><i class="fas fa-check-circle"></i> Already in inventory</span>' : '';
+    
     card.innerHTML = `
         <div class="device-header">
             <div class="device-info">
@@ -398,8 +439,9 @@ function createDeviceCard(device) {
                     ${autoClassified ? '<span class="auto-classified"><i class="fas fa-magic"></i> Auto-classified</span>' : ''}
                 </div>
                 <div class="device-ip">${device.ip_address}</div>
+                ${inventoryIndicator}
             </div>
-            <div class="device-status ${statusClass}">${device.is_new ? 'New' : 'Existing'}</div>
+            <div class="device-status ${statusClass}">${statusText}</div>
         </div>
         <div class="device-details">
             <div class="device-detail">
@@ -433,9 +475,14 @@ function createDeviceCard(device) {
             <button class="btn btn-secondary" onclick="viewDeviceDetails('${device.ip_address}')">
                 <i class="fas fa-info-circle"></i> Details
             </button>
-            <button class="btn btn-primary" onclick="addDeviceToInventory('${device.ip_address}')" id="add-btn-${device.ip_address.replace(/\./g, '-')}">
-                <i class="fas fa-plus"></i> Add to Inventory
-            </button>
+            ${device.in_inventory ? 
+                `<button class="btn btn-secondary" disabled>
+                    <i class="fas fa-check"></i> Already Added
+                </button>` :
+                `<button class="btn btn-primary" onclick="addDeviceToInventory('${device.ip_address}')" id="add-btn-${device.ip_address.replace(/\./g, '-')}">
+                    <i class="fas fa-plus"></i> Add to Inventory
+                </button>`
+            }
         </div>
     `;
     
@@ -575,7 +622,7 @@ async function checkActiveScans() {
     }
 }
 
-// View device details - FIXED VERSION
+// View device details
 function viewDeviceDetails(deviceIP) {
     console.log('View details for device:', deviceIP);
     
@@ -601,6 +648,7 @@ Vendor: ${device.vendor || 'Unknown'}
 Protocol: ${device.protocol || 'Unknown'}
 Open Ports: ${formatPortsForDisplay(device.open_ports)}
 Response Time: ${device.response_time || 'N/A'}
+In Inventory: ${device.in_inventory ? 'Yes' : 'No'}
         `;
         alert(deviceInfo);
     }
@@ -624,17 +672,18 @@ function formatPortsForDisplay(ports) {
     return portNumbers.length > 0 ? portNumbers.join(', ') : 'None';
 }
 
-// Add device to inventory - FIXED VERSION
+// Add device to inventory
 async function addDeviceToInventory(deviceIP) {
-    if (!currentScan && scanResults.length === 0) {
-        showNotification('No scan data available', 'error');
-        return;
-    }
-    
-    // Find the device in our results
+    // Find the device in our current results
     const device = scanResults.find(d => d.ip_address === deviceIP);
     if (!device) {
         showNotification('Device not found in scan results', 'error');
+        return;
+    }
+    
+    // Check if already in inventory
+    if (device.in_inventory) {
+        showNotification('Device is already in inventory', 'warning');
         return;
     }
     
@@ -649,24 +698,8 @@ async function addDeviceToInventory(deviceIP) {
     try {
         const token = getAuthToken();
         
-        // Use the most recent scan ID or the current scan ID
-        let scanId = currentScan?.scan_id;
-        
-        // If no current scan, get the most recent from history
-        if (!scanId) {
-            const historyResponse = await fetch('/api/discovery/history?limit=1', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
-            if (historyResponse.ok) {
-                const historyData = await historyResponse.json();
-                if (historyData.history && historyData.history.length > 0) {
-                    scanId = historyData.history[0].id;
-                }
-            }
-        }
+        // Use the scan ID from the device
+        const scanId = device.scan_id;
         
         if (!scanId) {
             throw new Error('No scan context available');
@@ -691,15 +724,15 @@ async function addDeviceToInventory(deviceIP) {
         const result = await response.json();
         showNotification('Device added to inventory successfully', 'success');
         
-        // Update the device card to show it's been added
+        // Update the device in our local data
+        device.in_inventory = true;
+        device.asset_id = result.asset.id;
+        
+        // Update the device card
         updateDeviceCardStatus(deviceIP, 'added');
         
         // Update the device in our local storage
-        const deviceToUpdate = allDiscoveredDevices.get(deviceIP);
-        if (deviceToUpdate) {
-            deviceToUpdate.is_new = false;
-            allDiscoveredDevices.set(deviceIP, deviceToUpdate);
-        }
+        allDiscoveredDevices.set(deviceIP, device);
 
     } catch (error) {
         console.error('Error adding device to inventory:', error);
@@ -721,17 +754,27 @@ function updateDeviceCardStatus(deviceIP, status) {
         if (ipElement && ipElement.textContent === deviceIP) {
             const statusElement = card.querySelector('.device-status');
             if (statusElement && status === 'added') {
-                statusElement.textContent = 'Added';
+                statusElement.textContent = 'In Inventory';
                 statusElement.className = 'device-status existing';
             }
             
-            // Update the add button
+            // Replace the add button with "Already Added"
             const addButton = card.querySelector(`#add-btn-${deviceIP.replace(/\./g, '-')}`);
             if (addButton) {
-                addButton.disabled = true;
-                addButton.innerHTML = '<i class="fas fa-check"></i> Added';
-                addButton.classList.remove('btn-primary');
-                addButton.classList.add('btn-secondary');
+                const newButton = document.createElement('button');
+                newButton.className = 'btn btn-secondary';
+                newButton.disabled = true;
+                newButton.innerHTML = '<i class="fas fa-check"></i> Already Added';
+                addButton.parentNode.replaceChild(newButton, addButton);
+            }
+            
+            // Add inventory indicator
+            const deviceInfo = card.querySelector('.device-info');
+            if (deviceInfo && !deviceInfo.querySelector('.inventory-indicator')) {
+                const indicator = document.createElement('span');
+                indicator.className = 'inventory-indicator';
+                indicator.innerHTML = '<i class="fas fa-check-circle"></i> Already in inventory';
+                deviceInfo.appendChild(indicator);
             }
         }
     });
@@ -740,6 +783,10 @@ function updateDeviceCardStatus(deviceIP, status) {
 // View scan results from history
 async function viewScanResults(scanId) {
     console.log('View scan results for:', scanId);
+    
+    // Clear existing results first
+    scanResults = [];
+    clearDisplayedResults();
     
     // Load results for this specific scan
     await loadScanResults(scanId);
@@ -937,6 +984,17 @@ if (!document.querySelector('#notification-styles')) {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(100%); opacity: 0; }
         }
+        .inventory-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--success-color);
+            margin-top: 4px;
+        }
+        .inventory-indicator i {
+            font-size: 12px;
+        }
     `;
     document.head.appendChild(style);
 }
@@ -978,7 +1036,9 @@ function handleDeviceFound(data) {
 function handleScanComplete(data) {
     if (currentScan && data.scan_id === currentScan.scan_id) {
         // Reload results to get complete data
-        loadScanResults(data.scan_id);
+        setTimeout(() => {
+            loadScanResults(data.scan_id);
+        }, 2000);
     }
 }
 
@@ -993,31 +1053,24 @@ function initializeWebSocket() {
 
 // Add all devices to inventory function
 async function addAllDevicesToInventory() {
-    if (!currentScan && scanResults.length === 0) {
+    if (scanResults.length === 0) {
         showNotification('No devices to add', 'warning');
+        return;
+    }
+
+    // Filter out devices already in inventory
+    const devicesToAdd = scanResults.filter(d => !d.in_inventory);
+    
+    if (devicesToAdd.length === 0) {
+        showNotification('All devices are already in inventory', 'info');
         return;
     }
 
     try {
         const token = getAuthToken();
         
-        // Get the most recent scan ID
-        let scanId = currentScan?.scan_id;
-        
-        if (!scanId) {
-            const historyResponse = await fetch('/api/discovery/history?limit=1', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
-            if (historyResponse.ok) {
-                const historyData = await historyResponse.json();
-                if (historyData.history && historyData.history.length > 0) {
-                    scanId = historyData.history[0].id;
-                }
-            }
-        }
+        // Get the scan ID from first device
+        const scanId = scanResults[0].scan_id;
         
         if (!scanId) {
             throw new Error('No scan context available');
@@ -1039,6 +1092,9 @@ async function addAllDevicesToInventory() {
         const result = await response.json();
         showNotification(`Added ${result.added} new devices, updated ${result.updated} existing devices`, 'success');
         
+        // Reload results to update UI
+        await loadScanResults(scanId);
+        
         // Update UI to reflect changes
         displayScanResults();
 
@@ -1050,3 +1106,10 @@ async function addAllDevicesToInventory() {
 
 // Export functions for use in HTML
 window.addAllDevicesToInventory = addAllDevicesToInventory;
+window.switchTab = switchTab;
+window.toggleProtocol = toggleProtocol;
+window.resetForm = resetForm;
+window.viewDeviceDetails = viewDeviceDetails;
+window.addDeviceToInventory = addDeviceToInventory;
+window.viewScanResults = viewScanResults;
+window.stopScan = stopScan;

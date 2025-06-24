@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"strings"
 )
 
 // ScanService manages network scanning operations
@@ -84,6 +85,8 @@ type DiscoveredDevice struct {
 	IsNew        bool                   `json:"is_new"`
 	ExistingID   string                 `json:"existing_id,omitempty"`
 	Fingerprint  map[string]interface{} `json:"fingerprint"`
+	InInventory  bool                   `json:"in_inventory"`
+	AssetID      string                 `json:"asset_id,omitempty"`
 }
 
 // NewScanService creates a new scan service
@@ -95,15 +98,18 @@ func NewScanService() *ScanService {
 	}
 }
 
-// StartScan initiates a new network scan
+// StartScan initiates a new network scan - FIXED
 func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
-	// Check if a scan is already running
-	s.mu.RLock()
-	if s.activeScan != nil && s.activeScan.Scanner.GetProgress().Status == scanner.StatusRunning {
-		s.mu.RUnlock()
-		return nil, fmt.Errorf("a scan is already in progress")
+	// Clear any previous active scan first
+	s.mu.Lock()
+	if s.activeScan != nil {
+		// Force stop previous scan if still running
+		if s.activeScan.Scanner != nil {
+			s.activeScan.Scanner.Stop()
+		}
+		s.activeScan = nil
 	}
-	s.mu.RUnlock()
+	s.mu.Unlock()
 
 	// Validate IP range
 	if err := s.ValidateIPRange(req.IPRange); err != nil {
@@ -136,7 +142,7 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		ID:        uuid.New(),
 		ScanType:  req.ScanType,
 		Target:    req.IPRange,
-		Status:    string(scanner.StatusPending),
+		Status:    string(scanner.StatusRunning),
 		StartTime: time.Now(),
 	}
 
@@ -152,6 +158,12 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		Results: make([]*scanner.DeviceResult, 0),
 	}
 
+	// Store active scan
+	s.mu.Lock()
+	s.activeScan = activeScan
+	s.scanHistory[scanDB.ID.String()] = scanDB
+	s.mu.Unlock()
+
 	// Start the scan
 	if err := scannerInstance.Start(); err != nil {
 		scanDB.Status = string(scanner.StatusFailed)
@@ -160,17 +172,13 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		return nil, err
 	}
 
-	// Store active scan
-	s.mu.Lock()
-	s.activeScan = activeScan
-	s.scanHistory[scanDB.ID.String()] = scanDB
-	s.mu.Unlock()
-
 	// Start result processor in background
 	go s.processResults(activeScan)
 
 	// Start progress monitor with WebSocket broadcasting
 	go s.monitorProgress(activeScan)
+
+	s.logger.Info("Scan started", "scan_id", scanDB.ID.String(), "target", req.IPRange)
 
 	return &ScanResponse{
 		ScanID:    scanDB.ID.String(),
@@ -258,26 +266,11 @@ func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, err
 	}, nil
 }
 
-// GetScanResults returns discovered devices from a scan
+// GetScanResults returns discovered devices from a scan - FIXED
 func (s *ScanService) GetScanResults(scanID string) ([]DiscoveredDevice, error) {
-	s.mu.RLock()
-	activeScan := s.activeScan
-	s.mu.RUnlock()
-
 	var results []DiscoveredDevice
 
-	// If scan is active, return current results
-	if activeScan != nil && activeScan.ID == scanID {
-		activeScan.mu.Lock()
-		defer activeScan.mu.Unlock()
-
-		for _, device := range activeScan.Results {
-			results = append(results, s.convertToDiscoveredDevice(device))
-		}
-		return results, nil
-	}
-
-	// Otherwise, load from database
+	// Load scan from database
 	var scanDB models.NetworkScan
 	if err := s.db.First(&scanDB, "id = ?", scanID).Error; err != nil {
 		return nil, fmt.Errorf("scan not found")
@@ -287,11 +280,28 @@ func (s *ScanService) GetScanResults(scanID string) ([]DiscoveredDevice, error) 
 	if scanDB.Results != "" {
 		var devices []*scanner.DeviceResult
 		if err := json.Unmarshal([]byte(scanDB.Results), &devices); err != nil {
+			s.logger.Error("Failed to parse scan results", "error", err, "scan_id", scanID)
 			return nil, fmt.Errorf("failed to parse scan results: %w", err)
 		}
 
+		s.logger.Info("Loaded scan results", "scan_id", scanID, "device_count", len(devices))
+
 		for _, device := range devices {
-			results = append(results, s.convertToDiscoveredDevice(device))
+			discoveredDevice := s.convertToDiscoveredDevice(device)
+			
+			// Check if device is already in inventory
+			var existingAsset models.Asset
+			err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
+			if err == nil {
+				discoveredDevice.InInventory = true
+				discoveredDevice.AssetID = existingAsset.ID.String()
+				discoveredDevice.IsNew = false
+			} else {
+				discoveredDevice.InInventory = false
+				discoveredDevice.IsNew = true
+			}
+			
+			results = append(results, discoveredDevice)
 		}
 	}
 
@@ -334,7 +344,12 @@ func (s *ScanService) AddDeviceToInventory(scanID string, deviceIP string) (*mod
 		return nil, fmt.Errorf("device not found in scan results")
 	}
 
-	// Check if asset already exists
+	// Check if already in inventory
+	if targetDevice.InInventory {
+		return nil, fmt.Errorf("device already in inventory")
+	}
+
+	// Check if asset already exists (double check)
 	var existingAsset models.Asset
 	err = s.db.Where("ip_address = ?", deviceIP).First(&existingAsset).Error
 	if err == nil {
@@ -350,6 +365,13 @@ func (s *ScanService) AddDeviceToInventory(scanID string, deviceIP string) (*mod
 		if targetDevice.Model != "" {
 			existingAsset.Model = targetDevice.Model
 		}
+		if targetDevice.Protocol != "" {
+			existingAsset.Protocol = targetDevice.Protocol
+		}
+		if targetDevice.DeviceType != "" {
+			existingAsset.AssetType = targetDevice.DeviceType
+		}
+		
 		if err := s.db.Save(&existingAsset).Error; err != nil {
 			return nil, err
 		}
@@ -375,6 +397,10 @@ func (s *ScanService) AddDeviceToInventory(scanID string, deviceIP string) (*mod
 		asset.Name = fmt.Sprintf("%s Device %s", targetDevice.DeviceType, targetDevice.IPAddress)
 	}
 
+	if asset.AssetType == "" {
+		asset.AssetType = "Unknown Device"
+	}
+
 	// Add port information as attributes
 	for _, port := range targetDevice.OpenPorts {
 		attribute := &models.AssetAttribute{
@@ -391,16 +417,19 @@ func (s *ScanService) AddDeviceToInventory(scanID string, deviceIP string) (*mod
 		return nil, err
 	}
 
+	s.logger.Info("Device added to inventory", "ip", deviceIP, "asset_id", asset.ID.String())
+
 	return asset, nil
 }
 
-// processResults processes scan results in the background
+// processResults processes scan results in the background - FIXED
 func (s *ScanService) processResults(activeScan *ActiveScan) {
 	resultChan := activeScan.Scanner.GetResults()
 	
 	for result := range resultChan {
 		activeScan.mu.Lock()
 		activeScan.Results = append(activeScan.Results, result)
+		currentResultCount := len(activeScan.Results)
 		activeScan.mu.Unlock()
 
 		// Check if device already exists in inventory
@@ -417,13 +446,15 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 
 		// Log discovery
 		s.logger.Info("Device discovered",
+			"scan_id", activeScan.ID,
 			"ip", result.IPAddress,
 			"type", result.DeviceType,
-			"protocol", result.Protocol)
+			"protocol", result.Protocol,
+			"result_count", currentResultCount)
 	}
 }
 
-// monitorProgress monitors scan progress and updates database
+// monitorProgress monitors scan progress and updates database - FIXED
 func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
@@ -462,17 +493,32 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 				activeScan.ScanDB.EndTime = &endTime
 				activeScan.ScanDB.Duration = int64(progress.ElapsedTime.Seconds())
 				
-				// Save results
+				// Save results - IMPORTANT: Lock before accessing Results
 				activeScan.mu.Lock()
-				resultsJSON, _ := json.Marshal(activeScan.Results)
-				activeScan.ScanDB.Results = string(resultsJSON)
+				resultsJSON, err := json.Marshal(activeScan.Results)
+				if err != nil {
+					s.logger.Error("Failed to marshal scan results", "error", err)
+				} else {
+					activeScan.ScanDB.Results = string(resultsJSON)
+					s.logger.Info("Saving scan results", 
+						"scan_id", activeScan.ID, 
+						"device_count", len(activeScan.Results),
+						"status", progress.Status)
+				}
 				activeScan.mu.Unlock()
 				
 				if progress.Status == scanner.StatusFailed && len(progress.Errors) > 0 {
 					activeScan.ScanDB.ErrorMsg = progress.Errors[0]
 				}
 				
-				s.db.Save(activeScan.ScanDB)
+				// Save to database
+				if err := s.db.Save(activeScan.ScanDB).Error; err != nil {
+					s.logger.Error("Failed to save scan results", "error", err)
+				} else {
+					s.logger.Info("Scan completed and saved", 
+						"scan_id", activeScan.ID,
+						"devices_found", activeScan.ScanDB.DevicesFound)
+				}
 				
 				// Send completion notification
 				if progress.Status == scanner.StatusCompleted {
@@ -491,7 +537,10 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 				return
 			}
 			
-			s.db.Save(activeScan.ScanDB)
+			// Save progress to database
+			if err := s.db.Save(activeScan.ScanDB).Error; err != nil {
+				s.logger.Error("Failed to update scan progress", "error", err)
+			}
 		}
 	}
 }
@@ -503,6 +552,8 @@ func (s *ScanService) checkExistingDevice(device *scanner.DeviceResult) {
 	if err == nil {
 		device.IsNew = false
 		device.Fingerprint["existing_asset_id"] = existingAsset.ID.String()
+	} else {
+		device.IsNew = true
 	}
 }
 
@@ -621,31 +672,101 @@ func (s *ScanService) ValidateIPRange(ipRange string) error {
 		return fmt.Errorf("IP range too large (max 65536 hosts)")
 	}
 	
+	s.logger.Info("Validated IP range", "input", ipRange, "host_count", len(hosts))
+	
 	return nil
 }
 
 // parseIPRange is a helper method to parse IP ranges
 func (s *ScanService) parseIPRange(ipRange string) ([]string, error) {
 	var hosts []string
+	hostMap := make(map[string]bool) // To avoid duplicates
 
-	// Check if it's a CIDR notation
-	if _, ipNet, err := net.ParseCIDR(ipRange); err == nil {
-		for ip := ipNet.IP.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
-			// Skip network and broadcast addresses for /24 and smaller
-			ones, _ := ipNet.Mask.Size()
-			if ones >= 24 && (ip[3] == 0 || ip[3] == 255) {
-				continue
-			}
-			hosts = append(hosts, ip.String())
+	// Split by comma for multiple entries
+	entries := strings.Split(ipRange, ",")
+	
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
 		}
-	} else if ip := net.ParseIP(ipRange); ip != nil {
-		// Single IP
-		hosts = append(hosts, ip.String())
-	} else {
-		return nil, fmt.Errorf("invalid IP range format: %s", ipRange)
+
+		// Check if it's a range (e.g., 192.168.1.1-192.168.1.10)
+		if strings.Contains(entry, "-") {
+			parts := strings.Split(entry, "-")
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("invalid range format: %s", entry)
+			}
+			
+			startIP := net.ParseIP(strings.TrimSpace(parts[0]))
+			endIP := net.ParseIP(strings.TrimSpace(parts[1]))
+			
+			if startIP == nil || endIP == nil {
+				return nil, fmt.Errorf("invalid IP in range: %s", entry)
+			}
+			
+			// Convert IPs to uint32 for comparison
+			start := ipToUint32(startIP.To4())
+			end := ipToUint32(endIP.To4())
+			
+			if start > end {
+				return nil, fmt.Errorf("invalid range: start IP is greater than end IP")
+			}
+			
+			// Generate all IPs in range
+			for i := start; i <= end; i++ {
+				ip := uint32ToIP(i).String()
+				if !hostMap[ip] {
+					hostMap[ip] = true
+					hosts = append(hosts, ip)
+				}
+			}
+			
+		} else if _, ipNet, err := net.ParseCIDR(entry); err == nil {
+			// CIDR notation (e.g., 192.168.1.0/24)
+			for ip := ipNet.IP.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
+				// Skip network and broadcast addresses for /24 and smaller
+				ones, _ := ipNet.Mask.Size()
+				if ones >= 24 && (ip[3] == 0 || ip[3] == 255) {
+					continue
+				}
+				ipStr := ip.String()
+				if !hostMap[ipStr] {
+					hostMap[ipStr] = true
+					hosts = append(hosts, ipStr)
+				}
+			}
+			
+		} else if ip := net.ParseIP(entry); ip != nil {
+			// Single IP (e.g., 192.168.1.100)
+			ipStr := ip.String()
+			if !hostMap[ipStr] {
+				hostMap[ipStr] = true
+				hosts = append(hosts, ipStr)
+			}
+			
+		} else {
+			return nil, fmt.Errorf("invalid IP format: %s", entry)
+		}
+	}
+
+	if len(hosts) == 0 {
+		return nil, fmt.Errorf("no valid hosts found in input")
 	}
 
 	return hosts, nil
+}
+
+// Helper functions for IP range parsing
+func ipToUint32(ip net.IP) uint32 {
+	if len(ip) == 4 {
+		return uint32(ip[0])<<24 + uint32(ip[1])<<16 + uint32(ip[2])<<8 + uint32(ip[3])
+	}
+	return 0
+}
+
+func uint32ToIP(n uint32) net.IP {
+	return net.IPv4(byte(n>>24), byte(n>>16), byte(n>>8), byte(n))
 }
 
 // incrementIP increments an IP address
