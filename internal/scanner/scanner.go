@@ -96,13 +96,13 @@ type DeviceResult struct {
 
 // PortInfo contains information about an open port
 type PortInfo struct {
-	Port        uint16
-	Protocol    string
-	Service     string
-	Version     string
-	Banner      string
-	IsSecure    bool
-	Certificate *CertificateInfo
+	Port        uint16                 `json:"port"`
+	Protocol    string                 `json:"protocol"`
+	Service     string                 `json:"service"`
+	Version     string                 `json:"version"`
+	Banner      string                 `json:"banner"`
+	IsSecure    bool                   `json:"is_secure"`
+	Certificate *CertificateInfo       `json:"certificate,omitempty"`
 }
 
 // CertificateInfo contains SSL/TLS certificate information
@@ -237,18 +237,13 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 		p.ScannedHosts++
 	})
 
-	// Check if host is alive
-	if !s.isHostAlive(host) {
-		s.logger.Debug("Host not responding", "host", host)
-		return
-	}
-
 	// Create device result
 	device := &DeviceResult{
 		IPAddress:   host,
 		Timestamp:   time.Now(),
 		IsNew:       true,
 		Fingerprint: make(map[string]interface{}),
+		OpenPorts:   make([]PortInfo, 0), // Initialize empty slice
 	}
 
 	// Get MAC address
@@ -257,18 +252,31 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 	// Resolve hostname
 	device.Hostname = s.resolveHostname(host)
 
-	// Scan ports
-	openPorts := s.scanPorts(host, ports)
-	device.OpenPorts = openPorts
+	// Scan ports based on protocols
+	foundDevice := false
+	for _, protocol := range s.config.Protocols {
+		ports := s.getProtocolPorts(protocol)
+		for _, port := range ports {
+			if portInfo := s.checkPort(host, port); portInfo != nil {
+				device.OpenPorts = append(device.OpenPorts, *portInfo)
+				foundDevice = true
+				
+				// Try to identify protocol
+				if device.Protocol == "" {
+					device.Protocol = s.identifyProtocolByPort(port)
+				}
+			}
+		}
+	}
 
-	if len(openPorts) > 0 {
+	if foundDevice {
 		// Update progress
 		s.updateProgress(func(p *ScanProgress) {
 			p.DiscoveredHosts++
-			p.OpenPorts += len(openPorts)
+			p.OpenPorts += len(device.OpenPorts)
 		})
 
-		// Identify device
+		// Identify device type based on ports
 		s.identifyDevice(device)
 
 		// Send result
@@ -280,39 +288,21 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 	}
 }
 
-// scanPorts scans ports on a host
-func (s *Scanner) scanPorts(host string, ports []uint16) []PortInfo {
-	var openPorts []PortInfo
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-
-	for _, port := range ports {
-		// Check context
-		select {
-		case <-s.ctx.Done():
-			return openPorts
-		default:
-		}
-
-		wg.Add(1)
-		go func(p uint16) {
-			defer wg.Done()
-
-			// Update progress
-			s.updateProgress(func(prog *ScanProgress) {
-				prog.ScannedPorts++
-			})
-
-			if portInfo := s.checkPort(host, p); portInfo != nil {
-				mu.Lock()
-				openPorts = append(openPorts, *portInfo)
-				mu.Unlock()
-			}
-		}(port)
+// getProtocolPorts returns ports for a specific protocol
+func (s *Scanner) getProtocolPorts(protocol string) []uint16 {
+	protocolPorts := map[string][]uint16{
+		"modbus":      {502},
+		"dnp3":        {20000, 20547},
+		"ethernet_ip": {44818, 2222},
+		"bacnet":      {47808},
+		"s7":          {102},
+		"snmp":        {161, 162},
 	}
-
-	wg.Wait()
-	return openPorts
+	
+	if ports, ok := protocolPorts[protocol]; ok {
+		return ports
+	}
+	return []uint16{}
 }
 
 // checkPort checks if a port is open
@@ -351,93 +341,58 @@ func (s *Scanner) identifyDevice(device *DeviceResult) {
 		// Try protocol-specific detection based on port
 		switch port.Port {
 		case 502:
-			if s.detectModbus(device, port.Port) {
-				return
-			}
+			device.Protocol = "Modbus TCP"
+			device.DeviceType = "PLC"
+			return
 		case 102:
-			if s.detectS7(device, port.Port) {
-				return
-			}
+			device.Protocol = "Siemens S7"
+			device.DeviceType = "PLC"
+			device.Vendor = "Siemens"
+			return
 		case 20000, 20547:
-			if s.detectDNP3(device, port.Port) {
-				return
-			}
+			device.Protocol = "DNP3"
+			device.DeviceType = "RTU"
+			return
 		case 44818, 2222:
-			if s.detectEtherNetIP(device, port.Port) {
-				return
-			}
+			device.Protocol = "EtherNet/IP"
+			device.DeviceType = "PLC"
+			device.Vendor = "Rockwell/Allen-Bradley"
+			return
 		case 47808:
-			if s.detectBACnet(device, port.Port) {
-				return
-			}
+			device.Protocol = "BACnet"
+			device.DeviceType = "Building Controller"
+			return
 		case 161, 162:
-			if s.detectSNMP(device, port.Port) {
-				return
-			}
+			device.Protocol = "SNMP"
+			device.DeviceType = "Network Device"
+			return
 		}
 	}
 
 	// Generic identification based on open ports
-	s.identifyByPorts(device)
+	if device.DeviceType == "" {
+		device.DeviceType = "Unknown Device"
+	}
 }
 
-// Protocol detection methods (simplified for now)
-func (s *Scanner) detectModbus(device *DeviceResult, port uint16) bool {
-	// In a real implementation, this would use the protocol detector
-	if port == 502 {
-		device.Protocol = "Modbus TCP"
-		device.DeviceType = "PLC"
-		device.Vendor = "Generic Modbus"
-		return true
+// identifyProtocolByPort identifies protocol by port number
+func (s *Scanner) identifyProtocolByPort(port uint16) string {
+	protocols := map[uint16]string{
+		102:   "Siemens S7",
+		161:   "SNMP",
+		162:   "SNMP",
+		502:   "Modbus TCP",
+		2222:  "EtherNet/IP",
+		20000: "DNP3",
+		20547: "DNP3",
+		44818: "EtherNet/IP",
+		47808: "BACnet",
 	}
-	return false
-}
-
-func (s *Scanner) detectS7(device *DeviceResult, port uint16) bool {
-	if port == 102 {
-		device.Protocol = "Siemens S7"
-		device.DeviceType = "PLC"
-		device.Vendor = "Siemens"
-		return true
+	
+	if protocol, ok := protocols[port]; ok {
+		return protocol
 	}
-	return false
-}
-
-func (s *Scanner) detectDNP3(device *DeviceResult, port uint16) bool {
-	if port == 20000 || port == 20547 {
-		device.Protocol = "DNP3"
-		device.DeviceType = "RTU"
-		return true
-	}
-	return false
-}
-
-func (s *Scanner) detectEtherNetIP(device *DeviceResult, port uint16) bool {
-	if port == 44818 || port == 2222 {
-		device.Protocol = "EtherNet/IP"
-		device.DeviceType = "PLC"
-		device.Vendor = "Rockwell/Allen-Bradley"
-		return true
-	}
-	return false
-}
-
-func (s *Scanner) detectBACnet(device *DeviceResult, port uint16) bool {
-	if port == 47808 {
-		device.Protocol = "BACnet"
-		device.DeviceType = "Building Controller"
-		return true
-	}
-	return false
-}
-
-func (s *Scanner) detectSNMP(device *DeviceResult, port uint16) bool {
-	if port == 161 || port == 162 {
-		device.Protocol = "SNMP"
-		device.DeviceType = "Network Device"
-		return true
-	}
-	return false
+	return ""
 }
 
 // Helper methods
@@ -508,23 +463,6 @@ func getTop1000Ports() []uint16 {
 		1723, 3306, 3389, 5900, 8080, 8443, 102, 502, 1911, 2222, 2404,
 		20000, 20547, 44818, 47808, 161, 162,
 	}
-}
-
-func (s *Scanner) isHostAlive(host string) bool {
-	// Try ICMP ping first (requires privileges)
-	// For now, we'll use a simple TCP check on common ports
-	commonPorts := []uint16{80, 443, 22, 445, 139, 502, 102}
-	
-	for _, port := range commonPorts {
-		address := fmt.Sprintf("%s:%d", host, port)
-		conn, err := net.DialTimeout("tcp", address, time.Second)
-		if err == nil {
-			conn.Close()
-			return true
-		}
-	}
-	
-	return false
 }
 
 func (s *Scanner) getMACAddress(ip string) string {
@@ -600,35 +538,6 @@ func (s *Scanner) isSSLPort(port uint16) bool {
 func (s *Scanner) getCertificateInfo(host string, port uint16) *CertificateInfo {
 	// TODO: Implement SSL/TLS certificate parsing
 	return nil
-}
-
-func (s *Scanner) identifyByPorts(device *DeviceResult) {
-	// Basic identification based on open ports
-	for _, port := range device.OpenPorts {
-		switch port.Port {
-		case 502:
-			device.DeviceType = "PLC"
-			device.Protocol = "Modbus"
-		case 102:
-			device.DeviceType = "PLC"
-			device.Protocol = "S7"
-			device.Vendor = "Siemens"
-		case 44818:
-			device.DeviceType = "PLC"
-			device.Protocol = "EtherNet/IP"
-		case 47808:
-			device.DeviceType = "Building Controller"
-			device.Protocol = "BACnet"
-		case 80, 443:
-			if device.DeviceType == "" {
-				device.DeviceType = "HMI/Web Interface"
-			}
-		}
-	}
-	
-	if device.DeviceType == "" {
-		device.DeviceType = "Unknown Device"
-	}
 }
 
 // Progress and status updates

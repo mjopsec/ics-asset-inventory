@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadScanHistory();
     loadProtocolPorts();
     
+    // Clear old scan results on page load
+    scanResults = [];
+    allDiscoveredDevices.clear();
+    
     // Check for active scans on page load
     checkActiveScans();
     
@@ -288,14 +292,28 @@ async function loadScanResults(scanId) {
         const data = await response.json();
         const devices = data.devices || [];
         
+        // Clear current scan results for fresh display
+        scanResults = [];
+        
         // Update scanResults and merge with existing devices
         devices.forEach(device => {
+            // Add timestamp to make each scan unique
+            device.scan_timestamp = new Date().toISOString();
+            device.scan_id = scanId;
+            
+            // Check if device already exists in our collection
+            const existingDevice = allDiscoveredDevices.get(device.ip_address);
+            if (existingDevice) {
+                device.is_new = false;
+                device.existing_id = existingDevice.existing_id || existingDevice.id;
+            }
+            
             // Store in our Map to persist across scans
             allDiscoveredDevices.set(device.ip_address, device);
+            
+            // Add to current scan results
+            scanResults.push(device);
         });
-        
-        // Convert Map values to array for display
-        scanResults = Array.from(allDiscoveredDevices.values());
         
         displayScanResults();
 
@@ -333,7 +351,7 @@ function displayScanResults() {
     });
 }
 
-// Create device card element
+// Create device card element - FIXED VERSION
 function createDeviceCard(device) {
     const card = document.createElement('div');
     card.className = 'device-card';
@@ -344,12 +362,22 @@ function createDeviceCard(device) {
     const protocol = device.protocol || 'Unknown';
     const responseTime = device.response_time || 'N/A';
     
-    // Get open ports info - fix the undefined issue
-    const openPorts = device.open_ports || [];
+    // Fix the port display issue
     let portDisplay = 'N/A';
-    if (openPorts.length > 0) {
-        // Display first port or multiple ports
-        portDisplay = openPorts.map(p => p.port).join(', ');
+    if (device.open_ports && Array.isArray(device.open_ports) && device.open_ports.length > 0) {
+        // Handle both object and number formats
+        const ports = device.open_ports.map(p => {
+            if (typeof p === 'object' && p.port) {
+                return p.port;
+            } else if (typeof p === 'number') {
+                return p;
+            }
+            return null;
+        }).filter(p => p !== null);
+        
+        if (ports.length > 0) {
+            portDisplay = ports.join(', ');
+        }
     }
     
     card.innerHTML = `
@@ -524,7 +552,7 @@ async function checkActiveScans() {
     }
 }
 
-// View device details
+// View device details - FIXED VERSION
 function viewDeviceDetails(deviceIP) {
     console.log('View details for device:', deviceIP);
     
@@ -535,8 +563,7 @@ function viewDeviceDetails(deviceIP) {
         return;
     }
     
-    // If you have the modal implementation from the previous artifact, it will show the modal
-    // Otherwise, show a simple alert with device info
+    // Check if modal functions exist and use them
     if (typeof populateDeviceDetailModal === 'function') {
         populateDeviceDetailModal(device);
         document.getElementById('deviceDetailModal').classList.add('active');
@@ -549,14 +576,32 @@ Hostname: ${device.hostname || 'Unknown'}
 Type: ${device.device_type || 'Unknown'}
 Vendor: ${device.vendor || 'Unknown'}
 Protocol: ${device.protocol || 'Unknown'}
-Open Ports: ${device.open_ports?.map(p => p.port).join(', ') || 'None'}
+Open Ports: ${formatPortsForDisplay(device.open_ports)}
 Response Time: ${device.response_time || 'N/A'}
         `;
         alert(deviceInfo);
     }
 }
 
-// Add device to inventory - Fixed implementation
+// Helper function to format ports for display
+function formatPortsForDisplay(ports) {
+    if (!ports || !Array.isArray(ports) || ports.length === 0) {
+        return 'None';
+    }
+    
+    const portNumbers = ports.map(p => {
+        if (typeof p === 'object' && p.port) {
+            return p.port;
+        } else if (typeof p === 'number') {
+            return p;
+        }
+        return null;
+    }).filter(p => p !== null);
+    
+    return portNumbers.length > 0 ? portNumbers.join(', ') : 'None';
+}
+
+// Add device to inventory - FIXED VERSION
 async function addDeviceToInventory(deviceIP) {
     if (!currentScan && scanResults.length === 0) {
         showNotification('No scan data available', 'error');
@@ -705,7 +750,7 @@ function switchTab(tabName) {
     
     // Load data for specific tabs
     if (tabName === 'results') {
-        // Display current results
+        // Always display current scan results when switching to results tab
         displayScanResults();
     } else if (tabName === 'history') {
         loadScanHistory();
@@ -922,3 +967,63 @@ function initializeWebSocket() {
         wsClient.on('scan_complete', handleScanComplete);
     }
 }
+
+// Add all devices to inventory function
+async function addAllDevicesToInventory() {
+    if (!currentScan && scanResults.length === 0) {
+        showNotification('No devices to add', 'warning');
+        return;
+    }
+
+    try {
+        const token = getAuthToken();
+        
+        // Get the most recent scan ID
+        let scanId = currentScan?.scan_id;
+        
+        if (!scanId) {
+            const historyResponse = await fetch('/api/discovery/history?limit=1', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (historyResponse.ok) {
+                const historyData = await historyResponse.json();
+                if (historyData.history && historyData.history.length > 0) {
+                    scanId = historyData.history[0].id;
+                }
+            }
+        }
+        
+        if (!scanId) {
+            throw new Error('No scan context available');
+        }
+
+        const response = await fetch(`/api/discovery/scan/${scanId}/add-all-devices`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to add devices');
+        }
+
+        const result = await response.json();
+        showNotification(`Added ${result.added} new devices, updated ${result.updated} existing devices`, 'success');
+        
+        // Update UI to reflect changes
+        displayScanResults();
+
+    } catch (error) {
+        console.error('Error adding all devices:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
+// Export functions for use in HTML
+window.addAllDevicesToInventory = addAllDevicesToInventory;

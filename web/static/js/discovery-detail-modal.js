@@ -446,7 +446,7 @@ function viewDeviceDetails(deviceIP) {
     document.getElementById('deviceDetailModal').classList.add('active');
 }
 
-// Populate device detail modal
+// Populate device detail modal - FIXED VERSION
 function populateDeviceDetailModal(device) {
     // Overview tab
     document.getElementById('detailDeviceType').textContent = device.device_type || 'Unknown';
@@ -468,19 +468,36 @@ function populateDeviceDetailModal(device) {
     document.getElementById('detailSubnet').textContent = guessSubnet(device.ip_address);
     document.getElementById('detailGateway').textContent = guessGateway(device.ip_address);
 
-    // Ports tab - Enhanced with proper service identification
+    // Ports tab - FIXED to handle port data properly
     const portsTable = document.getElementById('detailPortsTable');
     portsTable.innerHTML = '';
     
     if (device.open_ports && device.open_ports.length > 0) {
-        device.open_ports.forEach(port => {
+        device.open_ports.forEach(portData => {
             const row = document.createElement('tr');
-            const service = port.service || identifyServiceEnhanced(port.port);
+            
+            // Handle different port data formats
+            let port, protocol, service, banner;
+            
+            if (typeof portData === 'object') {
+                port = portData.port || 'Unknown';
+                protocol = portData.protocol || 'TCP';
+                service = portData.service || identifyServiceEnhanced(port);
+                banner = portData.banner || '-';
+            } else if (typeof portData === 'number') {
+                port = portData;
+                protocol = 'TCP';
+                service = identifyServiceEnhanced(port);
+                banner = '-';
+            } else {
+                return; // Skip invalid data
+            }
+            
             row.innerHTML = `
-                <td>${port.port}</td>
-                <td>${port.protocol || 'TCP'}</td>
+                <td>${port}</td>
+                <td>${protocol}</td>
                 <td>${service}</td>
-                <td>${port.banner || '-'}</td>
+                <td>${banner}</td>
             `;
             portsTable.appendChild(row);
         });
@@ -583,29 +600,6 @@ function guessGateway(ipAddress) {
     return parts.slice(0, 3).join('.') + '.1';
 }
 
-function identifyService(port) {
-    const services = {
-        21: 'FTP',
-        22: 'SSH',
-        23: 'Telnet',
-        80: 'HTTP',
-        443: 'HTTPS',
-        102: 'S7 (Siemens)',
-        161: 'SNMP',
-        162: 'SNMP Trap',
-        502: 'Modbus TCP',
-        1911: 'Niagara Fox',
-        2222: 'EtherNet/IP',
-        2404: 'IEC-104',
-        20000: 'DNP3',
-        20547: 'DNP3 (Alt)',
-        44818: 'EtherNet/IP',
-        47808: 'BACnet'
-    };
-    
-    return services[port] || `Port ${port}`;
-}
-
 // Enhanced service identification with more protocols
 function identifyServiceEnhanced(port) {
     const services = {
@@ -665,57 +659,3 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add the modal to the page
     addDeviceDetailModal();
 });
-
-// Update the device card creation to use the new modal
-function createDeviceCard(device) {
-    const card = document.createElement('div');
-    card.className = 'device-card';
-    
-    const statusClass = device.is_new ? 'new' : 'existing';
-    const deviceType = device.device_type || 'Unknown Device';
-    const vendor = device.vendor || 'Unknown';
-    const protocol = device.protocol || 'Unknown';
-    const responseTime = device.response_time || 'N/A';
-    
-    // Get open ports info
-    const openPorts = device.open_ports || [];
-    const portInfo = openPorts.length > 0 ? openPorts[0] : { port: 'N/A' };
-    
-    card.innerHTML = `
-        <div class="device-header">
-            <div class="device-info">
-                <div class="device-name">${device.hostname || deviceType}</div>
-                <div class="device-ip">${device.ip_address}</div>
-            </div>
-            <div class="device-status ${statusClass}">${device.is_new ? 'New' : 'Existing'}</div>
-        </div>
-        <div class="device-details">
-            <div class="device-detail">
-                <div class="device-detail-label">Protocol</div>
-                <div class="device-detail-value">${protocol}</div>
-            </div>
-            <div class="device-detail">
-                <div class="device-detail-label">Port</div>
-                <div class="device-detail-value">${portInfo.port}</div>
-            </div>
-            <div class="device-detail">
-                <div class="device-detail-label">Vendor</div>
-                <div class="device-detail-value">${vendor}</div>
-            </div>
-            <div class="device-detail">
-                <div class="device-detail-label">Response Time</div>
-                <div class="device-detail-value">${responseTime}</div>
-            </div>
-        </div>
-        <div class="device-actions">
-            <button class="btn btn-secondary" onclick="viewDeviceDetails('${device.ip_address}')">
-                <i class="fas fa-info-circle"></i> Details
-            </button>
-            <button class="btn btn-primary" onclick="addDeviceToInventory('${device.ip_address}')">
-                <i class="fas fa-plus"></i> Add to Inventory
-            </button>
-        </div>
-    `;
-    
-    return card;
-}

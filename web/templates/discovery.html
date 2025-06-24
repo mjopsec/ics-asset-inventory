@@ -130,10 +130,13 @@
             background-color: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
             padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .page-header {
-            margin-bottom: 32px;
+            flex: 1;
         }
 
         .page-title {
@@ -146,6 +149,95 @@
         .page-subtitle {
             font-size: 16px;
             color: var(--text-secondary);
+        }
+
+        /* User Profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .notifications {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background-color: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .notification-icon:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-menu:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--text-tertiary);
         }
 
         /* Content Area */
@@ -746,6 +838,10 @@
             .protocol-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .user-info {
+                display: none;
+            }
         }
 
         /* Logout button styling */
@@ -760,6 +856,50 @@
         .nav-item.logout:hover {
             background-color: #FEE2E2;
             color: var(--danger-color);
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 8px 0;
+        }
+
+        .user-menu-container {
+            position: relative;
         }
     </style>
 </head>
@@ -812,6 +952,11 @@
                 <div class="page-header">
                     <h1 class="page-title">Network Discovery</h1>
                     <p class="page-subtitle">Discover and identify industrial control system devices on your network</p>
+                </div>
+                
+                <!-- User Profile Section -->
+                <div class="user-profile" id="userProfileContainer">
+                    <!-- Profile will be injected here by user-profile.js -->
                 </div>
             </header>
 
@@ -986,7 +1131,7 @@
                                 <button class="btn btn-secondary">
                                     <i class="fas fa-filter"></i> Filter
                                 </button>
-                                <button class="btn btn-primary">
+                                <button class="btn btn-primary" onclick="addAllDevicesToInventory()">
                                     <i class="fas fa-plus"></i> Add All to Inventory
                                 </button>
                             </div>
@@ -1038,6 +1183,8 @@
         </main>
     </div>
 
+    <!-- Include User Profile Component -->
+    <script src="/static/js/user-profile.js"></script>
     <!-- Include WebSocket client -->
     <script src="/static/js/websocket.js"></script>
     <!-- Include Discovery page JavaScript -->
@@ -1046,17 +1193,21 @@
     <script src="/static/js/discovery-detail-modal.js"></script>
 
     <script>
-        // Logout function
-        function logout() {
-            fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                }
-            }).then(() => {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-            });
+        // Initialize user profile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize user profile component
+            const profileContainer = document.getElementById('userProfileContainer');
+            if (profileContainer && window.UserProfile) {
+                profileContainer.innerHTML = window.UserProfile.createHTML();
+                window.UserProfile.init();
+            }
+        });
+
+        // Protocol selection toggle
+        function toggleProtocol(card) {
+            card.classList.toggle('selected');
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
         }
     </script>
 </body>
