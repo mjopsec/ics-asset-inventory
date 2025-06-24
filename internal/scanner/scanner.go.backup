@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -20,15 +19,6 @@ const (
 	ScanTypeCustom ScanType = "custom"
 )
 
-// ScanMode represents the scanning mode
-type ScanMode string
-
-const (
-	ScanModeActive  ScanMode = "active"   // Traditional active scanning
-	ScanModePassive ScanMode = "passive"  // Passive monitoring only
-	ScanModeHybrid  ScanMode = "hybrid"   // Both active and passive
-)
-
 // ScanStatus represents the status of a scan
 type ScanStatus string
 
@@ -42,6 +32,43 @@ const (
 
 // Scanner handles network scanning operations
 type Scanner struct {
+	logger      *utils.Logger
+	config      *ScanConfig
+	workerPool  chan struct{}
+	results     chan *DeviceResult
+	errors      chan error
+	ctx         context.Context
+	cancel      context.CancelFunc
+	wg          sync.WaitGroup
+	mu          sync.Mutex
+	progress    *ScanProgress
+}
+
+// ScanConfig contains scanner configuration
+ttype ScanConfig struct {
+	IPRange        string
+	ScanType       ScanType
+	ScanMode       ScanMode       // NEW: active, passive, or hybrid
+	Timeout        time.Duration
+	MaxConcurrent  int
+	Protocols      []string
+	PortRanges     []PortRange
+	EnablePassive  bool          // Enable passive monitoring
+	PassiveConfig  *PassiveScanConfig // Passive scan configuration
+	RetryAttempts  int
+}
+
+// ScanMode represents the scanning mode
+type ScanMode string
+
+const (
+	ScanModeActive  ScanMode = "active"   // Traditional active scanning
+	ScanModePassive ScanMode = "passive"  // Passive monitoring only
+	ScanModeHybrid  ScanMode = "hybrid"   // Both active and passive
+)
+
+// Updated Scanner struct
+type Scanner struct {
 	logger         *utils.Logger
 	config         *ScanConfig
 	workerPool     chan struct{}
@@ -53,20 +80,6 @@ type Scanner struct {
 	mu             sync.Mutex
 	progress       *ScanProgress
 	passiveScanner *PassiveScanner // NEW: passive scanner instance
-}
-
-// ScanConfig contains scanner configuration
-type ScanConfig struct {
-	IPRange        string
-	ScanType       ScanType
-	ScanMode       ScanMode           // NEW: active, passive, or hybrid
-	Timeout        time.Duration
-	MaxConcurrent  int
-	Protocols      []string
-	PortRanges     []PortRange
-	EnablePassive  bool               // Enable passive monitoring
-	PassiveConfig  *PassiveScanConfig // Passive scan configuration
-	RetryAttempts  int
 }
 
 // PortRange represents a range of ports to scan
@@ -128,7 +141,7 @@ type CertificateInfo struct {
 	IsSelfSigned bool
 }
 
-// NewScanner creates a new network scanner with passive mode support
+// NewScanner creates a new network scanner
 func NewScanner(config *ScanConfig, logger *utils.Logger) *Scanner {
 	ctx, cancel := context.WithCancel(context.Background())
 	
@@ -154,7 +167,7 @@ func NewScanner(config *ScanConfig, logger *utils.Logger) *Scanner {
 				Interface:   "eth0", // Default interface
 				SnapLen:     65535,
 				Promiscuous: true,
-				Timeout:     30 * time.Second,
+				Timeout:     pcap.BlockForever,
 				BPFFilter:   buildBPFFilter(config.Protocols),
 			}
 		}
@@ -170,7 +183,7 @@ func NewScanner(config *ScanConfig, logger *utils.Logger) *Scanner {
 	return scanner
 }
 
-// Start begins the network scan with passive mode support
+// Start begins the network scan
 func (s *Scanner) Start() error {
 	s.mu.Lock()
 	if s.progress.Status == StatusRunning {
@@ -201,11 +214,6 @@ func (s *Scanner) Start() error {
 	// If passive-only mode, just monitor
 	if s.config.ScanMode == ScanModePassive {
 		s.logger.Info("Running in passive mode only - monitoring network traffic")
-		
-		// Start result processor for passive mode
-		go s.processResults()
-		go s.handleErrors()
-		
 		return nil
 	}
 
@@ -217,18 +225,13 @@ func (s *Scanner) Start() error {
 	}
 
 	s.progress.TotalHosts = len(hosts)
-	
-	// Determine ports to scan
 	ports := s.getPortsToScan()
 	s.progress.TotalPorts = len(ports) * len(hosts)
 
-	// Start result processor
 	go s.processResults()
-
-	// Start error handler
 	go s.handleErrors()
 
-	// Scan hosts
+	// Perform active scanning
 	for _, host := range hosts {
 		select {
 		case <-s.ctx.Done():
@@ -240,7 +243,6 @@ func (s *Scanner) Start() error {
 		}
 	}
 
-	// Wait for all scans to complete
 	go func() {
 		s.wg.Wait()
 		
@@ -260,69 +262,26 @@ func (s *Scanner) Start() error {
 	return nil
 }
 
-// Stop cancels the running scan
-func (s *Scanner) Stop() {
-	s.logger.Info("Stopping network scan")
-	
-	// Stop passive scanner if running
-	if s.passiveScanner != nil {
-		s.passiveScanner.Stop()
-	}
-	
-	s.cancel()
-	s.updateStatus(StatusCancelled)
-}
-
-// GetProgress returns current scan progress
-func (s *Scanner) GetProgress() ScanProgress {
-	s.progress.mu.Lock()
-	defer s.progress.mu.Unlock()
-	
-	progress := *s.progress
-	progress.ElapsedTime = time.Since(progress.StartTime)
-	
-	// Add passive scan statistics if available
-	if s.passiveScanner != nil && s.config.ScanMode != ScanModeActive {
-		passiveHosts := s.passiveScanner.GetDiscoveredHosts()
-		// Don't double count in hybrid mode
-		if s.config.ScanMode == ScanModePassive {
-			progress.DiscoveredHosts = len(passiveHosts)
-		}
-	}
-	
-	return progress
-}
-
-// GetResults returns the results channel
-func (s *Scanner) GetResults() <-chan *DeviceResult {
-	return s.results
-}
-
-// processPassiveResults processes results from passive scanner
 func (s *Scanner) processPassiveResults() {
-	if s.passiveScanner == nil {
-		return
-	}
-	
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-	
-	discoveredIPs := make(map[string]bool)
 	
 	for {
 		select {
 		case <-s.ctx.Done():
 			return
 		case <-ticker.C:
+			if s.passiveScanner == nil {
+				continue
+			}
+			
 			hosts := s.passiveScanner.GetDiscoveredHosts()
 			for ip, hostInfo := range hosts {
+				// Convert passive host info to device result
+				device := s.convertPassiveToDevice(hostInfo)
+				
 				// Check if this is a new discovery
-				if !discoveredIPs[ip] {
-					discoveredIPs[ip] = true
-					
-					// Convert passive host info to device result
-					device := s.convertPassiveToDevice(hostInfo)
-					
+				if s.isNewPassiveDiscovery(ip) {
 					s.logger.Info("New device discovered passively",
 						"ip", ip,
 						"protocols", hostInfo.Protocols,
@@ -375,13 +334,59 @@ func (s *Scanner) convertPassiveToDevice(hostInfo *PassiveHostInfo) *DeviceResul
 	// Add passive scan indicator
 	device.Fingerprint["scan_method"] = "passive"
 	device.Fingerprint["packet_count"] = hostInfo.PacketCount
-	device.Fingerprint["auto_classified"] = true
-	device.Fingerprint["classification_confidence"] = 85 // Example confidence
 	
 	return device
 }
 
-// GetPassiveStatistics returns passive scanning statistics
+// isNewPassiveDiscovery checks if this is a new passive discovery
+func (s *Scanner) isNewPassiveDiscovery(ip string) bool {
+	// Implementation would track discovered IPs
+	// For now, return true
+	return true
+}
+
+// buildBPFFilter builds a BPF filter for industrial protocols
+func buildBPFFilter(protocols []string) string {
+	var filters []string
+	
+	portMap := map[string][]string{
+		"modbus":      {"502"},
+		"dnp3":        {"20000", "20547"},
+		"ethernet_ip": {"44818", "2222"},
+		"bacnet":      {"47808"},
+		"s7":          {"102"},
+		"snmp":        {"161", "162"},
+	}
+	
+	for _, protocol := range protocols {
+		if ports, ok := portMap[protocol]; ok {
+			for _, port := range ports {
+				filters = append(filters, fmt.Sprintf("port %s", port))
+			}
+		}
+	}
+	
+	if len(filters) == 0 {
+		// Default filter for all industrial protocols
+		return "port 102 or port 502 or port 20000 or port 44818 or port 47808 or port 161"
+	}
+	
+	return strings.Join(filters, " or ")
+}
+
+// Updated Stop method
+func (s *Scanner) Stop() {
+	s.logger.Info("Stopping network scan")
+	
+	// Stop passive scanner if running
+	if s.passiveScanner != nil {
+		s.passiveScanner.Stop()
+	}
+	
+	s.cancel()
+	s.updateStatus(StatusCancelled)
+}
+
 func (s *Scanner) GetPassiveStatistics() map[string]interface{} {
 	if s.passiveScanner == nil {
 		return map[string]interface{}{
@@ -396,7 +401,46 @@ func (s *Scanner) GetPassiveStatistics() map[string]interface{} {
 	return stats
 }
 
-// scanHost scans a single host (existing implementation)
+// Add this method to get combined progress including passive results
+func (s *Scanner) GetCombinedProgress() ScanProgress {
+	s.progress.mu.Lock()
+	defer s.progress.mu.Unlock()
+	
+	progress := *s.progress
+	progress.ElapsedTime = time.Since(progress.StartTime)
+	
+	// Add passive scan statistics if available
+	if s.passiveScanner != nil {
+		passiveHosts := s.passiveScanner.GetDiscoveredHosts()
+		progress.DiscoveredHosts += len(passiveHosts)
+		
+		// Add passive scan indicator
+		if s.config.ScanMode == ScanModePassive {
+			progress.Status = "monitoring"
+		} else if s.config.ScanMode == ScanModeHybrid {
+			progress.Status = progress.Status + " (hybrid)"
+		}
+	}
+	
+	return progress
+}
+
+// GetProgress returns current scan progress
+func (s *Scanner) GetProgress() ScanProgress {
+	s.progress.mu.Lock()
+	defer s.progress.mu.Unlock()
+	
+	progress := *s.progress
+	progress.ElapsedTime = time.Since(progress.StartTime)
+	return progress
+}
+
+// GetResults returns the results channel
+func (s *Scanner) GetResults() <-chan *DeviceResult {
+	return s.results
+}
+
+// scanHost scans a single host
 func (s *Scanner) scanHost(host string, ports []uint16) {
 	defer s.wg.Done()
 
@@ -421,7 +465,7 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 		Timestamp:   time.Now(),
 		IsNew:       true,
 		Fingerprint: make(map[string]interface{}),
-		OpenPorts:   make([]PortInfo, 0),
+		OpenPorts:   make([]PortInfo, 0), // Initialize empty slice
 	}
 
 	// Get MAC address
@@ -456,12 +500,6 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 
 		// Identify device type based on ports
 		s.identifyDevice(device)
-		
-		// Mark as auto-classified if identified
-		if device.DeviceType != "Unknown Device" {
-			device.Fingerprint["auto_classified"] = true
-			device.Fingerprint["classification_confidence"] = 75
-		}
 
 		// Send result
 		select {
@@ -472,7 +510,7 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 	}
 }
 
-// Helper methods (keep all existing helper methods)
+// getProtocolPorts returns ports for a specific protocol
 func (s *Scanner) getProtocolPorts(protocol string) []uint16 {
 	protocolPorts := map[string][]uint16{
 		"modbus":      {502},
@@ -489,6 +527,7 @@ func (s *Scanner) getProtocolPorts(protocol string) []uint16 {
 	return []uint16{}
 }
 
+// checkPort checks if a port is open
 func (s *Scanner) checkPort(host string, port uint16) *PortInfo {
 	address := fmt.Sprintf("%s:%d", host, port)
 	
@@ -517,6 +556,7 @@ func (s *Scanner) checkPort(host string, port uint16) *PortInfo {
 	return portInfo
 }
 
+// identifyDevice identifies device type and details
 func (s *Scanner) identifyDevice(device *DeviceResult) {
 	// Try protocol detection for each open port
 	for _, port := range device.OpenPorts {
@@ -557,6 +597,7 @@ func (s *Scanner) identifyDevice(device *DeviceResult) {
 	}
 }
 
+// identifyProtocolByPort identifies protocol by port number
 func (s *Scanner) identifyProtocolByPort(port uint16) string {
 	protocols := map[uint16]string{
 		102:   "Siemens S7",
@@ -575,6 +616,8 @@ func (s *Scanner) identifyProtocolByPort(port uint16) string {
 	}
 	return ""
 }
+
+// Helper methods
 
 func (s *Scanner) parseIPRange(ipRange string) ([]string, error) {
 	var hosts []string
@@ -752,33 +795,4 @@ func (s *Scanner) handleErrors() {
 			p.Errors = append(p.Errors, err.Error())
 		})
 	}
-}
-
-// buildBPFFilter builds a BPF filter for industrial protocols
-func buildBPFFilter(protocols []string) string {
-	var filters []string
-	
-	portMap := map[string][]string{
-		"modbus":      {"502"},
-		"dnp3":        {"20000", "20547"},
-		"ethernet_ip": {"44818", "2222"},
-		"bacnet":      {"47808"},
-		"s7":          {"102"},
-		"snmp":        {"161", "162"},
-	}
-	
-	for _, protocol := range protocols {
-		if ports, ok := portMap[protocol]; ok {
-			for _, port := range ports {
-				filters = append(filters, fmt.Sprintf("port %s", port))
-			}
-		}
-	}
-	
-	if len(filters) == 0 {
-		// Default filter for all industrial protocols
-		return "port 102 or port 502 or port 20000 or port 44818 or port 47808 or port 161"
-	}
-	
-	return strings.Join(filters, " or ")
 }

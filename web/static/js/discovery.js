@@ -62,10 +62,17 @@ async function handleScanSubmit(e) {
     const scanConfig = {
         ip_range: formData.get('ipRange') || document.getElementById('ipRange').value,
         scan_type: formData.get('scanType') || document.getElementById('scanType').value,
+        scan_mode: formData.get('scanMode') || 'active', // ADD THIS LINE
         timeout: parseInt(formData.get('timeout') || document.getElementById('timeout').value),
         max_concurrent: parseInt(formData.get('concurrent') || document.getElementById('concurrent').value),
-        protocols: selectedProtocols
+        protocols: selectedProtocols,
+        network_interface: formData.get('networkInterface') || 'eth0' // ADD THIS LINE
     };
+
+    // Show passive indicator if needed
+    if (scanConfig.scan_mode === 'passive' || scanConfig.scan_mode === 'hybrid') {
+        document.getElementById('scanModeIndicator').style.display = 'flex';
+    }
 
     // Add custom port ranges if selected
     if (scanConfig.scan_type === 'custom') {
@@ -361,11 +368,14 @@ function createDeviceCard(device) {
     const vendor = device.vendor || 'Unknown';
     const protocol = device.protocol || 'Unknown';
     const responseTime = device.response_time || 'N/A';
+    const scanMethod = device.fingerprint?.scan_method || 'active';
     
-    // Fix the port display issue
+    // Auto-classification indicator
+    const autoClassified = device.fingerprint?.auto_classified || false;
+    const classificationConfidence = device.fingerprint?.classification_confidence || 0;
+    
     let portDisplay = 'N/A';
     if (device.open_ports && Array.isArray(device.open_ports) && device.open_ports.length > 0) {
-        // Handle both object and number formats
         const ports = device.open_ports.map(p => {
             if (typeof p === 'object' && p.port) {
                 return p.port;
@@ -383,7 +393,10 @@ function createDeviceCard(device) {
     card.innerHTML = `
         <div class="device-header">
             <div class="device-info">
-                <div class="device-name">${device.hostname || deviceType}</div>
+                <div class="device-name">
+                    ${device.hostname || deviceType}
+                    ${autoClassified ? '<span class="auto-classified"><i class="fas fa-magic"></i> Auto-classified</span>' : ''}
+                </div>
                 <div class="device-ip">${device.ip_address}</div>
             </div>
             <div class="device-status ${statusClass}">${device.is_new ? 'New' : 'Existing'}</div>
@@ -402,10 +415,20 @@ function createDeviceCard(device) {
                 <div class="device-detail-value">${vendor}</div>
             </div>
             <div class="device-detail">
-                <div class="device-detail-label">Response Time</div>
-                <div class="device-detail-value">${responseTime}</div>
+                <div class="device-detail-label">Detection</div>
+                <div class="device-detail-value">
+                    ${scanMethod === 'passive' ? '<i class="fas fa-wifi"></i> Passive' : '<i class="fas fa-radar"></i> Active'}
+                </div>
             </div>
         </div>
+        ${classificationConfidence > 0 ? `
+        <div class="device-classification">
+            <div class="classification-badge">
+                <i class="fas fa-brain"></i>
+                <span>Classification Confidence: ${classificationConfidence}%</span>
+            </div>
+        </div>
+        ` : ''}
         <div class="device-actions">
             <button class="btn btn-secondary" onclick="viewDeviceDetails('${device.ip_address}')">
                 <i class="fas fa-info-circle"></i> Details

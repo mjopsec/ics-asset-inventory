@@ -901,6 +901,154 @@
         .user-menu-container {
             position: relative;
         }
+
+        /* Passive Scanning Styles - ADD THESE */
+        .scan-mode-indicator {
+            background-color: #DBEAFE;
+            border: 1px solid #60A5FA;
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #1E40AF;
+            font-size: 14px;
+        }
+
+        .scan-mode-indicator i {
+            font-size: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        .passive-stats {
+            margin-left: auto;
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+        }
+
+        .passive-stats strong {
+            color: #1E40AF;
+            font-weight: 600;
+        }
+
+        /* Protocol Enhancement Indicator */
+        .protocol-enhancement {
+            background-color: #F0FDF4;
+            border: 1px solid #86EFAC;
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #166534;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .protocol-enhancement i {
+            color: #22C55E;
+        }
+
+        /* Auto-classified indicator */
+        .auto-classified {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background-color: #FEF3C7;
+            color: #92400E;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .auto-classified i {
+            font-size: 10px;
+        }
+
+        /* Enhanced device card for better classification display */
+        .device-classification {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .classification-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .classification-badge i {
+            font-size: 12px;
+            color: var(--primary-color);
+        }
+
+        /* Network interface selector for passive mode */
+        .network-interface-group {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+
+        .network-interface-group.visible {
+            display: block;
+        }
+
+        .interface-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .interface-item {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .interface-item:hover {
+            border-color: var(--primary-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .interface-item.selected {
+            background-color: #DBEAFE;
+            border-color: var(--primary-color);
+            color: #1E40AF;
+        }
+
+        .interface-name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .interface-ip {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
     </style>
 </head>
 <body>
@@ -999,6 +1147,17 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label class="form-label">Scan Mode</label>
+                                    <select class="form-input" id="scanMode" name="scanMode" onchange="handleScanModeChange()">
+                                        <option value="active">Active Scan (Traditional)</option>
+                                        <option value="passive">Passive Monitoring Only</option>
+                                        <option value="hybrid">Hybrid (Active + Passive)</option>
+                                    </select>
+                                    <span class="form-hint">
+                                        <i class="fas fa-info-circle"></i> Passive mode monitors network traffic without sending packets
+                                    </span>
+                                </div>
+                                <div class="form-group">
                                     <label class="form-label">Timeout (seconds)</label>
                                     <input type="number" class="form-input" id="timeout" name="timeout" value="30" min="10" max="300">
                                     <span class="form-hint">Connection timeout per device</span>
@@ -1092,7 +1251,14 @@
                                 <i class="fas fa-stop"></i> Stop Scan
                             </button>
                         </div>
-                        
+                        <div class="scan-mode-indicator" id="scanModeIndicator" style="display: none;">
+                            <i class="fas fa-wifi"></i>
+                            <span>Passive Monitoring Active</span>
+                            <div class="passive-stats">
+                                <span>Packets: <strong id="passivePackets">0</strong></span>
+                                <span>Hosts: <strong id="passiveHosts">0</strong></span>
+                            </div>
+                        </div>
                         <div class="progress-bar-container">
                             <div class="progress-bar" id="progressBar"></div>
                         </div>
@@ -1209,6 +1375,127 @@
             const checkbox = card.querySelector('input[type="checkbox"]');
             checkbox.checked = !checkbox.checked;
         }
+        
+        // Handle scan mode change
+        function handleScanModeChange() {
+            const scanMode = document.getElementById('scanMode').value;
+            const interfaceGroup = document.querySelector('.network-interface-group');
+            
+            if (scanMode === 'passive' || scanMode === 'hybrid') {
+                // Show network interface selector
+                if (!interfaceGroup) {
+                    createInterfaceSelector();
+                } else {
+                    interfaceGroup.classList.add('visible');
+                }
+                
+                // Update scan button text
+                const scanButton = document.querySelector('button[type="submit"]');
+                if (scanMode === 'passive') {
+                    scanButton.innerHTML = '<i class="fas fa-wifi"></i> Start Monitoring';
+                } else {
+                    scanButton.innerHTML = '<i class="fas fa-play"></i> Start Hybrid Scan';
+                }
+                
+                // Show passive indicator during scan
+                if (currentScan) {
+                    document.getElementById('scanModeIndicator').style.display = 'flex';
+                }
+            } else {
+                // Hide interface selector
+                if (interfaceGroup) {
+                    interfaceGroup.classList.remove('visible');
+                }
+                
+                // Reset scan button text
+                const scanButton = document.querySelector('button[type="submit"]');
+                scanButton.innerHTML = '<i class="fas fa-play"></i> Start Scan';
+                
+                // Hide passive indicator
+                document.getElementById('scanModeIndicator').style.display = 'none';
+            }
+        }
+
+        // Create network interface selector
+        function createInterfaceSelector() {
+            const formElement = document.getElementById('scanForm');
+            const protocolSection = document.querySelector('.form-group:last-child');
+            
+            const interfaceHTML = `
+                <div class="network-interface-group visible">
+                    <label class="form-label">
+                        <i class="fas fa-ethernet"></i> Network Interface for Passive Monitoring
+                    </label>
+                    <div class="interface-list">
+                        <div class="interface-item selected" onclick="selectInterface(this, 'eth0')">
+                            <div class="interface-name">eth0</div>
+                            <div class="interface-ip">Primary Network</div>
+                        </div>
+                        <div class="interface-item" onclick="selectInterface(this, 'eth1')">
+                            <div class="interface-name">eth1</div>
+                            <div class="interface-ip">Secondary Network</div>
+                        </div>
+                        <div class="interface-item" onclick="selectInterface(this, 'any')">
+                            <div class="interface-name">any</div>
+                            <div class="interface-ip">All Interfaces</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="networkInterface" name="networkInterface" value="eth0">
+                </div>
+            `;
+            
+            // Insert after protocols section
+            protocolSection.insertAdjacentHTML('afterend', interfaceHTML);
+        }
+
+        // Select network interface
+        function selectInterface(element, interfaceName) {
+            // Remove selected class from all items
+            document.querySelectorAll('.interface-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked item
+            element.classList.add('selected');
+            
+            // Update hidden input
+            document.getElementById('networkInterface').value = interfaceName;
+        }
+
+        // Update passive monitoring stats
+        function updatePassiveStats(packets, hosts) {
+            const packetsElement = document.getElementById('passivePackets');
+            const hostsElement = document.getElementById('passiveHosts');
+            
+            if (packetsElement) packetsElement.textContent = packets;
+            if (hostsElement) hostsElement.textContent = hosts;
+        }
+
+        // Add protocol enhancement indicators
+        document.addEventListener('DOMContentLoaded', function() {
+            const protocolEnhancements = {
+                'modbus': 'Deep packet inspection for function codes',
+                'dnp3': 'Outstation identification & classification',
+                'ethernet_ip': 'CIP object detection & vendor ID',
+                'bacnet': 'Device object property discovery',
+                's7': 'PLC model & firmware detection',
+                'snmp': 'MIB-based device profiling'
+            };
+            
+            // Add enhancement badges to existing protocol cards
+            document.querySelectorAll('.protocol-card').forEach(card => {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                if (checkbox && protocolEnhancements[checkbox.value]) {
+                    const enhancement = document.createElement('div');
+                    enhancement.className = 'protocol-enhancement';
+                    enhancement.innerHTML = `
+                        <i class="fas fa-bolt"></i>
+                        <span>${protocolEnhancements[checkbox.value]}</span>
+                    `;
+                    card.appendChild(enhancement);
+                }
+            });
+        });
     </script>
 </body>
 </html>
