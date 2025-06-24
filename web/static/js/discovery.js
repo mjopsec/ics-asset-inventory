@@ -1,7 +1,8 @@
-// Discovery Page JavaScript - Complete Implementation
+// Discovery Page JavaScript - Fixed Implementation
 let currentScan = null;
 let progressInterval = null;
 let scanResults = [];
+let allDiscoveredDevices = new Map(); // Store all discovered devices by IP
 
 // Helper function to get authentication token
 function getAuthToken() {
@@ -24,6 +25,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for active scans on page load
     checkActiveScans();
+    
+    // Initialize WebSocket for real-time updates
+    initializeWebSocket();
 });
 
 // Setup event listeners
@@ -32,16 +36,6 @@ function setupEventListeners() {
     const scanForm = document.getElementById('scanForm');
     if (scanForm) {
         scanForm.addEventListener('submit', handleScanSubmit);
-    }
-
-    // Tab switching - handled by inline onclick events
-    
-    // Protocol toggle handlers are inline
-    
-    // Stop scan button
-    const stopBtn = document.querySelector('[onclick="stopScan()"]');
-    if (stopBtn) {
-        stopBtn.addEventListener('click', stopScan);
     }
 }
 
@@ -71,7 +65,6 @@ async function handleScanSubmit(e) {
 
     // Add custom port ranges if selected
     if (scanConfig.scan_type === 'custom') {
-        // For demo purposes, using default ranges. In production, this would be from UI
         scanConfig.port_ranges = [
             { start: 1, end: 1024 },
             { start: 502, end: 502 },
@@ -123,11 +116,8 @@ async function handleScanSubmit(e) {
         // Show progress section
         document.getElementById('scanProgress').classList.add('active');
         
-        // Switch to scan tab if not already there
-        const scanTab = document.querySelector('.tab[onclick*="scan"]');
-        if (scanTab && !scanTab.classList.contains('active')) {
-            switchTab('scan');
-        }
+        // Clear previous results
+        scanResults = [];
         
     } catch (error) {
         console.error('Error starting scan:', error);
@@ -192,19 +182,19 @@ async function updateScanProgress(scanId) {
             
             if (progress.status === 'completed') {
                 showNotification('Scan completed successfully', 'success');
-                loadScanResults(scanId);
+                await loadScanResults(scanId);
                 
-                // Auto-switch to results tab
+                // Auto-switch to results tab after a short delay
                 setTimeout(() => {
                     switchTab('results');
-                }, 2000);
+                }, 1000);
             } else if (progress.status === 'failed') {
                 showNotification('Scan failed', 'error');
             } else if (progress.status === 'cancelled') {
                 showNotification('Scan was cancelled', 'info');
             }
             
-            // Hide progress section
+            // Hide progress section after a delay
             setTimeout(() => {
                 document.getElementById('scanProgress').classList.remove('active');
             }, 3000);
@@ -215,7 +205,6 @@ async function updateScanProgress(scanId) {
 
     } catch (error) {
         console.error('Error updating progress:', error);
-        // Don't show error notification for progress updates to avoid spam
     }
 }
 
@@ -247,7 +236,7 @@ function displayProgress(progress) {
     
     if (devicesFound) devicesFound.textContent = progress.discovered_hosts || 0;
     if (ipsScanned) ipsScanned.textContent = progress.scanned_hosts || 0;
-    if (protocolsDetected) protocolsDetected.textContent = progress.discovered_hosts || 0; // TODO: Get actual protocol count
+    if (protocolsDetected) protocolsDetected.textContent = progress.discovered_hosts || 0;
     if (errorsCount) errorsCount.textContent = progress.errors ? progress.errors.length : 0;
 }
 
@@ -297,7 +286,16 @@ async function loadScanResults(scanId) {
         }
 
         const data = await response.json();
-        scanResults = data.devices || [];
+        const devices = data.devices || [];
+        
+        // Update scanResults and merge with existing devices
+        devices.forEach(device => {
+            // Store in our Map to persist across scans
+            allDiscoveredDevices.set(device.ip_address, device);
+        });
+        
+        // Convert Map values to array for display
+        scanResults = Array.from(allDiscoveredDevices.values());
         
         displayScanResults();
 
@@ -346,9 +344,13 @@ function createDeviceCard(device) {
     const protocol = device.protocol || 'Unknown';
     const responseTime = device.response_time || 'N/A';
     
-    // Get open ports info
+    // Get open ports info - fix the undefined issue
     const openPorts = device.open_ports || [];
-    const portInfo = openPorts.length > 0 ? openPorts[0] : { port: 'N/A' };
+    let portDisplay = 'N/A';
+    if (openPorts.length > 0) {
+        // Display first port or multiple ports
+        portDisplay = openPorts.map(p => p.port).join(', ');
+    }
     
     card.innerHTML = `
         <div class="device-header">
@@ -365,7 +367,7 @@ function createDeviceCard(device) {
             </div>
             <div class="device-detail">
                 <div class="device-detail-label">Port</div>
-                <div class="device-detail-value">${portInfo.port}</div>
+                <div class="device-detail-value">${portDisplay}</div>
             </div>
             <div class="device-detail">
                 <div class="device-detail-label">Vendor</div>
@@ -380,7 +382,7 @@ function createDeviceCard(device) {
             <button class="btn btn-secondary" onclick="viewDeviceDetails('${device.ip_address}')">
                 <i class="fas fa-info-circle"></i> Details
             </button>
-            <button class="btn btn-primary" onclick="addDeviceToInventory('${device.ip_address}')">
+            <button class="btn btn-primary" onclick="addDeviceToInventory('${device.ip_address}')" id="add-btn-${device.ip_address.replace(/\./g, '-')}">
                 <i class="fas fa-plus"></i> Add to Inventory
             </button>
         </div>
@@ -408,7 +410,6 @@ async function loadScanHistory() {
 
     } catch (error) {
         console.error('Error loading scan history:', error);
-        // Don't show error for history loading
     }
 }
 
@@ -471,9 +472,6 @@ async function loadProtocolPorts() {
         }
 
         const protocolPorts = await response.json();
-        console.log('Protocol ports loaded:', protocolPorts);
-        
-        // Update protocol cards with port information if needed
         updateProtocolCards(protocolPorts);
 
     } catch (error) {
@@ -505,9 +503,21 @@ function updateProtocolCards(protocolPorts) {
 async function checkActiveScans() {
     try {
         const token = getAuthToken();
+        const response = await fetch('/api/discovery/active-scans', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         
-        // This would need a new API endpoint to check for active scans
-        // For now, we'll skip this functionality
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        if (data.active_scans && data.active_scans.length > 0) {
+            const activeScan = data.active_scans[0];
+            currentScan = activeScan;
+            startProgressMonitoring(activeScan.scan_id);
+            document.getElementById('scanProgress').classList.add('active');
+        }
         
     } catch (error) {
         console.error('Error checking active scans:', error);
@@ -525,9 +535,14 @@ function viewDeviceDetails(deviceIP) {
         return;
     }
     
-    // For now, show an alert with device info
-    // In production, this would open a modal or navigate to a detail page
-    const deviceInfo = `
+    // If you have the modal implementation from the previous artifact, it will show the modal
+    // Otherwise, show a simple alert with device info
+    if (typeof populateDeviceDetailModal === 'function') {
+        populateDeviceDetailModal(device);
+        document.getElementById('deviceDetailModal').classList.add('active');
+    } else {
+        // Fallback to simple display
+        const deviceInfo = `
 Device Details:
 IP Address: ${device.ip_address}
 Hostname: ${device.hostname || 'Unknown'}
@@ -536,21 +551,60 @@ Vendor: ${device.vendor || 'Unknown'}
 Protocol: ${device.protocol || 'Unknown'}
 Open Ports: ${device.open_ports?.map(p => p.port).join(', ') || 'None'}
 Response Time: ${device.response_time || 'N/A'}
-    `;
-    
-    alert(deviceInfo);
+        `;
+        alert(deviceInfo);
+    }
 }
 
-// Add device to inventory
+// Add device to inventory - Fixed implementation
 async function addDeviceToInventory(deviceIP) {
-    if (!currentScan) {
-        showNotification('No active scan context', 'error');
+    if (!currentScan && scanResults.length === 0) {
+        showNotification('No scan data available', 'error');
         return;
+    }
+    
+    // Find the device in our results
+    const device = scanResults.find(d => d.ip_address === deviceIP);
+    if (!device) {
+        showNotification('Device not found in scan results', 'error');
+        return;
+    }
+    
+    // Get the button and show loading state
+    const buttonId = `add-btn-${deviceIP.replace(/\./g, '-')}`;
+    const addButton = document.getElementById(buttonId);
+    if (addButton) {
+        addButton.disabled = true;
+        addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
     }
     
     try {
         const token = getAuthToken();
-        const response = await fetch(`/api/discovery/scan/${currentScan.scan_id}/add-device`, {
+        
+        // Use the most recent scan ID or the current scan ID
+        let scanId = currentScan?.scan_id;
+        
+        // If no current scan, get the most recent from history
+        if (!scanId) {
+            const historyResponse = await fetch('/api/discovery/history?limit=1', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (historyResponse.ok) {
+                const historyData = await historyResponse.json();
+                if (historyData.history && historyData.history.length > 0) {
+                    scanId = historyData.history[0].id;
+                }
+            }
+        }
+        
+        if (!scanId) {
+            throw new Error('No scan context available');
+        }
+        
+        const response = await fetch(`/api/discovery/scan/${scanId}/add-device`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -571,10 +625,23 @@ async function addDeviceToInventory(deviceIP) {
         
         // Update the device card to show it's been added
         updateDeviceCardStatus(deviceIP, 'added');
+        
+        // Update the device in our local storage
+        const deviceToUpdate = allDiscoveredDevices.get(deviceIP);
+        if (deviceToUpdate) {
+            deviceToUpdate.is_new = false;
+            allDiscoveredDevices.set(deviceIP, deviceToUpdate);
+        }
 
     } catch (error) {
         console.error('Error adding device to inventory:', error);
         showNotification(error.message, 'error');
+        
+        // Reset button state
+        if (addButton) {
+            addButton.disabled = false;
+            addButton.innerHTML = '<i class="fas fa-plus"></i> Add to Inventory';
+        }
     }
 }
 
@@ -590,8 +657,8 @@ function updateDeviceCardStatus(deviceIP, status) {
                 statusElement.className = 'device-status existing';
             }
             
-            // Disable the add button
-            const addButton = card.querySelector('button[onclick*="addDeviceToInventory"]');
+            // Update the add button
+            const addButton = card.querySelector(`#add-btn-${deviceIP.replace(/\./g, '-')}`);
             if (addButton) {
                 addButton.disabled = true;
                 addButton.innerHTML = '<i class="fas fa-check"></i> Added';
@@ -603,17 +670,17 @@ function updateDeviceCardStatus(deviceIP, status) {
 }
 
 // View scan results from history
-function viewScanResults(scanId) {
+async function viewScanResults(scanId) {
     console.log('View scan results for:', scanId);
     
     // Load results for this specific scan
-    loadScanResults(scanId);
+    await loadScanResults(scanId);
     
     // Switch to results tab
     switchTab('results');
 }
 
-// Tab switching function (called by inline onclick)
+// Tab switching function
 function switchTab(tabName) {
     // Update tab buttons
     document.querySelectorAll('.tab').forEach(tab => {
@@ -637,39 +704,15 @@ function switchTab(tabName) {
     }
     
     // Load data for specific tabs
-    if (tabName === 'results' && scanResults.length === 0) {
-        // Try to load most recent scan results
-        loadMostRecentScanResults();
+    if (tabName === 'results') {
+        // Display current results
+        displayScanResults();
     } else if (tabName === 'history') {
         loadScanHistory();
     }
 }
 
-// Load most recent scan results
-async function loadMostRecentScanResults() {
-    try {
-        const token = getAuthToken();
-        const response = await fetch('/api/discovery/history?limit=1', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-        const history = data.history || [];
-        
-        if (history.length > 0 && history[0].status === 'completed') {
-            loadScanResults(history[0].id);
-        }
-
-    } catch (error) {
-        console.error('Error loading recent scan results:', error);
-    }
-}
-
-// Protocol selection toggle (called by inline onclick)
+// Protocol selection toggle
 function toggleProtocol(card) {
     card.classList.toggle('selected');
     const checkbox = card.querySelector('input[type="checkbox"]');
@@ -830,13 +873,52 @@ if (!document.querySelector('#notification-styles')) {
     document.head.appendChild(style);
 }
 
-// Auto-refresh scan progress if there's an active scan
-setInterval(() => {
-    if (currentScan && progressInterval) {
-        // Progress is already being monitored
-        return;
+// WebSocket handlers for real-time updates
+function handleScanProgress(data) {
+    if (currentScan && data.scan_id === currentScan.scan_id) {
+        displayProgress({
+            progress: data.progress,
+            total_hosts: data.total_hosts,
+            scanned_hosts: data.scanned_hosts,
+            discovered_hosts: data.discovered_hosts,
+            elapsed_time: data.elapsed_time,
+            errors: []
+        });
     }
-    
-    // Check for any scans that might have been started in another session
-    checkActiveScans();
-}, 30000); // Check every 30 seconds
+}
+
+function handleDeviceFound(data) {
+    if (currentScan && data.scan_id === currentScan.scan_id) {
+        // Add device to our local collection
+        const device = {
+            ip_address: data.ip_address,
+            device_type: data.device_type,
+            protocol: data.protocol,
+            vendor: data.vendor,
+            is_new: true,
+            open_ports: [],
+            response_time: 'Real-time'
+        };
+        
+        allDiscoveredDevices.set(data.ip_address, device);
+        
+        // Show notification
+        showNotification(`Device found: ${data.ip_address}`, 'info');
+    }
+}
+
+function handleScanComplete(data) {
+    if (currentScan && data.scan_id === currentScan.scan_id) {
+        // Reload results to get complete data
+        loadScanResults(data.scan_id);
+    }
+}
+
+// Initialize WebSocket connection
+function initializeWebSocket() {
+    if (typeof wsClient !== 'undefined' && wsClient) {
+        wsClient.on('scan_progress', handleScanProgress);
+        wsClient.on('device_found', handleDeviceFound);
+        wsClient.on('scan_complete', handleScanComplete);
+    }
+}

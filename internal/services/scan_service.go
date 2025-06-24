@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"ics-asset-inventory/internal/database/models"
 	"ics-asset-inventory/internal/scanner"
 	"ics-asset-inventory/internal/utils"
+	"ics-asset-inventory/internal/websocket"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -103,6 +105,11 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	}
 	s.mu.RUnlock()
 
+	// Validate IP range
+	if err := s.ValidateIPRange(req.IPRange); err != nil {
+		return nil, err
+	}
+
 	// Create scan configuration
 	config := &scanner.ScanConfig{
 		IPRange:       req.IPRange,
@@ -126,10 +133,10 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 
 	// Create database record
 	scanDB := &models.NetworkScan{
-		ID:       uuid.New(),
-		ScanType: req.ScanType,
-		Target:   req.IPRange,
-		Status:   string(scanner.StatusPending),
+		ID:        uuid.New(),
+		ScanType:  req.ScanType,
+		Target:    req.IPRange,
+		Status:    string(scanner.StatusPending),
 		StartTime: time.Now(),
 	}
 
@@ -162,7 +169,7 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	// Start result processor in background
 	go s.processResults(activeScan)
 
-	// Start progress monitor
+	// Start progress monitor with WebSocket broadcasting
 	go s.monitorProgress(activeScan)
 
 	return &ScanResponse{
@@ -399,6 +406,15 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 		// Check if device already exists in inventory
 		s.checkExistingDevice(result)
 
+		// Send WebSocket notification for discovered device
+		websocket.BroadcastDeviceFound(
+			activeScan.ID,
+			result.IPAddress,
+			result.DeviceType,
+			result.Protocol,
+			result.Vendor,
+		)
+
 		// Log discovery
 		s.logger.Info("Device discovered",
 			"ip", result.IPAddress,
@@ -409,13 +425,29 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 
 // monitorProgress monitors scan progress and updates database
 func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
 			progress := activeScan.Scanner.GetProgress()
+			
+			// Calculate progress percentage
+			var progressPct float64
+			if progress.TotalHosts > 0 {
+				progressPct = float64(progress.ScannedHosts) / float64(progress.TotalHosts) * 100
+			}
+			
+			// Broadcast progress via WebSocket
+			websocket.BroadcastScanProgress(
+				activeScan.ID,
+				progressPct,
+				progress.TotalHosts,
+				progress.ScannedHosts,
+				progress.DiscoveredHosts,
+				progress.ElapsedTime.String(),
+			)
 			
 			// Update database
 			activeScan.ScanDB.Status = string(progress.Status)
@@ -426,7 +458,8 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 			   progress.Status == scanner.StatusCancelled {
 				
 				// Final update
-				activeScan.ScanDB.EndTime = &[]time.Time{time.Now()}[0]
+				endTime := time.Now()
+				activeScan.ScanDB.EndTime = &endTime
 				activeScan.ScanDB.Duration = int64(progress.ElapsedTime.Seconds())
 				
 				// Save results
@@ -440,6 +473,13 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 				}
 				
 				s.db.Save(activeScan.ScanDB)
+				
+				// Send completion notification
+				if progress.Status == scanner.StatusCompleted {
+					websocket.BroadcastScanComplete(activeScan.ID, progress.DiscoveredHosts)
+				} else if progress.Status == scanner.StatusFailed {
+					websocket.BroadcastScanError(activeScan.ID, activeScan.ScanDB.ErrorMsg)
+				}
 				
 				// Clear active scan
 				s.mu.Lock()
