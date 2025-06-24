@@ -1,3 +1,4 @@
+// cmd/server/main.go
 package main
 
 import (
@@ -14,6 +15,7 @@ import (
 	"ics-asset-inventory/internal/api/routes"
 	"ics-asset-inventory/internal/config"
 	"ics-asset-inventory/internal/database"
+	"ics-asset-inventory/internal/services"
 	"ics-asset-inventory/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +24,7 @@ import (
 
 // @title ICS Asset Inventory API
 // @version 1.0
-// @description A comprehensive asset inventory system for Industrial Control Systems (ICS/OT)
+// @description A comprehensive asset inventory system for Industrial Control Systems (ICS/OT) with real-time monitoring
 // @contact.name API Support
 // @contact.url https://github.com/your-org/ics-asset-inventory
 // @contact.email support@example.com
@@ -73,6 +75,19 @@ func main() {
 		logger.Fatal("Database connection test failed", "error", err)
 	}
 	logger.Info("✅ Database connection test passed")
+
+	// Initialize monitoring service
+	logger.Info("📡 Initializing monitoring service...")
+	monitoringService := services.NewMonitoringService()
+	go func() {
+		// Wait a bit for server to start
+		time.Sleep(5 * time.Second)
+		if err := monitoringService.StartMonitoring(); err != nil {
+			logger.Error("Failed to start monitoring service", "error", err)
+		} else {
+			logger.Info("✅ Monitoring service started successfully")
+		}
+	}()
 
 	// Set Gin mode
 	gin.SetMode(cfg.Server.Mode)
@@ -152,7 +167,7 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	groupHandler := handlers.NewGroupHandler()
 	dashboardHandler := handlers.NewDashboardHandler()
 	discoveryHandler := handlers.NewDiscoveryHandler()
-
+	monitoringHandler := handlers.NewMonitoringHandler()
 
 	// Setup all routes with authentication
 	routes.SetupAllRoutes(
@@ -162,6 +177,7 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 		groupHandler,
 		dashboardHandler,
 		discoveryHandler,
+		monitoringHandler,
 	)
 
 	return router

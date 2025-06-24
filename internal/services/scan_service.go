@@ -1,3 +1,4 @@
+// internal/services/scan_service.go
 package services
 
 import (
@@ -20,11 +21,12 @@ import (
 
 // ScanService manages network scanning operations
 type ScanService struct {
-	db          *gorm.DB
-	logger      *utils.Logger
-	activeScan  *ActiveScan
-	scanHistory map[string]*models.NetworkScan
-	mu          sync.RWMutex
+	db               *gorm.DB
+	logger           *utils.Logger
+	activeScan       *ActiveScan
+	scanHistory      map[string]*models.NetworkScan
+	completedResults map[string][]*scanner.DeviceResult // Store completed results
+	mu               sync.RWMutex
 }
 
 // ActiveScan represents a currently running scan
@@ -92,13 +94,14 @@ type DiscoveredDevice struct {
 // NewScanService creates a new scan service
 func NewScanService() *ScanService {
 	return &ScanService{
-		db:          database.GetDB(),
-		logger:      utils.NewLogger(),
-		scanHistory: make(map[string]*models.NetworkScan),
+		db:               database.GetDB(),
+		logger:           utils.NewLogger(),
+		scanHistory:      make(map[string]*models.NetworkScan),
+		completedResults: make(map[string][]*scanner.DeviceResult),
 	}
 }
 
-// StartScan initiates a new network scan - FIXED
+// StartScan initiates a new network scan - FIXED with better result handling
 func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	// Clear any previous active scan first
 	s.mu.Lock()
@@ -266,9 +269,18 @@ func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, err
 	}, nil
 }
 
-// GetScanResults returns discovered devices from a scan - FIXED
+// GetScanResults returns discovered devices from a scan - ENHANCED
 func (s *ScanService) GetScanResults(scanID string) ([]DiscoveredDevice, error) {
 	var results []DiscoveredDevice
+
+	// Check if we have results in memory (for recent scans)
+	s.mu.RLock()
+	if cachedResults, exists := s.completedResults[scanID]; exists {
+		s.mu.RUnlock()
+		s.logger.Info("Using cached results", "scan_id", scanID, "device_count", len(cachedResults))
+		return s.convertResultsToDevices(cachedResults, scanID), nil
+	}
+	s.mu.RUnlock()
 
 	// Load scan from database
 	var scanDB models.NetworkScan
@@ -284,28 +296,43 @@ func (s *ScanService) GetScanResults(scanID string) ([]DiscoveredDevice, error) 
 			return nil, fmt.Errorf("failed to parse scan results: %w", err)
 		}
 
-		s.logger.Info("Loaded scan results", "scan_id", scanID, "device_count", len(devices))
-
-		for _, device := range devices {
-			discoveredDevice := s.convertToDiscoveredDevice(device)
-			
-			// Check if device is already in inventory
-			var existingAsset models.Asset
-			err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
-			if err == nil {
-				discoveredDevice.InInventory = true
-				discoveredDevice.AssetID = existingAsset.ID.String()
-				discoveredDevice.IsNew = false
-			} else {
-				discoveredDevice.InInventory = false
-				discoveredDevice.IsNew = true
-			}
-			
-			results = append(results, discoveredDevice)
-		}
+		s.logger.Info("Loaded scan results from database", "scan_id", scanID, "device_count", len(devices))
+		
+		// Cache results for future requests
+		s.mu.Lock()
+		s.completedResults[scanID] = devices
+		s.mu.Unlock()
+		
+		return s.convertResultsToDevices(devices, scanID), nil
 	}
 
 	return results, nil
+}
+
+// convertResultsToDevices converts scanner results to UI devices
+func (s *ScanService) convertResultsToDevices(devices []*scanner.DeviceResult, scanID string) []DiscoveredDevice {
+	results := make([]DiscoveredDevice, 0, len(devices))
+	
+	for _, device := range devices {
+		discoveredDevice := s.convertToDiscoveredDevice(device)
+		discoveredDevice.ID = fmt.Sprintf("%s-%s", scanID, device.IPAddress) // Unique ID per scan
+		
+		// Check if device is already in inventory
+		var existingAsset models.Asset
+		err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
+		if err == nil {
+			discoveredDevice.InInventory = true
+			discoveredDevice.AssetID = existingAsset.ID.String()
+			discoveredDevice.IsNew = false
+		} else {
+			discoveredDevice.InInventory = false
+			discoveredDevice.IsNew = true
+		}
+		
+		results = append(results, discoveredDevice)
+	}
+	
+	return results
 }
 
 // GetScanHistory returns scan history
@@ -419,14 +446,26 @@ func (s *ScanService) AddDeviceToInventory(scanID string, deviceIP string) (*mod
 
 	s.logger.Info("Device added to inventory", "ip", deviceIP, "asset_id", asset.ID.String())
 
+	// Start monitoring for the new asset
+	monitoringService := NewMonitoringService()
+	monitoringService.StartAssetMonitoring(asset)
+
 	return asset, nil
 }
 
-// processResults processes scan results in the background - FIXED
+// processResults processes scan results in the background - ENHANCED
 func (s *ScanService) processResults(activeScan *ActiveScan) {
 	resultChan := activeScan.Scanner.GetResults()
+	processedIPs := make(map[string]bool) // Track processed IPs to avoid duplicates
 	
 	for result := range resultChan {
+		// Skip duplicate IPs
+		if processedIPs[result.IPAddress] {
+			s.logger.Debug("Skipping duplicate IP", "ip", result.IPAddress)
+			continue
+		}
+		processedIPs[result.IPAddress] = true
+		
 		activeScan.mu.Lock()
 		activeScan.Results = append(activeScan.Results, result)
 		currentResultCount := len(activeScan.Results)
@@ -452,9 +491,11 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 			"protocol", result.Protocol,
 			"result_count", currentResultCount)
 	}
+	
+	s.logger.Info("Result processing completed", "scan_id", activeScan.ID, "total_devices", len(processedIPs))
 }
 
-// monitorProgress monitors scan progress and updates database - FIXED
+// monitorProgress monitors scan progress and updates database - ENHANCED
 func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
@@ -495,15 +536,22 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 				
 				// Save results - IMPORTANT: Lock before accessing Results
 				activeScan.mu.Lock()
-				resultsJSON, err := json.Marshal(activeScan.Results)
+				// Remove duplicates before saving
+				uniqueResults := s.deduplicateResults(activeScan.Results)
+				resultsJSON, err := json.Marshal(uniqueResults)
 				if err != nil {
 					s.logger.Error("Failed to marshal scan results", "error", err)
 				} else {
 					activeScan.ScanDB.Results = string(resultsJSON)
 					s.logger.Info("Saving scan results", 
 						"scan_id", activeScan.ID, 
-						"device_count", len(activeScan.Results),
+						"device_count", len(uniqueResults),
 						"status", progress.Status)
+					
+					// Cache the results
+					s.mu.Lock()
+					s.completedResults[activeScan.ID] = uniqueResults
+					s.mu.Unlock()
 				}
 				activeScan.mu.Unlock()
 				
@@ -534,6 +582,9 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 				}
 				s.mu.Unlock()
 				
+				// Clean up old cached results (keep last 10 scans)
+				s.cleanupCachedResults()
+				
 				return
 			}
 			
@@ -541,6 +592,41 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 			if err := s.db.Save(activeScan.ScanDB).Error; err != nil {
 				s.logger.Error("Failed to update scan progress", "error", err)
 			}
+		}
+	}
+}
+
+// deduplicateResults removes duplicate devices from results
+func (s *ScanService) deduplicateResults(results []*scanner.DeviceResult) []*scanner.DeviceResult {
+	seen := make(map[string]bool)
+	unique := make([]*scanner.DeviceResult, 0)
+	
+	for _, result := range results {
+		if !seen[result.IPAddress] {
+			seen[result.IPAddress] = true
+			unique = append(unique, result)
+		}
+	}
+	
+	return unique
+}
+
+// cleanupCachedResults removes old cached results
+func (s *ScanService) cleanupCachedResults() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
+	// Keep only last 10 scan results in memory
+	if len(s.completedResults) > 10 {
+		// Get scan IDs sorted by time (newest first)
+		var scanIDs []string
+		for id := range s.completedResults {
+			scanIDs = append(scanIDs, id)
+		}
+		
+		// Remove oldest entries
+		for i := 10; i < len(scanIDs); i++ {
+			delete(s.completedResults, scanIDs[i])
 		}
 	}
 }
