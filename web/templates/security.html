@@ -631,6 +631,82 @@
             display: block;
         }
 
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            transition: opacity 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification-error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .notification-warning {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .notification-info {
+            border-left: 4px solid var(--info-color);
+        }
+
+        .notification i {
+            font-size: 20px;
+        }
+
+        .notification-success i { color: var(--success-color); }
+        .notification-error i { color: var(--danger-color); }
+        .notification-warning i { color: var(--warning-color); }
+        .notification-info i { color: var(--info-color); }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -1137,37 +1213,110 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
-        // Tab switching
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
+        // API Integration for Security Page
+        const SecurityAPI = {
+            // Run passive security assessment
+            runAssessment: async function(assetIds, checkTypes) {
+                try {
+                    const response = await fetch('/api/security/assessment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                        },
+                        body: JSON.stringify({
+                            asset_ids: assetIds,
+                            check_types: checkTypes,
+                            use_cache: true,
+                            generate_report: true
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error('Assessment failed');
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error running assessment:', error);
+                    throw error;
+                }
+            },
 
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(tabName + 'Tab').classList.add('active');
+            // Get vulnerabilities
+            getVulnerabilities: async function(filters = {}) {
+                const params = new URLSearchParams(filters);
+                const response = await fetch(`/api/security/vulnerabilities?${params}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    }
+                });
+                return await response.json();
+            },
 
-            // Initialize charts when switching to risk tab
-            if (tabName === 'risk' && !window.riskChartsInitialized) {
-                // Initialize risk charts here if needed
-                window.riskChartsInitialized = true;
+            // Update vulnerability status
+            updateVulnerabilityStatus: async function(vulnId, status, notes = '') {
+                const response = await fetch(`/api/security/vulnerabilities/${vulnId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    },
+                    body: JSON.stringify({ status, notes })
+                });
+                return await response.json();
+            },
+
+            // Get security dashboard
+            getDashboard: async function() {
+                const response = await fetch('/api/security/dashboard', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    }
+                });
+                return await response.json();
+            },
+
+            // Get compliance status
+            getCompliance: async function() {
+                const response = await fetch('/api/security/compliance', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    }
+                });
+                return await response.json();
+            },
+
+            // Get risk matrix
+            getRiskMatrix: async function() {
+                const response = await fetch('/api/security/risk-matrix', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    }
+                });
+                return await response.json();
             }
-        }
+        };
 
-        // Initialize charts
+        // Initialize page on load
         document.addEventListener('DOMContentLoaded', function() {
+            // Keep existing chart initialization
+            initializeCharts();
+            
+            // Initialize with real data
+            initializeSecurityPage();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        // Initialize charts (existing code)
+        function initializeCharts() {
             // Vulnerability Distribution Chart
             const vulnCtx = document.getElementById('vulnChart').getContext('2d');
-            const vulnChart = new Chart(vulnCtx, {
+            window.vulnChart = new Chart(vulnCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Critical', 'High', 'Medium', 'Low'],
                     datasets: [{
-                        data: [3, 12, 28, 45],
+                        data: [0, 0, 0, 0], // Will be updated with real data
                         backgroundColor: [
                             '#EF4444',
                             '#F59E0B',
@@ -1201,7 +1350,7 @@
 
             // Vulnerability Trend Chart
             const trendCtx = document.getElementById('trendChart').getContext('2d');
-            const trendChart = new Chart(trendCtx, {
+            window.trendChart = new Chart(trendCtx, {
                 type: 'line',
                 data: {
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -1244,43 +1393,427 @@
                     }
                 }
             });
+        }
 
-            // Load security data
-            loadSecurityData();
-        });
-
-        // Load security data from API
-        async function loadSecurityData() {
+        // Load real data
+        async function initializeSecurityPage() {
             try {
-                // Fetch security assessments
-                const response = await fetch('/api/dashboard/alerts');
-                const data = await response.json();
+                // Show loading state
+                showLoadingState();
                 
-                if (data.alerts) {
-                    // Update UI with real data
-                    console.log('Security alerts loaded:', data.alerts);
-                }
+                // Load dashboard data
+                const dashboard = await SecurityAPI.getDashboard();
+                updateSecurityOverview(dashboard);
+                
+                // Load vulnerabilities
+                const vulnData = await SecurityAPI.getVulnerabilities();
+                updateVulnerabilityTable(vulnData.vulnerabilities || []);
+                updateVulnerabilityCharts(vulnData.severity_distribution || []);
+                
+                // Load compliance
+                const compliance = await SecurityAPI.getCompliance();
+                updateComplianceCards(compliance.standards || []);
+                
+                // Load risk matrix
+                const riskData = await SecurityAPI.getRiskMatrix();
+                updateRiskMatrix(riskData);
+                
+                hideLoadingState();
+                
             } catch (error) {
-                console.error('Error loading security data:', error);
+                console.error('Error initializing security page:', error);
+                hideLoadingState();
+                showNotification('Failed to load security data', 'error');
             }
         }
 
-        // Risk cell click handler
-        document.querySelectorAll('.risk-cell').forEach(cell => {
-            cell.addEventListener('click', function() {
-                const risk = this.textContent;
-                console.log('Risk score clicked:', risk);
-                // TODO: Show assets with this risk score
-            });
-        });
+        // Update security overview cards
+        function updateSecurityOverview(dashboard) {
+            const vulns = dashboard.vulnerabilities || {};
+            
+            // Update critical vulnerabilities count
+            const criticalCard = document.querySelector('.security-card:nth-child(1) .security-value');
+            if (criticalCard) criticalCard.textContent = vulns.critical || 0;
+            
+            // Update high risk issues
+            const highCard = document.querySelector('.security-card:nth-child(2) .security-value');
+            if (highCard) highCard.textContent = vulns.high || 0;
+            
+            // Update medium risk issues
+            const mediumCard = document.querySelector('.security-card:nth-child(3) .security-value');
+            if (mediumCard) mediumCard.textContent = vulns.medium || 0;
+            
+            // Update security score
+            const scoreCard = document.querySelector('.security-card:nth-child(4) .security-value');
+            if (scoreCard) scoreCard.textContent = (dashboard.security_score || 0) + '%';
+        }
 
-        // Filter handlers
-        document.querySelectorAll('.filter-select').forEach(select => {
-            select.addEventListener('change', function() {
-                // TODO: Implement filtering
-                console.log('Filter changed:', this.value);
+        // Update vulnerability table
+        function updateVulnerabilityTable(vulnerabilities) {
+            const tbody = document.querySelector('.data-table tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            if (vulnerabilities.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-shield-alt" style="font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px; display: block;"></i>
+                            <p style="color: var(--text-secondary);">No vulnerabilities found. Run a security assessment to check for vulnerabilities.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            vulnerabilities.forEach(vuln => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${vuln.cve || 'N/A'}</td>
+                    <td>${vuln.title || vuln.description}</td>
+                    <td>${vuln.asset?.name || 'Unknown'}</td>
+                    <td><span class="severity-badge ${vuln.severity}">${vuln.severity.toUpperCase()}</span></td>
+                    <td><span class="cvss-score ${getCVSSClass(vuln.cvss)}">${vuln.cvss ? vuln.cvss.toFixed(1) : 'N/A'}</span></td>
+                    <td>
+                        <span class="status-badge ${vuln.status}">
+                            <i class="fas fa-${getStatusIcon(vuln.status)}"></i> 
+                            ${vuln.status.charAt(0).toUpperCase() + vuln.status.slice(1)}
+                        </span>
+                    </td>
+                    <td>${new Date(vuln.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" 
+                                onclick="viewVulnerability('${vuln.id}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
             });
-        });
-    </script>
+        }
+
+        // Update vulnerability charts
+        function updateVulnerabilityCharts(severityDistribution) {
+            if (!window.vulnChart) return;
+            
+            const counts = {
+                critical: 0,
+                high: 0,
+                medium: 0,
+                low: 0
+            };
+            
+            severityDistribution.forEach(item => {
+                if (counts.hasOwnProperty(item.severity)) {
+                    counts[item.severity] = item.count;
+                }
+            });
+            
+            window.vulnChart.data.datasets[0].data = [
+                counts.critical,
+                counts.high,
+                counts.medium,
+                counts.low
+            ];
+            window.vulnChart.update();
+        }
+
+        // Update compliance cards
+        function updateComplianceCards(standards) {
+            const complianceGrid = document.querySelector('.compliance-grid');
+            if (!complianceGrid) return;
+            
+            complianceGrid.innerHTML = '';
+            
+            standards.forEach(standard => {
+                const card = createComplianceCard(standard);
+                complianceGrid.appendChild(card);
+            });
+        }
+
+        // Create compliance card
+        function createComplianceCard(standard) {
+            const card = document.createElement('div');
+            card.className = 'compliance-card';
+            
+            const scoreClass = getScoreClass(standard.compliance_rate);
+            
+            card.innerHTML = `
+                <div class="compliance-header">
+                    <h3 class="compliance-title">${standard.name}</h3>
+                    <span class="compliance-score ${scoreClass}">${standard.compliance_rate.toFixed(1)}%</span>
+                </div>
+                <div class="compliance-progress">
+                    <div class="compliance-progress-bar ${scoreClass}" style="width: ${standard.compliance_rate}%;"></div>
+                </div>
+                <div class="compliance-items">
+                    ${createComplianceItems(standard.categories)}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="viewComplianceReport('${standard.name}')">
+                        <i class="fas fa-file-alt"></i> View Report
+                    </button>
+                    <button class="btn btn-primary" onclick="exportComplianceReport('${standard.name}')">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Update risk matrix
+        function updateRiskMatrix(riskData) {
+            if (!riskData) return;
+            
+            // Update summary counts
+            if (riskData.summary) {
+                // Could update UI elements showing risk counts
+                console.log('Risk summary:', riskData.summary);
+            }
+            
+            // Update risk table
+            if (riskData.assets_at_risk) {
+                updateRiskTable(riskData.assets_at_risk);
+            }
+        }
+
+        function updateRiskTable(assets) {
+            const tbody = document.querySelector('#riskTab .data-table tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            assets.forEach(asset => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${asset.risk || 'Unknown Risk'}</td>
+                    <td>${asset.asset_name || asset.asset || 'Unknown'}</td>
+                    <td>${asset.likelihood || 'Unknown'}</td>
+                    <td>${asset.impact || 'Unknown'}</td>
+                    <td><span class="severity-badge ${asset.risk_level}">${asset.risk_score || 0}</span></td>
+                    <td>${asset.mitigation || 'View mitigation plan'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Run security assessment
+        async function runSecurityAssessment() {
+            try {
+                // Show confirmation dialog
+                if (!confirm('Run passive security assessment on all assets? This will not interact with devices directly.')) {
+                    return;
+                }
+                
+                // Get all assets
+                const assetResponse = await fetch('/api/assets?limit=100', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    }
+                });
+                
+                if (!assetResponse.ok) throw new Error('Failed to fetch assets');
+                
+                const assetData = await assetResponse.json();
+                const assetIds = assetData.data.map(asset => asset.id);
+                
+                if (assetIds.length === 0) {
+                    showNotification('No assets found to assess', 'warning');
+                    return;
+                }
+                
+                // Show progress
+                showNotification('Running security assessment...', 'info');
+                
+                // Run assessment
+                const result = await SecurityAPI.runAssessment(
+                    assetIds,
+                    ['vulnerability', 'compliance', 'configuration']
+                );
+                
+                showNotification(
+                    `Assessment completed. ${result.assets_assessed} assets assessed.`,
+                    'success'
+                );
+                
+                // Reload data
+                await initializeSecurityPage();
+                
+            } catch (error) {
+                showNotification('Failed to run assessment: ' + error.message, 'error');
+            }
+        }
+
+        // Helper functions
+        function getCVSSClass(score) {
+            if (score >= 9.0) return 'critical';
+            if (score >= 7.0) return 'high';
+            if (score >= 4.0) return 'medium';
+            return 'low';
+        }
+
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'open': return 'circle';
+                case 'acknowledged': return 'exclamation-circle';
+                case 'resolved': return 'check-circle';
+                case 'false_positive': return 'times-circle';
+                default: return 'circle';
+            }
+        }
+
+        function getScoreClass(score) {
+            if (score >= 90) return 'good';
+            if (score >= 70) return 'warning';
+            return 'poor';
+        }
+
+        function createComplianceItems(categories) {
+            return Object.entries(categories).map(([key, value]) => {
+                const passed = value === 'pass';
+                return `
+                    <div class="compliance-item ${passed ? 'passed' : 'failed'}">
+                        <i class="fas fa-${passed ? 'check' : 'times'}-circle"></i>
+                        <span>${key.replace(/_/g, ' ')}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // View functions
+        function viewVulnerability(vulnId) {
+            // In production, this would open a detailed view
+            console.log('View vulnerability:', vulnId);
+            showNotification('Opening vulnerability details...', 'info');
+        }
+
+        function viewComplianceReport(standard) {
+            console.log('View compliance report:', standard);
+            showNotification('Generating compliance report...', 'info');
+        }
+
+        async function exportComplianceReport(standard) {
+            try {
+                const response = await fetch(`/api/security/report/export?format=pdf&standard=${encodeURIComponent(standard)}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    }
+                });
+                const data = await response.json();
+                showNotification('Report generated successfully', 'success');
+            } catch (error) {
+                showNotification('Failed to export report: ' + error.message, 'error');
+            }
+        }
+
+        // UI State functions
+        function showLoadingState() {
+            // Could show loading spinners on cards
+            console.log('Loading security data...');
+        }
+
+        function hideLoadingState() {
+            // Hide loading spinners
+            console.log('Loading complete');
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${getNotificationIcon(type)}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 'success': return 'check-circle';
+                case 'error': return 'exclamation-circle';
+                case 'warning': return 'exclamation-triangle';
+                default: return 'info-circle';
+            }
+        }
+
+        // Event listeners
+        function setupEventListeners() {
+            // Run Assessment button
+            const runBtn = document.querySelector('button[onclick*="Run Security Scan"]');
+            if (runBtn) {
+                runBtn.removeAttribute('onclick');
+                runBtn.addEventListener('click', runSecurityAssessment);
+            }
+            
+            // Tab switching (keep existing functionality)
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.textContent.trim().toLowerCase());
+                });
+            });
+            
+            // Filter dropdowns
+            document.querySelectorAll('.filter-select').forEach(select => {
+                select.addEventListener('change', async function() {
+                    const filters = {
+                        severity: document.querySelector('.filter-select[value*="critical"]')?.value,
+                        status: document.querySelector('.filter-select[value*="open"]')?.value,
+                        asset_type: document.querySelector('.filter-select[value*="plc"]')?.value
+                    };
+                    
+                    // Remove empty filters
+                    Object.keys(filters).forEach(key => {
+                        if (!filters[key] || filters[key] === '') delete filters[key];
+                    });
+                    
+                    const vulnData = await SecurityAPI.getVulnerabilities(filters);
+                    updateVulnerabilityTable(vulnData.vulnerabilities || []);
+                });
+            });
+            
+            // Search box
+            const searchInput = document.querySelector('.search-box input');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(async () => {
+                        const vulnData = await SecurityAPI.getVulnerabilities({ search: this.value });
+                        updateVulnerabilityTable(vulnData.vulnerabilities || []);
+                    }, 500);
+                });
+            }
+        }
+
+        // Tab switching (existing function)
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.textContent.toLowerCase().includes(tabName)) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const tabContent = document.getElementById(tabName + 'Tab');
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+        }
+        </script>
 </body>
 </html>

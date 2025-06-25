@@ -158,6 +158,7 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	dashboardHandler := handlers.NewDashboardHandler()
 	discoveryHandler := handlers.NewDiscoveryHandler()
 	monitoringHandler := handlers.NewMonitoringHandler()
+	securityHandler := handlers.NewSecurityHandler()
 
 	// Setup all routes with authentication
 	routes.SetupAllRoutes(
@@ -168,6 +169,7 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 		dashboardHandler,
 		discoveryHandler,
 		monitoringHandler,
+		securityHandler,
 	)
 
 	return router
