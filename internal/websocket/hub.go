@@ -9,10 +9,13 @@ import (
 
 // Message types for WebSocket communication
 const (
-	MessageTypeScanProgress = "scan_progress"
-	MessageTypeDeviceFound  = "device_found"
-	MessageTypeScanComplete = "scan_complete"
-	MessageTypeScanError    = "scan_error"
+	MessageTypeScanProgress        = "scan_progress"
+	MessageTypeDeviceFound         = "device_found"
+	MessageTypeScanComplete        = "scan_complete"
+	MessageTypeScanCompleteWithResults = "scan_complete_with_results"
+	MessageTypeScanError           = "scan_error"
+	MessageTypeAssetStatusUpdate   = "asset_status_update"
+	MessageTypeRealtimeMonitoring  = "realtime_monitoring"
 )
 
 // WebSocketMessage represents a message sent over WebSocket
@@ -208,4 +211,22 @@ func BroadcastScanError(scanID string, error string) {
 		"scan_id": scanID,
 		"error":   error,
 	})
+}
+
+// BroadcastAssetStatusUpdate sends asset status update notification
+func BroadcastAssetStatusUpdate(assetID string, ipAddress string, status string, lastSeen time.Time) {
+	hub := GetHub()
+	hub.BroadcastMessage(MessageTypeAssetStatusUpdate, map[string]interface{}{
+		"asset_id":    assetID,
+		"ip_address":  ipAddress,
+		"status":      status,
+		"last_seen":   lastSeen,
+		"timestamp":   time.Now(),
+	})
+}
+
+// BroadcastRealtimeMonitoring sends real-time monitoring data
+func BroadcastRealtimeMonitoring(data interface{}) {
+	hub := GetHub()
+	hub.BroadcastMessage(MessageTypeRealtimeMonitoring, data)
 }
