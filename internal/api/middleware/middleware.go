@@ -82,7 +82,7 @@ func RequestID() gin.HandlerFunc {
 	})
 }
 
-// AuthRequired middleware for protected routes
+// AuthRequired middleware for protected routes - FIXED
 func AuthRequired() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		// Try to get token from Authorization header first
@@ -104,11 +104,13 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		// Validate session
+		// Validate session - IMPORTANT: Don't invalidate on every check
 		session, err := auth.ValidateSession(token)
 		if err != nil {
-			// Clear invalid cookie if exists
-			c.SetCookie("auth_token", "", -1, "/", "", false, true)
+			// Only clear cookie if token is actually invalid
+			if err.Error() == "invalid session" || err.Error() == "session expired" {
+				c.SetCookie("auth_token", "", -1, "/", "", false, true)
+			}
 			
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": err.Error(),
@@ -116,6 +118,12 @@ func AuthRequired() gin.HandlerFunc {
 			})
 			c.Abort()
 			return
+		}
+
+		// Refresh session if it's getting close to expiry (within 1 hour)
+		if time.Until(session.ExpiresAt) < time.Hour {
+			// Extend session automatically
+			auth.RefreshSession(token, 24*time.Hour)
 		}
 
 		// Set user context
@@ -149,6 +157,13 @@ func AdminRequired() gin.HandlerFunc {
 func OptionalAuth() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		token := extractToken(c)
+		if token == "" {
+			// Try cookie as fallback
+			if cookieToken, err := c.Cookie("auth_token"); err == nil {
+				token = cookieToken
+			}
+		}
+		
 		if token != "" {
 			// Try to validate session, but don't fail if invalid
 			if session, err := auth.ValidateSession(token); err == nil {
@@ -242,9 +257,7 @@ func extractToken(c *gin.Context) string {
 	return bearerToken
 }
 
-// Add this function to middleware.go
-
-// WebAuthRequired middleware for web routes (redirects to login)
+// WebAuthRequired middleware for web routes (redirects to login) - FIXED
 func WebAuthRequired() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		// Check for token in cookie first (for web pages)
@@ -271,11 +284,13 @@ func WebAuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		// Validate session
+		// Validate session - IMPORTANT: Don't invalidate on every check
 		session, err := auth.ValidateSession(token)
 		if err != nil {
-			// Clear invalid cookie
-			c.SetCookie("auth_token", "", -1, "/", "", false, true)
+			// Only clear cookie if token is actually invalid
+			if err.Error() == "invalid session" || err.Error() == "session expired" {
+				c.SetCookie("auth_token", "", -1, "/", "", false, true)
+			}
 			
 			// For AJAX requests, return 401
 			if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
@@ -291,6 +306,23 @@ func WebAuthRequired() gin.HandlerFunc {
 			c.Redirect(http.StatusTemporaryRedirect, "/login")
 			c.Abort()
 			return
+		}
+
+		// Refresh session if it's getting close to expiry (within 1 hour)
+		if time.Until(session.ExpiresAt) < time.Hour {
+			// Extend session automatically
+			auth.RefreshSession(token, 24*time.Hour)
+			
+			// Update cookie with new expiration
+			c.SetCookie(
+				"auth_token",
+				token,
+				int((24 * time.Hour).Seconds()),
+				"/",
+				"",
+				false,
+				true,
+			)
 		}
 
 		// Set user context

@@ -36,7 +36,7 @@ func NewSecurityHandler() *SecurityHandler {
 	}
 }
 
-// RunSecurityAssessment performs passive security assessment
+// RunSecurityAssessment performs passive security assessment - FIXED
 // @Summary Run security assessment
 // @Description Perform passive security assessment on selected assets (SAFE for ICS)
 // @Tags security
@@ -84,13 +84,17 @@ func (h *SecurityHandler) RunSecurityAssessment(c *gin.Context) {
 		return
 	}
 	
+	// Return results in the expected format
 	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
 		"message": "Security assessment completed",
 		"mode": "passive",
-		"assets_assessed": len(results),
-		"results": results,
-		"timestamp": time.Now(),
-		"safe_mode": true, // Always true for ICS
+		"data": gin.H{
+			"assets_assessed": len(results),
+			"results": results,
+			"timestamp": time.Now(),
+			"safe_mode": true, // Always true for ICS
+		},
 	})
 }
 
@@ -153,10 +157,19 @@ func (h *SecurityHandler) GetVulnerabilities(c *gin.Context) {
 		Group("severity").
 		Scan(&severityCounts)
 	
+	// Build severity distribution
+	severityDistribution := []map[string]interface{}{}
+	for _, sc := range severityCounts {
+		severityDistribution = append(severityDistribution, map[string]interface{}{
+			"severity": sc.Severity,
+			"count":    sc.Count,
+		})
+	}
+	
 	c.JSON(http.StatusOK, gin.H{
 		"vulnerabilities": vulnerabilities,
 		"count": len(vulnerabilities),
-		"severity_distribution": severityCounts,
+		"severity_distribution": severityDistribution,
 	})
 }
 
@@ -259,53 +272,53 @@ func (h *SecurityHandler) GetComplianceStatus(c *gin.Context) {
 	// This is a simplified implementation
 	// In production, this would aggregate compliance check results
 	
-	compliance := map[string]interface{}{
-		"standards": []map[string]interface{}{
-			{
-				"name": "IEC 62443",
-				"compliance_rate": 78.5,
-				"last_assessed": time.Now().Add(-24 * time.Hour),
-				"categories": map[string]string{
-					"FR1_IAC": "pass",
-					"FR2_UC": "pass",
-					"FR3_SI": "fail",
-					"FR4_DC": "pass",
-					"FR5_RDF": "not_assessed",
-					"FR6_TRE": "pass",
-					"FR7_RA": "fail",
-				},
-			},
-			{
-				"name": "NIST Cybersecurity Framework",
-				"compliance_rate": 92.0,
-				"last_assessed": time.Now().Add(-48 * time.Hour),
-				"categories": map[string]string{
-					"Identify": "pass",
-					"Protect": "pass",
-					"Detect": "pass",
-					"Respond": "pass",
-					"Recover": "fail",
-				},
-			},
-			{
-				"name": "Corporate Security Policy",
-				"compliance_rate": 65.0,
-				"last_assessed": time.Now().Add(-72 * time.Hour),
-				"categories": map[string]string{
-					"Password Policy": "pass",
-					"Encryption Standards": "fail",
-					"Backup Procedures": "fail",
-					"Incident Response": "pass",
-					"Security Training": "fail",
-				},
+	standards := []map[string]interface{}{
+		{
+			"name": "IEC 62443",
+			"compliance_rate": 78.5,
+			"last_assessed": time.Now().Add(-24 * time.Hour),
+			"categories": map[string]string{
+				"FR1_IAC": "pass",
+				"FR2_UC": "pass",
+				"FR3_SI": "fail",
+				"FR4_DC": "pass",
+				"FR5_RDF": "not_assessed",
+				"FR6_TRE": "pass",
+				"FR7_RA": "fail",
 			},
 		},
+		{
+			"name": "NIST Cybersecurity Framework",
+			"compliance_rate": 92.0,
+			"last_assessed": time.Now().Add(-48 * time.Hour),
+			"categories": map[string]string{
+				"Identify": "pass",
+				"Protect": "pass",
+				"Detect": "pass",
+				"Respond": "pass",
+				"Recover": "fail",
+			},
+		},
+		{
+			"name": "Corporate Security Policy",
+			"compliance_rate": 65.0,
+			"last_assessed": time.Now().Add(-72 * time.Hour),
+			"categories": map[string]string{
+				"Password Policy": "pass",
+				"Encryption Standards": "fail",
+				"Backup Procedures": "fail",
+				"Incident Response": "pass",
+				"Security Training": "fail",
+			},
+		},
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"standards": standards,
 		"overall_compliance": 78.5,
 		"trend": "improving",
 		"next_assessment": time.Now().Add(7 * 24 * time.Hour),
-	}
-	
-	c.JSON(http.StatusOK, compliance)
+	})
 }
 
 // GetRiskMatrix returns risk assessment matrix
