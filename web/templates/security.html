@@ -219,7 +219,7 @@
             color: var(--text-secondary);
         }
 
-        /* Vulnerability Chart Section */
+        /* Chart Section */
         .chart-section {
             background-color: var(--bg-secondary);
             border-radius: var(--radius-lg);
@@ -277,6 +277,15 @@
         .btn-secondary:hover {
             background-color: var(--bg-tertiary);
             color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #DC2626;
         }
 
         /* Vulnerabilities Table */
@@ -428,6 +437,11 @@
         .status-badge.resolved {
             background-color: #D1FAE5;
             color: #065F46;
+        }
+
+        .status-badge.false_positive {
+            background-color: #E0E7FF;
+            color: #3730A3;
         }
 
         /* Compliance Section */
@@ -636,6 +650,234 @@
             display: block;
         }
 
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Vulnerability Details */
+        .vuln-details {
+            display: grid;
+            gap: 20px;
+        }
+
+        .vuln-detail-section {
+            padding: 16px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+
+        .vuln-detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .vuln-detail-value {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .vuln-references {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vuln-reference {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .vuln-reference:hover {
+            text-decoration: underline;
+        }
+
+        /* Asset Selection */
+        .asset-selection {
+            display: grid;
+            gap: 16px;
+        }
+
+        .asset-select-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-select-info {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .asset-select-filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .asset-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        .asset-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .asset-item:last-child {
+            border-bottom: none;
+        }
+
+        .asset-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .asset-checkbox {
+            margin-right: 12px;
+        }
+
+        .asset-info {
+            flex: 1;
+        }
+
+        .asset-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .asset-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .asset-criticality {
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .asset-criticality.critical {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .asset-criticality.high {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .asset-criticality.medium {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .asset-criticality.low {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        /* Progress Bar */
+        .assessment-progress {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 999px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Notification */
         .notification {
             position: fixed;
             top: 20px;
@@ -724,51 +966,61 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Session Warning Modal */
-        .session-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            justify-content: center;
+        /* Risk Table */
+        .risk-item-header {
+            display: flex;
             align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
         }
 
-        .session-modal-content {
-            background: white;
-            padding: 32px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            max-width: 400px;
+        .risk-score-badge {
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .risk-score-badge.critical {
+            background-color: var(--danger-color);
+        }
+
+        .risk-score-badge.high {
+            background-color: var(--warning-color);
+        }
+
+        .risk-score-badge.medium {
+            background-color: var(--info-color);
+        }
+
+        .risk-score-badge.low {
+            background-color: var(--success-color);
+        }
+
+        /* Empty State */
+        .empty-state {
             text-align: center;
+            padding: 60px 20px;
         }
 
-        .session-modal-icon {
-            font-size: 48px;
-            color: var(--warning-color);
-            margin-bottom: 16px;
+        .empty-state-icon {
+            font-size: 64px;
+            color: var(--text-tertiary);
+            margin-bottom: 20px;
         }
 
-        .session-modal-title {
+        .empty-state-title {
             font-size: 20px;
             font-weight: 600;
-            margin-bottom: 12px;
             color: var(--text-primary);
+            margin-bottom: 12px;
         }
 
-        .session-modal-text {
+        .empty-state-text {
+            font-size: 16px;
             color: var(--text-secondary);
             margin-bottom: 24px;
-        }
-
-        .session-modal-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
         }
 
         /* Responsive */
@@ -861,7 +1113,7 @@
             <header class="topbar">
                 <div class="page-header">
                     <h1 class="page-title">Security Assessment</h1>
-                    <p class="page-subtitle">Monitor vulnerabilities, compliance status, and security risks across your ICS infrastructure</p>
+                    <p class="page-subtitle">Passive security monitoring and vulnerability assessment for OT/ICS environments</p>
                 </div>
             </header>
 
@@ -873,28 +1125,28 @@
                         <div class="security-icon critical">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <div class="security-value">3</div>
+                        <div class="security-value" id="criticalCount">0</div>
                         <div class="security-label">Critical Vulnerabilities</div>
                     </div>
                     <div class="security-card">
                         <div class="security-icon high">
                             <i class="fas fa-exclamation-circle"></i>
                         </div>
-                        <div class="security-value">12</div>
+                        <div class="security-value" id="highCount">0</div>
                         <div class="security-label">High Risk Issues</div>
                     </div>
                     <div class="security-card">
                         <div class="security-icon medium">
                             <i class="fas fa-info-circle"></i>
                         </div>
-                        <div class="security-value">28</div>
+                        <div class="security-value" id="mediumCount">0</div>
                         <div class="security-label">Medium Risk Issues</div>
                     </div>
                     <div class="security-card">
                         <div class="security-icon low">
                             <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="security-value">89%</div>
+                        <div class="security-value" id="securityScore">100%</div>
                         <div class="security-label">Overall Security Score</div>
                     </div>
                 </div>
@@ -918,9 +1170,14 @@
                     <div class="chart-section">
                         <div class="section-header">
                             <h2 class="section-title">Vulnerability Distribution</h2>
-                            <button class="btn btn-primary" id="runSecurityScanBtn">
-                                <i class="fas fa-sync"></i> Run Security Scan
-                            </button>
+                            <div>
+                                <button class="btn btn-secondary" id="loadCVEBtn">
+                                    <i class="fas fa-database"></i> Load CVE Database
+                                </button>
+                                <button class="btn btn-primary" id="runSecurityScanBtn">
+                                    <i class="fas fa-sync"></i> Run Passive Assessment
+                                </button>
+                            </div>
                         </div>
                         <div class="chart-grid">
                             <div class="chart-container">
@@ -944,16 +1201,17 @@
                             </select>
                             <select class="filter-select" id="assetTypeFilter">
                                 <option value="">All Assets</option>
-                                <option value="plc">PLCs</option>
-                                <option value="hmi">HMIs</option>
-                                <option value="rtu">RTUs</option>
-                                <option value="server">Servers</option>
+                                <option value="PLC">PLCs</option>
+                                <option value="HMI">HMIs</option>
+                                <option value="RTU">RTUs</option>
+                                <option value="Server">Servers</option>
                             </select>
                             <select class="filter-select" id="statusFilter">
                                 <option value="">All Status</option>
                                 <option value="open">Open</option>
                                 <option value="acknowledged">Acknowledged</option>
                                 <option value="resolved">Resolved</option>
+                                <option value="false_positive">False Positive</option>
                             </select>
                             <div class="search-box">
                                 <i class="fas fa-search"></i>
@@ -974,7 +1232,17 @@
                                 </tr>
                             </thead>
                             <tbody id="vulnerabilityTableBody">
-                                <!-- Will be populated by JavaScript -->
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 40px;">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">
+                                                <i class="fas fa-shield-alt"></i>
+                                            </div>
+                                            <div class="empty-state-title">No Vulnerabilities Found</div>
+                                            <div class="empty-state-text">Run a passive security assessment to check for vulnerabilities</div>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -999,32 +1267,8 @@
                         
                         <div style="text-align: center; margin-bottom: 20px;">
                             <p style="color: var(--text-secondary); margin-bottom: 20px;">Risk = Likelihood × Impact</p>
-                            <div class="risk-matrix">
-                                <div class="risk-cell critical">5</div>
-                                <div class="risk-cell critical">10</div>
-                                <div class="risk-cell critical">15</div>
-                                <div class="risk-cell critical">20</div>
-                                <div class="risk-cell critical">25</div>
-                                <div class="risk-cell high">4</div>
-                                <div class="risk-cell high">8</div>
-                                <div class="risk-cell high">12</div>
-                                <div class="risk-cell critical">16</div>
-                                <div class="risk-cell critical">20</div>
-                                <div class="risk-cell medium">3</div>
-                                <div class="risk-cell medium">6</div>
-                                <div class="risk-cell high">9</div>
-                                <div class="risk-cell high">12</div>
-                                <div class="risk-cell critical">15</div>
-                                <div class="risk-cell low">2</div>
-                                <div class="risk-cell medium">4</div>
-                                <div class="risk-cell medium">6</div>
-                                <div class="risk-cell high">8</div>
-                                <div class="risk-cell high">10</div>
-                                <div class="risk-cell low">1</div>
-                                <div class="risk-cell low">2</div>
-                                <div class="risk-cell medium">3</div>
-                                <div class="risk-cell medium">4</div>
-                                <div class="risk-cell medium">5</div>
+                            <div class="risk-matrix" id="riskMatrix">
+                                <!-- Will be populated by JavaScript -->
                             </div>
                             <div class="risk-labels">
                                 <span>Very Low</span>
@@ -1041,7 +1285,7 @@
                     <div class="chart-section">
                         <div class="section-header">
                             <h2 class="section-title">Top Security Risks</h2>
-                            <button class="btn btn-primary">
+                            <button class="btn btn-primary" onclick="generateRiskReport()">
                                 <i class="fas fa-file-export"></i> Generate Risk Report
                             </button>
                         </div>
@@ -1049,8 +1293,9 @@
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Risk</th>
                                         <th>Asset</th>
+                                        <th>Type</th>
+                                        <th>Vulnerabilities</th>
                                         <th>Likelihood</th>
                                         <th>Impact</th>
                                         <th>Risk Score</th>
@@ -1058,7 +1303,11 @@
                                     </tr>
                                 </thead>
                                 <tbody id="riskTableBody">
-                                    <!-- Will be populated by JavaScript -->
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; padding: 40px;">
+                                            <p style="color: var(--text-secondary);">No risk analysis available. Run a security assessment first.</p>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1068,247 +1317,156 @@
         </main>
     </div>
 
-    <!-- Session Warning Modal -->
-    <div class="session-modal" id="sessionModal">
-        <div class="session-modal-content">
-            <div class="session-modal-icon">
-                <i class="fas fa-exclamation-triangle"></i>
+    <!-- Vulnerability Details Modal -->
+    <div class="modal" id="vulnModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Vulnerability Details</h2>
+                <button class="modal-close" onclick="closeVulnModal()">&times;</button>
             </div>
-            <h3 class="session-modal-title">Session Warning</h3>
-            <p class="session-modal-text">Your session has expired or is invalid. Would you like to continue working?</p>
-            <div class="session-modal-buttons">
-                <button class="btn btn-secondary" onclick="continueWithoutAuth()">Continue Without Auth</button>
-                <button class="btn btn-primary" onclick="redirectToLogin()">Go to Login</button>
+            <div class="modal-body" id="vulnModalBody">
+                <!-- Will be populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeVulnModal()">Close</button>
+                <button class="btn btn-primary" id="updateVulnStatusBtn">Update Status</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Selection Modal -->
+    <div class="modal" id="assetSelectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Select Assets for Assessment</h2>
+                <button class="modal-close" onclick="closeAssetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="asset-selection">
+                    <div class="asset-select-header">
+                        <div class="asset-select-info">
+                            <span id="selectedAssetCount">0</span> assets selected
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="selectAllAssets()">Select All</button>
+                            <button class="btn btn-secondary" onclick="deselectAllAssets()">Deselect All</button>
+                        </div>
+                    </div>
+                    <div class="asset-select-filters">
+                        <select class="filter-select" id="assetModalTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="PLC">PLCs</option>
+                            <option value="HMI">HMIs</option>
+                            <option value="RTU">RTUs</option>
+                            <option value="Server">Servers</option>
+                        </select>
+                        <select class="filter-select" id="assetModalCriticalityFilter">
+                            <option value="">All Criticality</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="asset-list" id="assetList">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                    <div class="assessment-progress" id="assessmentProgress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Assessing assets...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAssetModal()">Cancel</button>
+                <button class="btn btn-primary" id="runAssessmentBtn" onclick="runSelectedAssessment()">
+                    Run Assessment
+                </button>
             </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
+        // Enhanced Security Page JavaScript
+        
         // Global variables
-        let apiIntervals = [];
-        let activeCharts = [];
-        let cleanupFunctions = [];
-        let isRunningAssessment = false;
-        let sessionValid = true;
-        let retryAttempts = 0;
-        const MAX_RETRY_ATTEMPTS = 3;
-
-        // Enhanced API with better error handling
-        const SecurityAPI = {
-            // Helper to get auth token - FIXED to match assets.html
-            getAuthToken: function() {
-                // Try localStorage first (key should be 'token' not 'auth_token')
-                let token = localStorage.getItem('token');
-                if (token) return token;
-                
-                // Fallback to cookie
-                return getCookie('auth_token');
-            },
-
-            // Check if we have a token
-            hasAuthToken: function() {
-                return !!this.getAuthToken();
-            },
-
-            // Enhanced error handler that doesn't logout
-            handleApiError: async function(error, response) {
-                console.error('API Error:', error);
-                
-                if (response) {
-                    const responseData = await response.json().catch(() => ({}));
-                    
-                    if (response.status === 401) {
-                        const errorCode = responseData.code || '';
-                        
-                        // Don't logout immediately
-                        if (errorCode === 'SESSION_EXPIRED' || errorCode === 'INVALID_SESSION') {
-                            console.warn('Session issue detected, but not logging out');
-                            sessionValid = false;
-                            
-                            // Show session modal instead of logging out
-                            if (retryAttempts < MAX_RETRY_ATTEMPTS) {
-                                retryAttempts++;
-                                showSessionWarning();
-                            }
-                            
-                            return { error: 'session_issue', data: null };
-                        }
-                    }
-                    
-                    // For other errors, just return error data
-                    return { error: responseData.error || 'Unknown error', data: null };
-                }
-                
-                return { error: error.message, data: null };
-            },
-
-            // Safe API call wrapper
-            safeApiCall: async function(url, options = {}) {
-                try {
-                    // Always add auth header
-                    const token = this.getAuthToken();
-                    if (!options.headers) {
-                        options.headers = {};
-                    }
-                    
-                    if (token) {
-                        options.headers['Authorization'] = 'Bearer ' + token;
-                    }
-                    
-                    // Add default headers
-                    if (!options.headers['Content-Type'] && (options.method === 'POST' || options.method === 'PUT')) {
-                        options.headers['Content-Type'] = 'application/json';
-                    }
-                    
-                    const response = await fetch(url, options);
-                    
-                    if (!response.ok) {
-                        // Handle 401 specially
-                        if (response.status === 401) {
-                            // Check if we're already showing session modal
-                            if (!document.getElementById('sessionModal').style.display || 
-                                document.getElementById('sessionModal').style.display === 'none') {
-                                // Only redirect if not in modal
-                                window.location.href = '/login';
-                            }
-                            return { error: 'session_issue', data: null };
-                        }
-                        
-                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                        return { error: errorData.error || `HTTP ${response.status}`, data: null };
-                    }
-                    
-                    const data = await response.json();
-                    return { error: null, data };
-                    
-                } catch (error) {
-                    console.error('API call failed:', error);
-                    return { error: error.message, data: null };
-                }
-            },
-
-            // Run assessment with better error handling
-            runAssessment: async function(assetIds, checkTypes) {
-                return await this.safeApiCall('/api/security/assessment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        asset_ids: assetIds,
-                        check_types: checkTypes,
-                        use_cache: true,
-                        generate_report: true
-                    })
-                });
-            },
-
-            // Get vulnerabilities
-            getVulnerabilities: async function(filters = {}) {
-                const params = new URLSearchParams(filters);
-                return await this.safeApiCall(`/api/security/vulnerabilities?${params}`);
-            },
-
-            // Get dashboard
-            getDashboard: async function() {
-                return await this.safeApiCall('/api/security/dashboard');
-            },
-
-            // Get compliance
-            getCompliance: async function() {
-                return await this.safeApiCall('/api/security/compliance');
-            },
-
-            // Get risk matrix
-            getRiskMatrix: async function() {
-                return await this.safeApiCall('/api/security/risk-matrix');
-            }
-        };
-
-        // Session handling functions
-        function showSessionWarning() {
-            const modal = document.getElementById('sessionModal');
-            if (modal) {
-                modal.style.display = 'flex';
-            }
-        }
-
-        function hideSessionWarning() {
-            const modal = document.getElementById('sessionModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        function continueWithoutAuth() {
-            hideSessionWarning();
-            sessionValid = false;
-            showNotification('Continuing in read-only mode. Some features may be limited.', 'warning');
-        }
-
-        function redirectToLogin() {
-            window.location.href = '/login';
-        }
-
+        let vulnerabilities = [];
+        let selectedAssets = new Set();
+        let isAssessing = false;
+        let currentVuln = null;
+        let assets = [];
+        let cveDatabase = [];
+        
+        // Chart instances
+        let vulnChart = null;
+        let trendChart = null;
+        
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Security page loading...');
+            console.log('Security page loaded');
             
-            // Initialize charts first
+            // Initialize charts
             initializeCharts();
             
-            // Load data - no need to check auth here, API will handle it
+            // Load initial data
             loadSecurityData();
             
-            // Set up event listeners
+            // Setup event listeners
             setupEventListeners();
             
-            // Cleanup on page unload
-            window.addEventListener('beforeunload', cleanupSecurityPage);
+            // Initialize risk matrix
+            initializeRiskMatrix();
         });
-
-        // Helper function to get cookie value
+        
+        // API helper
+        async function apiCall(url, options = {}) {
+            const token = localStorage.getItem('token') || getCookie('auth_token');
+            
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            };
+            
+            try {
+                const response = await fetch(url, { ...defaultOptions, ...options });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return null;
+                    }
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`API error: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', url, data); // Debug logging
+                return data;
+            } catch (error) {
+                console.error('API Call Error:', error);
+                throw error;
+            }
+        }
+        
+        // Get cookie helper
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
             return null;
         }
-
-        // Load security data with better error handling
-        async function loadSecurityData() {
-            console.log('Loading security data...');
-            
-            // Load dashboard
-            const dashboardResult = await SecurityAPI.getDashboard();
-            if (!dashboardResult.error && dashboardResult.data) {
-                updateSecurityOverview(dashboardResult.data);
-            }
-            
-            // Load vulnerabilities
-            const vulnResult = await SecurityAPI.getVulnerabilities();
-            if (!vulnResult.error && vulnResult.data) {
-                updateVulnerabilityTable(vulnResult.data.vulnerabilities || []);
-                updateVulnerabilityCharts(vulnResult.data.severity_distribution || []);
-            }
-            
-            // Load compliance
-            const complianceResult = await SecurityAPI.getCompliance();
-            if (!complianceResult.error && complianceResult.data) {
-                updateComplianceCards(complianceResult.data.standards || []);
-            }
-            
-            // Load risk matrix
-            const riskResult = await SecurityAPI.getRiskMatrix();
-            if (!riskResult.error && riskResult.data) {
-                updateRiskMatrix(riskResult.data);
-            }
-        }
-
+        
         // Initialize charts
         function initializeCharts() {
             // Vulnerability Distribution Chart
             const vulnCtx = document.getElementById('vulnChart').getContext('2d');
-            const vulnChart = new Chart(vulnCtx, {
+            vulnChart = new Chart(vulnCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Critical', 'High', 'Medium', 'Low'],
@@ -1345,32 +1503,35 @@
                 }
             });
             
-            window.vulnChart = vulnChart;
-            activeCharts.push(vulnChart);
-
             // Vulnerability Trend Chart
             const trendCtx = document.getElementById('trendChart').getContext('2d');
-            const trendChart = new Chart(trendCtx, {
+            trendChart = new Chart(trendCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    labels: getLast7Days(),
                     datasets: [{
                         label: 'Critical',
-                        data: [5, 4, 6, 3, 2, 3],
+                        data: [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#EF4444',
                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
                         tension: 0.4
                     }, {
                         label: 'High',
-                        data: [15, 18, 14, 16, 13, 12],
+                        data: [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#F59E0B',
                         backgroundColor: 'rgba(245, 158, 11, 0.1)',
                         tension: 0.4
                     }, {
                         label: 'Medium',
-                        data: [32, 35, 30, 33, 29, 28],
+                        data: [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#3B82F6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Low',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         tension: 0.4
                     }]
                 },
@@ -1380,7 +1541,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Vulnerability Trends',
+                            text: 'Vulnerability Trends (Last 7 Days)',
                             font: {
                                 size: 16
                             }
@@ -1388,73 +1549,128 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
                         }
                     }
                 }
             });
-            
-            window.trendChart = trendChart;
-            activeCharts.push(trendChart);
         }
-
-        // Update functions
-        function updateSecurityOverview(dashboard) {
-            const vulns = dashboard.vulnerabilities || {};
-            
-            document.querySelector('.security-card:nth-child(1) .security-value').textContent = vulns.critical || 0;
-            document.querySelector('.security-card:nth-child(2) .security-value').textContent = vulns.high || 0;
-            document.querySelector('.security-card:nth-child(3) .security-value').textContent = vulns.medium || 0;
-            document.querySelector('.security-card:nth-child(4) .security-value').textContent = (dashboard.security_score || 0) + '%';
+        
+        // Get last 7 days labels
+        function getLast7Days() {
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                days.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            }
+            return days;
         }
-
-        function updateVulnerabilityTable(vulnerabilities) {
+        
+        // Load security data
+        async function loadSecurityData() {
+            try {
+                // Load dashboard data
+                const dashboard = await apiCall('/api/security/dashboard');
+                if (dashboard) {
+                    updateDashboard(dashboard);
+                }
+                
+                // Load vulnerabilities
+                const vulnData = await apiCall('/api/security/vulnerabilities');
+                if (vulnData) {
+                    vulnerabilities = vulnData.vulnerabilities || [];
+                    updateVulnerabilityTable(vulnerabilities);
+                    updateVulnerabilityChart(vulnData.severity_distribution || []);
+                }
+                
+                // Load compliance data
+                const compliance = await apiCall('/api/security/compliance');
+                if (compliance) {
+                    updateComplianceSection(compliance);
+                }
+                
+                // Load risk matrix
+                const riskData = await apiCall('/api/security/risk-matrix');
+                if (riskData) {
+                    updateRiskMatrix(riskData);
+                }
+                
+            } catch (error) {
+                console.error('Error loading security data:', error);
+                showNotification('Failed to load security data', 'error');
+            }
+        }
+        
+        // Update dashboard
+        function updateDashboard(data) {
+            const vulns = data.vulnerabilities || {};
+            
+            document.getElementById('criticalCount').textContent = vulns.critical || 0;
+            document.getElementById('highCount').textContent = vulns.high || 0;
+            document.getElementById('mediumCount').textContent = vulns.medium || 0;
+            document.getElementById('securityScore').textContent = (data.security_score || 100) + '%';
+        }
+        
+        // Update vulnerability table
+        function updateVulnerabilityTable(vulns) {
             const tbody = document.getElementById('vulnerabilityTableBody');
-            if (!tbody) return;
-            
             tbody.innerHTML = '';
             
-            if (vulnerabilities.length === 0) {
+            if (vulns.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="8" style="text-align: center; padding: 40px;">
-                            <i class="fas fa-shield-alt" style="font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px; display: block;"></i>
-                            <p style="color: var(--text-secondary);">No vulnerabilities found. Run a security assessment to check for vulnerabilities.</p>
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="empty-state-title">No Vulnerabilities Found</div>
+                                <div class="empty-state-text">Run a passive security assessment to check for vulnerabilities</div>
+                            </div>
                         </td>
                     </tr>
                 `;
                 return;
             }
             
-            vulnerabilities.forEach(vuln => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${vuln.cve || 'N/A'}</td>
-                    <td>${vuln.title || vuln.description}</td>
-                    <td>${vuln.asset?.name || 'Unknown'}</td>
-                    <td><span class="severity-badge ${vuln.severity}">${vuln.severity.toUpperCase()}</span></td>
-                    <td><span class="cvss-score ${getCVSSClass(vuln.cvss)}">${vuln.cvss ? vuln.cvss.toFixed(1) : 'N/A'}</span></td>
-                    <td>
-                        <span class="status-badge ${vuln.status}">
-                            <i class="fas fa-${getStatusIcon(vuln.status)}"></i> 
-                            ${vuln.status.charAt(0).toUpperCase() + vuln.status.slice(1)}
-                        </span>
-                    </td>
-                    <td>${new Date(vuln.created_at).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" 
-                                onclick="viewVulnerability('${vuln.id}')">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </td>
-                `;
+            vulns.forEach(vuln => {
+                const row = createVulnerabilityRow(vuln);
                 tbody.appendChild(row);
             });
         }
-
-        function updateVulnerabilityCharts(severityDistribution) {
-            if (!window.vulnChart) return;
-            
+        
+        // Create vulnerability row
+        function createVulnerabilityRow(vuln) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${vuln.cve || 'N/A'}</td>
+                <td>${vuln.title || vuln.description || 'No description'}</td>
+                <td>${vuln.asset ? vuln.asset.name : 'Unknown'}</td>
+                <td><span class="severity-badge ${vuln.severity}">${vuln.severity.toUpperCase()}</span></td>
+                <td><span class="cvss-score ${getCVSSClass(vuln.cvss_score)}">${vuln.cvss_score ? vuln.cvss_score.toFixed(1) : 'N/A'}</span></td>
+                <td>
+                    <span class="status-badge ${vuln.status}">
+                        <i class="fas fa-${getStatusIcon(vuln.status)}"></i> 
+                        ${formatStatus(vuln.status)}
+                    </span>
+                </td>
+                <td>${formatDate(vuln.created_at)}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" 
+                            onclick="viewVulnerability('${vuln.id}')">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                </td>
+            `;
+            return row;
+        }
+        
+        // Update vulnerability chart
+        function updateVulnerabilityChart(distribution) {
             const counts = {
                 critical: 0,
                 high: 0,
@@ -1462,38 +1678,40 @@
                 low: 0
             };
             
-            severityDistribution.forEach(item => {
+            distribution.forEach(item => {
                 if (counts.hasOwnProperty(item.severity)) {
                     counts[item.severity] = item.count;
                 }
             });
             
-            window.vulnChart.data.datasets[0].data = [
+            vulnChart.data.datasets[0].data = [
                 counts.critical,
                 counts.high,
                 counts.medium,
                 counts.low
             ];
-            window.vulnChart.update();
+            vulnChart.update();
         }
-
-        function updateComplianceCards(standards) {
-            const complianceGrid = document.getElementById('complianceGrid');
-            if (!complianceGrid) return;
+        
+        // Update compliance section
+        function updateComplianceSection(compliance) {
+            const grid = document.getElementById('complianceGrid');
+            grid.innerHTML = '';
             
-            complianceGrid.innerHTML = '';
-            
+            const standards = compliance.standards || [];
             standards.forEach(standard => {
                 const card = createComplianceCard(standard);
-                complianceGrid.appendChild(card);
+                grid.appendChild(card);
             });
         }
-
+        
+        // Create compliance card
         function createComplianceCard(standard) {
             const card = document.createElement('div');
             card.className = 'compliance-card';
             
             const scoreClass = getScoreClass(standard.compliance_rate);
+            const categories = standard.categories || {};
             
             card.innerHTML = `
                 <div class="compliance-header">
@@ -1504,13 +1722,21 @@
                     <div class="compliance-progress-bar ${scoreClass}" style="width: ${standard.compliance_rate}%;"></div>
                 </div>
                 <div class="compliance-items">
-                    ${createComplianceItems(standard.categories)}
+                    ${Object.entries(categories).map(([key, value]) => {
+                        const passed = value === 'pass';
+                        return `
+                            <div class="compliance-item ${passed ? 'passed' : 'failed'}">
+                                <i class="fas fa-${passed ? 'check' : 'times'}-circle"></i>
+                                <span>${formatCategoryName(key)}</span>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
                 <div class="action-buttons">
-                    <button class="btn btn-secondary" onclick="viewComplianceReport('${standard.name}')">
-                        <i class="fas fa-file-alt"></i> View Report
+                    <button class="btn btn-secondary" onclick="viewComplianceDetails('${standard.name}')">
+                        <i class="fas fa-file-alt"></i> View Details
                     </button>
-                    <button class="btn btn-primary" onclick="exportComplianceReport('${standard.name}')">
+                    <button class="btn btn-primary" onclick="exportCompliance('${standard.name}')">
                         <i class="fas fa-download"></i> Export
                     </button>
                 </div>
@@ -1518,85 +1744,589 @@
             
             return card;
         }
-
-        function updateRiskMatrix(riskData) {
-            if (!riskData || !riskData.assets_at_risk) return;
+        
+        // Initialize risk matrix
+        function initializeRiskMatrix() {
+            const matrix = document.getElementById('riskMatrix');
+            if (!matrix) return;
             
+            const riskLevels = [
+                ['medium', 'high', 'critical', 'critical', 'critical'],
+                ['low', 'medium', 'high', 'critical', 'critical'],
+                ['low', 'medium', 'medium', 'high', 'critical'],
+                ['low', 'low', 'medium', 'medium', 'high'],
+                ['low', 'low', 'low', 'medium', 'medium']
+            ];
+            
+            const values = [
+                [5, 10, 15, 20, 25],
+                [4, 8, 12, 16, 20],
+                [3, 6, 9, 12, 15],
+                [2, 4, 6, 8, 10],
+                [1, 2, 3, 4, 5]
+            ];
+            
+            matrix.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 5; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `risk-cell ${riskLevels[i][j]}`;
+                    cell.textContent = values[i][j];
+                    cell.title = `Likelihood: ${5-i}, Impact: ${j+1}`;
+                    matrix.appendChild(cell);
+                }
+            }
+        }
+        
+        // Update risk matrix with data
+        function updateRiskMatrix(data) {
             const tbody = document.getElementById('riskTableBody');
             if (!tbody) return;
             
             tbody.innerHTML = '';
             
-            riskData.assets_at_risk.forEach(asset => {
+            const risks = data.assets_at_risk || [];
+            if (risks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <p style="color: var(--text-secondary);">No risk analysis available. Run a security assessment first.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            risks.forEach(risk => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${asset.risk || 'Unknown Risk'}</td>
-                    <td>${asset.asset_name || 'Unknown'}</td>
-                    <td>${asset.likelihood || 'Unknown'}</td>
-                    <td>${asset.impact || 'Unknown'}</td>
-                    <td><span class="severity-badge ${asset.risk_level}">${asset.risk_score || 0}</span></td>
-                    <td>${asset.mitigation || 'View mitigation plan'}</td>
+                    <td>${risk.asset_name}</td>
+                    <td>${risk.asset_type}</td>
+                    <td>${risk.vuln_count}</td>
+                    <td>${risk.likelihood}</td>
+                    <td>${risk.impact}</td>
+                    <td>
+                        <span class="risk-score-badge ${risk.risk_level}">
+                            ${risk.risk_score}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"
+                                onclick="viewMitigation('${risk.asset_id}')">
+                            View Plan
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
         }
-
-        // Helper functions
-        function getCVSSClass(score) {
-            if (score >= 9.0) return 'critical';
-            if (score >= 7.0) return 'high';
-            if (score >= 4.0) return 'medium';
-            return 'low';
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.getAttribute('data-tab'));
+                });
+            });
+            
+            // Run assessment button
+            document.getElementById('runSecurityScanBtn').addEventListener('click', showAssetSelectionModal);
+            
+            // Load CVE database button
+            document.getElementById('loadCVEBtn').addEventListener('click', loadCVEDatabase);
+            
+            // Filters
+            ['severityFilter', 'assetTypeFilter', 'statusFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', filterVulnerabilities);
+                }
+            });
+            
+            // Search
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(filterVulnerabilities, 300);
+                });
+            }
+            
+            // Asset modal filters
+            ['assetModalTypeFilter', 'assetModalCriticalityFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', filterAssetList);
+                }
+            });
         }
-
-        function getStatusIcon(status) {
-            switch(status) {
-                case 'open': return 'circle';
-                case 'acknowledged': return 'exclamation-circle';
-                case 'resolved': return 'check-circle';
-                case 'false_positive': return 'times-circle';
-                default: return 'circle';
+        
+        // Switch tabs
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const tabContent = document.getElementById(tabName + 'Tab');
+            if (tabContent) {
+                tabContent.classList.add('active');
             }
         }
-
-        function getScoreClass(score) {
-            if (score >= 90) return 'good';
-            if (score >= 70) return 'warning';
-            return 'poor';
+        
+        // Show asset selection modal
+        async function showAssetSelectionModal() {
+            try {
+                // Load assets
+                const response = await apiCall('/api/assets?limit=1000');
+                if (!response) return;
+                
+                assets = response.data || [];
+                selectedAssets.clear();
+                
+                // Populate asset list
+                populateAssetList(assets);
+                
+                // Show modal
+                document.getElementById('assetSelectionModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Error loading assets:', error);
+                showNotification('Failed to load assets', 'error');
+            }
         }
-
-        function createComplianceItems(categories) {
-            return Object.entries(categories).map(([key, value]) => {
-                const passed = value === 'pass';
-                return `
-                    <div class="compliance-item ${passed ? 'passed' : 'failed'}">
-                        <i class="fas fa-${passed ? 'check' : 'times'}-circle"></i>
-                        <span>${key.replace(/_/g, ' ')}</span>
+        
+        // Populate asset list
+        function populateAssetList(assetList) {
+            const container = document.getElementById('assetList');
+            container.innerHTML = '';
+            
+            assetList.forEach(asset => {
+                const item = document.createElement('div');
+                item.className = 'asset-item';
+                item.innerHTML = `
+                    <input type="checkbox" class="asset-checkbox" value="${asset.id}"
+                           onchange="toggleAssetSelection('${asset.id}')">
+                    <div class="asset-info">
+                        <div class="asset-name">${asset.name}</div>
+                        <div class="asset-details">
+                            ${asset.asset_type} | ${asset.ip_address || 'No IP'} | 
+                            ${asset.vendor || 'Unknown vendor'}
+                        </div>
+                    </div>
+                    <span class="asset-criticality ${asset.criticality}">${asset.criticality.toUpperCase()}</span>
+                `;
+                container.appendChild(item);
+            });
+            
+            updateSelectedCount();
+        }
+        
+        // Toggle asset selection
+        function toggleAssetSelection(assetId) {
+            if (selectedAssets.has(assetId)) {
+                selectedAssets.delete(assetId);
+            } else {
+                selectedAssets.add(assetId);
+            }
+            updateSelectedCount();
+        }
+        
+        // Update selected count
+        function updateSelectedCount() {
+            document.getElementById('selectedAssetCount').textContent = selectedAssets.size;
+            document.getElementById('runAssessmentBtn').disabled = selectedAssets.size === 0;
+        }
+        
+        // Select all assets
+        function selectAllAssets() {
+            const checkboxes = document.querySelectorAll('.asset-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                selectedAssets.add(checkbox.value);
+            });
+            updateSelectedCount();
+        }
+        
+        // Deselect all assets
+        function deselectAllAssets() {
+            const checkboxes = document.querySelectorAll('.asset-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedAssets.clear();
+            updateSelectedCount();
+        }
+        
+        // Filter asset list
+        function filterAssetList() {
+            const typeFilter = document.getElementById('assetModalTypeFilter').value;
+            const criticalityFilter = document.getElementById('assetModalCriticalityFilter').value;
+            
+            const filtered = assets.filter(asset => {
+                if (typeFilter && asset.asset_type !== typeFilter) return false;
+                if (criticalityFilter && asset.criticality !== criticalityFilter) return false;
+                return true;
+            });
+            
+            populateAssetList(filtered);
+        }
+        
+        // Close asset modal
+        function closeAssetModal() {
+            document.getElementById('assetSelectionModal').style.display = 'none';
+            selectedAssets.clear();
+        }
+        
+        // Run selected assessment
+        async function runSelectedAssessment() {
+            if (selectedAssets.size === 0) {
+                showNotification('Please select at least one asset', 'warning');
+                return;
+            }
+            
+            if (isAssessing) {
+                showNotification('Assessment already in progress', 'warning');
+                return;
+            }
+            
+            isAssessing = true;
+            const btn = document.getElementById('runAssessmentBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Running Assessment...';
+            
+            // Show progress
+            document.getElementById('assessmentProgress').style.display = 'block';
+            updateProgress(0, 'Starting assessment...');
+            
+            try {
+                const assetIds = Array.from(selectedAssets);
+                const checkTypes = ['vulnerability', 'compliance', 'configuration'];
+                
+                // Simulate progress for passive assessment
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress > 90) progress = 90;
+                    updateProgress(progress, `Assessing ${assetIds.length} assets...`);
+                }, 500);
+                
+                // Run assessment
+                const response = await apiCall('/api/security/assessment', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        asset_ids: assetIds,
+                        check_types: checkTypes,
+                        use_cache: true,
+                        generate_report: true
+                    })
+                });
+                
+                clearInterval(progressInterval);
+                
+                if (response) {
+                    updateProgress(100, 'Assessment completed!');
+                    
+                    // Handle different response formats
+                    let results = [];
+                    if (response.data) {
+                        // Response wrapped in data property
+                        if (Array.isArray(response.data)) {
+                            results = response.data;
+                        } else if (response.data.results && Array.isArray(response.data.results)) {
+                            results = response.data.results;
+                        } else if (response.data.data && Array.isArray(response.data.data)) {
+                            results = response.data.data;
+                        }
+                    } else if (Array.isArray(response)) {
+                        // Direct array response
+                        results = response;
+                    } else if (response.results && Array.isArray(response.results)) {
+                        results = response.results;
+                    }
+                    
+                    const vulnCount = countVulnerabilities(results);
+                    showNotification(`Assessment completed. Found ${vulnCount} vulnerabilities.`, 'success');
+                    
+                    // Close modal after a short delay
+                    setTimeout(() => {
+                        closeAssetModal();
+                        // Reload security data
+                        loadSecurityData();
+                    }, 1500);
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+                
+            } catch (error) {
+                console.error('Assessment error:', error);
+                showNotification('Assessment failed: ' + error.message, 'error');
+            } finally {
+                isAssessing = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> Run Assessment';
+                
+                // Hide progress after delay
+                setTimeout(() => {
+                    document.getElementById('assessmentProgress').style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // Update progress
+        function updateProgress(percent, text) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+        
+        // Count vulnerabilities in results
+        function countVulnerabilities(results) {
+            let count = 0;
+            if (Array.isArray(results)) {
+                results.forEach(result => {
+                    if (result.vulnerabilities && Array.isArray(result.vulnerabilities)) {
+                        count += result.vulnerabilities.length;
+                    }
+                });
+            }
+            return count;
+        }
+        
+        // Load CVE database
+        async function loadCVEDatabase() {
+            const btn = document.getElementById('loadCVEBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Loading CVE Database...';
+            
+            try {
+                const response = await apiCall('/api/security/cve/load?source=offline', {
+                    method: 'POST'
+                });
+                
+                if (response) {
+                    showNotification('CVE database loaded successfully', 'success');
+                    // Optionally reload data
+                    loadSecurityData();
+                }
+                
+            } catch (error) {
+                console.error('Error loading CVE database:', error);
+                showNotification('Failed to load CVE database', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-database"></i> Load CVE Database';
+            }
+        }
+        
+        // View vulnerability details
+        async function viewVulnerability(vulnId) {
+            try {
+                // Find vulnerability in current list
+                const vuln = vulnerabilities.find(v => v.id === vulnId);
+                if (!vuln) {
+                    showNotification('Vulnerability not found', 'error');
+                    return;
+                }
+                
+                currentVuln = vuln;
+                
+                // Populate modal
+                const modalBody = document.getElementById('vulnModalBody');
+                modalBody.innerHTML = `
+                    <div class="vuln-details">
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">CVE ID</div>
+                            <div class="vuln-detail-value">${vuln.cve || 'N/A'}</div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Title</div>
+                            <div class="vuln-detail-value">${vuln.title || 'No title'}</div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Description</div>
+                            <div class="vuln-detail-value">${vuln.description || 'No description available'}</div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Affected Asset</div>
+                            <div class="vuln-detail-value">
+                                ${vuln.asset ? `${vuln.asset.name} (${vuln.asset.ip_address})` : 'Unknown'}
+                            </div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Severity</div>
+                            <div class="vuln-detail-value">
+                                <span class="severity-badge ${vuln.severity}">${vuln.severity.toUpperCase()}</span>
+                                <span class="cvss-score ${getCVSSClass(vuln.cvss_score)}">
+                                    CVSS: ${vuln.cvss_score ? vuln.cvss_score.toFixed(1) : 'N/A'}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Status</div>
+                            <div class="vuln-detail-value">
+                                <select class="filter-select" id="vulnStatusSelect">
+                                    <option value="open" ${vuln.status === 'open' ? 'selected' : ''}>Open</option>
+                                    <option value="acknowledged" ${vuln.status === 'acknowledged' ? 'selected' : ''}>Acknowledged</option>
+                                    <option value="resolved" ${vuln.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                    <option value="false_positive" ${vuln.status === 'false_positive' ? 'selected' : ''}>False Positive</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Remediation</div>
+                            <div class="vuln-detail-value">${vuln.remediation || 'No remediation steps available'}</div>
+                        </div>
+                        
+                        ${vuln.references && vuln.references.length > 0 ? `
+                            <div class="vuln-detail-section">
+                                <div class="vuln-detail-label">References</div>
+                                <div class="vuln-references">
+                                    ${vuln.references.map(ref => `
+                                        <a href="${ref}" target="_blank" class="vuln-reference">
+                                            <i class="fas fa-external-link-alt"></i> ${ref}
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Notes</div>
+                            <textarea class="filter-select" id="vulnNotes" rows="3" style="width: 100%; resize: vertical;">
+${vuln.notes || ''}</textarea>
+                        </div>
                     </div>
                 `;
-            }).join('');
-        }
-
-        // UI functions
-        function viewVulnerability(vulnId) {
-            console.log('View vulnerability:', vulnId);
-            showNotification('Opening vulnerability details...', 'info');
-        }
-
-        function viewComplianceReport(standard) {
-            console.log('View compliance report:', standard);
-            showNotification('Generating compliance report...', 'info');
-        }
-
-        async function exportComplianceReport(standard) {
-            const result = await SecurityAPI.safeApiCall(`/api/security/report/export?format=pdf&standard=${encodeURIComponent(standard)}`);
-            if (!result.error) {
-                showNotification('Report generated successfully', 'success');
-            } else {
-                showNotification('Failed to export report', 'error');
+                
+                // Update button handler
+                document.getElementById('updateVulnStatusBtn').onclick = updateVulnerabilityStatus;
+                
+                // Show modal
+                document.getElementById('vulnModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Error viewing vulnerability:', error);
+                showNotification('Failed to load vulnerability details', 'error');
             }
         }
-
+        
+        // Close vulnerability modal
+        function closeVulnModal() {
+            document.getElementById('vulnModal').style.display = 'none';
+            currentVuln = null;
+        }
+        
+        // Update vulnerability status
+        async function updateVulnerabilityStatus() {
+            if (!currentVuln) return;
+            
+            const newStatus = document.getElementById('vulnStatusSelect').value;
+            const notes = document.getElementById('vulnNotes').value;
+            
+            try {
+                const response = await apiCall(`/api/security/vulnerabilities/${currentVuln.id}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        status: newStatus,
+                        notes: notes,
+                        remediation: ''
+                    })
+                });
+                
+                if (response) {
+                    showNotification('Vulnerability status updated', 'success');
+                    closeVulnModal();
+                    // Reload data
+                    loadSecurityData();
+                }
+                
+            } catch (error) {
+                console.error('Error updating vulnerability:', error);
+                showNotification('Failed to update vulnerability status', 'error');
+            }
+        }
+        
+        // Filter vulnerabilities
+        async function filterVulnerabilities() {
+            const severity = document.getElementById('severityFilter').value;
+            const assetType = document.getElementById('assetTypeFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchInput').value;
+            
+            const params = new URLSearchParams();
+            if (severity) params.append('severity', severity);
+            if (assetType) params.append('asset_type', assetType);
+            if (status) params.append('status', status);
+            if (search) params.append('search', search);
+            
+            try {
+                const response = await apiCall(`/api/security/vulnerabilities?${params}`);
+                if (response) {
+                    vulnerabilities = response.vulnerabilities || [];
+                    updateVulnerabilityTable(vulnerabilities);
+                }
+            } catch (error) {
+                console.error('Error filtering vulnerabilities:', error);
+            }
+        }
+        
+        // View compliance details
+        function viewComplianceDetails(standard) {
+            showNotification(`Opening compliance details for ${standard}...`, 'info');
+            // TODO: Implement compliance details view
+        }
+        
+        // Export compliance report
+        async function exportCompliance(standard) {
+            try {
+                const response = await apiCall(`/api/security/report/export?format=pdf&standard=${encodeURIComponent(standard)}`);
+                if (response) {
+                    showNotification('Compliance report generated', 'success');
+                    // TODO: Handle file download
+                }
+            } catch (error) {
+                console.error('Error exporting compliance:', error);
+                showNotification('Failed to export compliance report', 'error');
+            }
+        }
+        
+        // View mitigation plan
+        function viewMitigation(assetId) {
+            showNotification('Opening mitigation plan...', 'info');
+            // TODO: Implement mitigation plan view
+        }
+        
+        // Generate risk report
+        async function generateRiskReport() {
+            try {
+                const response = await apiCall('/api/security/report/export?format=pdf&type=risk');
+                if (response) {
+                    showNotification('Risk report generated', 'success');
+                    // TODO: Handle file download
+                }
+            } catch (error) {
+                console.error('Error generating risk report:', error);
+                showNotification('Failed to generate risk report', 'error');
+            }
+        }
+        
+        // Show notification
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `notification notification-${type}`;
@@ -1612,7 +2342,52 @@
                 setTimeout(() => notification.remove(), 300);
             }, 5000);
         }
-
+        
+        // Helper functions
+        function getCVSSClass(score) {
+            if (!score) return '';
+            if (score >= 9.0) return 'critical';
+            if (score >= 7.0) return 'high';
+            if (score >= 4.0) return 'medium';
+            return 'low';
+        }
+        
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'open': return 'circle';
+                case 'acknowledged': return 'exclamation-circle';
+                case 'resolved': return 'check-circle';
+                case 'false_positive': return 'times-circle';
+                default: return 'circle';
+            }
+        }
+        
+        function formatStatus(status) {
+            return status.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+        
+        function getScoreClass(score) {
+            if (score >= 90) return 'good';
+            if (score >= 70) return 'warning';
+            return 'poor';
+        }
+        
+        function formatCategoryName(category) {
+            return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
         function getNotificationIcon(type) {
             switch(type) {
                 case 'success': return 'check-circle';
@@ -1621,231 +2396,13 @@
                 default: return 'info-circle';
             }
         }
-
-        // Event listeners
-        function setupEventListeners() {
-            // Run Assessment button
-            const runBtn = document.getElementById('runSecurityScanBtn');
-            if (runBtn) {
-                runBtn.addEventListener('click', runSecurityAssessment);
+        
+        // Auto-refresh data every 5 minutes
+        setInterval(() => {
+            if (!isAssessing) {
+                loadSecurityData();
             }
-            
-            // Tab switching
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabName = this.getAttribute('data-tab');
-                    switchTab(tabName);
-                });
-            });
-            
-            // Filter dropdowns
-            const severityFilter = document.getElementById('severityFilter');
-            const assetTypeFilter = document.getElementById('assetTypeFilter');
-            const statusFilter = document.getElementById('statusFilter');
-            
-            [severityFilter, assetTypeFilter, statusFilter].forEach(filter => {
-                if (filter) {
-                    filter.addEventListener('change', async function() {
-                        const filters = {
-                            severity: severityFilter.value,
-                            asset_type: assetTypeFilter.value,
-                            status: statusFilter.value
-                        };
-                        
-                        // Remove empty filters
-                        Object.keys(filters).forEach(key => {
-                            if (!filters[key]) delete filters[key];
-                        });
-                        
-                        const result = await SecurityAPI.getVulnerabilities(filters);
-                        if (!result.error && result.data) {
-                            updateVulnerabilityTable(result.data.vulnerabilities || []);
-                        }
-                    });
-                }
-            });
-            
-            // Search box
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                let searchTimeout;
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(async () => {
-                        const result = await SecurityAPI.getVulnerabilities({ search: this.value });
-                        if (!result.error && result.data) {
-                            updateVulnerabilityTable(result.data.vulnerabilities || []);
-                        }
-                    }, 500);
-                });
-            }
-        }
-
-        // Tab switching
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.getAttribute('data-tab') === tabName) {
-                    tab.classList.add('active');
-                }
-            });
-
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            const tabContent = document.getElementById(tabName + 'Tab');
-            if (tabContent) {
-                tabContent.classList.add('active');
-            }
-        }
-
-        // Run security assessment with better error handling
-        async function runSecurityAssessment() {
-            if (isRunningAssessment) {
-                showNotification('Assessment already in progress', 'warning');
-                return;
-            }
-            
-            if (!confirm('Run passive security assessment on all assets? This will not interact with devices directly.')) {
-                return;
-            }
-            
-            isRunningAssessment = true;
-            const runBtn = document.getElementById('runSecurityScanBtn');
-            if (runBtn) {
-                runBtn.disabled = true;
-                runBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Running Assessment...';
-            }
-            
-            try {
-                // Get assets - use the correct auth token
-                const token = SecurityAPI.getAuthToken();
-                const assetResult = await SecurityAPI.safeApiCall('/api/assets?limit=100');
-                
-                if (assetResult.error) {
-                    // Check if it's auth error
-                    if (assetResult.error === 'session_issue') {
-                        // Don't show auth error, session modal will handle it
-                        return;
-                    }
-                    showNotification('Failed to fetch assets: ' + assetResult.error, 'error');
-                    return;
-                }
-                
-                const assets = assetResult.data?.data || [];
-                const assetIds = assets.map(asset => asset.id);
-                
-                if (assetIds.length === 0) {
-                    showNotification('No assets found to assess', 'warning');
-                    return;
-                }
-                
-                showNotification(`Running security assessment on ${assetIds.length} assets...`, 'info');
-                
-                // Run assessment
-                const assessmentResult = await SecurityAPI.runAssessment(
-                    assetIds,
-                    ['vulnerability', 'compliance', 'configuration']
-                );
-                
-                if (assessmentResult.error) {
-                    if (assessmentResult.error === 'session_issue') {
-                        return;
-                    }
-                    showNotification('Assessment failed: ' + assessmentResult.error, 'error');
-                    return;
-                }
-                
-                const assessedCount = assessmentResult.data?.data?.assets_assessed || assetIds.length;
-                showNotification(`Assessment completed successfully. ${assessedCount} assets assessed.`, 'success');
-                
-                // Reload data after a short delay
-                setTimeout(() => {
-                    loadSecurityData();
-                }, 1000);
-                
-            } catch (error) {
-                console.error('Assessment error:', error);
-                showNotification('An unexpected error occurred', 'error');
-            } finally {
-                isRunningAssessment = false;
-                if (runBtn) {
-                    runBtn.disabled = false;
-                    runBtn.innerHTML = '<i class="fas fa-sync"></i> Run Security Scan';
-                }
-            }
-        }
-
-        // Cleanup function
-        function cleanupSecurityPage() {
-            console.log('Cleaning up security page...');
-            
-            // Clear intervals
-            apiIntervals.forEach(interval => clearInterval(interval));
-            apiIntervals = [];
-            
-            // Destroy charts
-            activeCharts.forEach(chart => {
-                if (chart && typeof chart.destroy === 'function') {
-                    chart.destroy();
-                }
-            });
-            activeCharts = [];
-            
-            // Call cleanup functions
-            cleanupFunctions.forEach(fn => {
-                if (typeof fn === 'function') {
-                    fn();
-                }
-            });
-            cleanupFunctions = [];
-        }
-
-        // Auto-refresh data periodically (optional)
-        function startAutoRefresh() {
-            // Only auto-refresh if we have valid session
-            if (sessionValid && SecurityAPI.hasAuthToken()) {
-                const refreshInterval = setInterval(async () => {
-                    if (!sessionValid) {
-                        clearInterval(refreshInterval);
-                        return;
-                    }
-                    
-                    console.log('Auto-refreshing security data...');
-                    await loadSecurityData();
-                }, 5 * 60 * 1000); // Refresh every 5 minutes
-                
-                apiIntervals.push(refreshInterval);
-            }
-        }
-
-        // Handle visibility change to pause/resume updates
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                console.log('Page hidden, pausing updates');
-                // Could pause intervals here if needed
-            } else {
-                console.log('Page visible, resuming updates');
-                // Could resume intervals here if needed
-            }
-        });
-
-        // Global error handler for uncaught errors
-        window.addEventListener('error', function(event) {
-            console.error('Uncaught error:', event.error);
-            // Don't show notification for every error to avoid spam
-        });
-
-        // Handle beforeunload to save any pending changes
-        window.addEventListener('beforeunload', function(event) {
-            if (isRunningAssessment) {
-                event.preventDefault();
-                event.returnValue = 'Security assessment is still running. Are you sure you want to leave?';
-            }
-        });
+        }, 5 * 60 * 1000);
     </script>
 </body>
 </html>

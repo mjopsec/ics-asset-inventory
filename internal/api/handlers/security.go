@@ -46,6 +46,16 @@ func NewSecurityHandler() *SecurityHandler {
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]string
 // @Router /api/security/assessment [post]
+// RunSecurityAssessment performs passive security assessment - FIXED
+// @Summary Run security assessment
+// @Description Perform passive security assessment on selected assets (SAFE for ICS)
+// @Tags security
+// @Accept json
+// @Produce json
+// @Param request body services.SecurityAssessmentRequest true "Assessment request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Router /api/security/assessment [post]
 func (h *SecurityHandler) RunSecurityAssessment(c *gin.Context) {
 	var req services.SecurityAssessmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -84,18 +94,28 @@ func (h *SecurityHandler) RunSecurityAssessment(c *gin.Context) {
 		return
 	}
 	
-	// Return results in the expected format
+	// Return results in consistent format
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
 		"message": "Security assessment completed",
 		"mode": "passive",
-		"data": gin.H{
+		"data": results, // This should be an array of SecurityAssessmentResult
+		"timestamp": time.Now(),
+		"summary": gin.H{
 			"assets_assessed": len(results),
-			"results": results,
-			"timestamp": time.Now(),
-			"safe_mode": true, // Always true for ICS
+			"vulnerabilities_found": countTotalVulnerabilities(results),
+			"safe_mode": true,
 		},
 	})
+}
+
+// Helper function to count total vulnerabilities
+func countTotalVulnerabilities(results []services.SecurityAssessmentResult) int {
+	total := 0
+	for _, result := range results {
+		total += len(result.Vulnerabilities)
+	}
+	return total
 }
 
 // GetVulnerabilities returns vulnerability list
