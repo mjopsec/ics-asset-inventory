@@ -122,7 +122,7 @@ func (h *DiscoveryHandler) GetScanProgress(c *gin.Context) {
 	c.JSON(http.StatusOK, progress)
 }
 
-// GetScanResults returns discovered devices
+// GetScanResults returns discovered devices - FIXED
 // @Summary Get scan results
 // @Description Get discovered devices from a network scan
 // @Tags discovery
@@ -135,6 +135,9 @@ func (h *DiscoveryHandler) GetScanProgress(c *gin.Context) {
 func (h *DiscoveryHandler) GetScanResults(c *gin.Context) {
 	scanID := c.Param("id")
 	
+	// Add logging
+	c.Set("scan_id", scanID)
+	
 	results, err := h.scanService.GetScanResults(scanID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -143,6 +146,7 @@ func (h *DiscoveryHandler) GetScanResults(c *gin.Context) {
 		return
 	}
 
+	// Return results in the expected format
 	c.JSON(http.StatusOK, gin.H{
 		"scan_id": scanID,
 		"devices": results,
@@ -334,7 +338,7 @@ func (h *DiscoveryHandler) GetProtocolPorts(c *gin.Context) {
 	c.JSON(http.StatusOK, protocolPorts)
 }
 
-// GetActiveScans returns currently active scans
+// GetActiveScans returns currently active scans - FIXED
 // @Summary Get active scans
 // @Description Get list of currently running scans
 // @Tags discovery

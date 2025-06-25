@@ -34,6 +34,7 @@ type ActiveScan struct {
 	ScanDB   *models.NetworkScan
 	Results  []*scanner.DeviceResult
 	mu       sync.Mutex
+	stopped  bool // Add flag to track if scan was stopped
 }
 
 // ScanRequest represents a scan configuration request
@@ -98,15 +99,19 @@ func NewScanService() *ScanService {
 	}
 }
 
-// StartScan initiates a new network scan - FIXED for better result handling
+// StartScan initiates a new network scan - FIXED
 func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
-	// Clear any previous active scan first
+	// Check and stop any existing scan
 	s.mu.Lock()
 	if s.activeScan != nil {
-		// Force stop previous scan if still running
+		s.logger.Info("Stopping previous active scan", "scan_id", s.activeScan.ID)
+		// Mark as stopped before stopping
+		s.activeScan.stopped = true
 		if s.activeScan.Scanner != nil {
 			s.activeScan.Scanner.Stop()
 		}
+		// Wait a bit for cleanup
+		time.Sleep(500 * time.Millisecond)
 		s.activeScan = nil
 	}
 	s.mu.Unlock()
@@ -156,6 +161,7 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		Scanner: scannerInstance,
 		ScanDB:  scanDB,
 		Results: make([]*scanner.DeviceResult, 0),
+		stopped: false,
 	}
 
 	// Store active scan
@@ -169,6 +175,12 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		scanDB.Status = string(scanner.StatusFailed)
 		scanDB.ErrorMsg = err.Error()
 		s.db.Save(scanDB)
+		
+		// Clear active scan on error
+		s.mu.Lock()
+		s.activeScan = nil
+		s.mu.Unlock()
+		
 		return nil, err
 	}
 
@@ -193,6 +205,12 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 	resultChan := activeScan.Scanner.GetResults()
 	
 	for result := range resultChan {
+		// Check if scan was stopped
+		if activeScan.stopped {
+			s.logger.Info("Scan was stopped, ignoring remaining results", "scan_id", activeScan.ID)
+			break
+		}
+
 		activeScan.mu.Lock()
 		activeScan.Results = append(activeScan.Results, result)
 		currentResultCount := len(activeScan.Results)
@@ -225,7 +243,7 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 	}
 }
 
-// monitorProgress monitors scan progress and updates database - ENHANCED
+// monitorProgress monitors scan progress and updates database - FIXED
 func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
@@ -233,6 +251,12 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 	for {
 		select {
 		case <-ticker.C:
+			// Check if scan was stopped
+			if activeScan.stopped {
+				s.logger.Info("Progress monitoring stopped for scan", "scan_id", activeScan.ID)
+				return
+			}
+
 			progress := activeScan.Scanner.GetProgress()
 			
 			// Calculate progress percentage
@@ -283,6 +307,7 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 				}
 				
 				// Save to database with retry
+				saved := false
 				for i := 0; i < 3; i++ {
 					if err := s.db.Save(activeScan.ScanDB).Error; err != nil {
 						s.logger.Error("Failed to save scan results (attempt %d)", i+1, "error", err)
@@ -292,30 +317,34 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 					s.logger.Info("Scan completed and saved", 
 						"scan_id", activeScan.ID,
 						"devices_found", activeScan.ScanDB.DevicesFound)
+					saved = true
 					break
 				}
 				
 				// Send completion notification with delay to ensure data is saved
-				time.Sleep(500 * time.Millisecond)
-				
-				if progress.Status == scanner.StatusCompleted {
-					// Send scan complete with results included
-					s.broadcastScanCompleteWithResults(activeScan)
-				} else if progress.Status == scanner.StatusFailed {
-					websocket.BroadcastScanError(activeScan.ID, activeScan.ScanDB.ErrorMsg)
+				if saved {
+					time.Sleep(500 * time.Millisecond)
+					
+					if progress.Status == scanner.StatusCompleted {
+						// Send scan complete with results included
+						s.broadcastScanCompleteWithResults(activeScan)
+					} else if progress.Status == scanner.StatusFailed {
+						websocket.BroadcastScanError(activeScan.ID, activeScan.ScanDB.ErrorMsg)
+					}
 				}
 				
 				// Update offline status for assets not found in scan
 				s.updateOfflineAssets(activeScan)
 				
-				// Clear active scan
+				// IMPORTANT: Clear active scan properly
 				s.mu.Lock()
 				if s.activeScan != nil && s.activeScan.ID == activeScan.ID {
+					s.logger.Info("Clearing active scan", "scan_id", activeScan.ID)
 					s.activeScan = nil
 				}
 				s.mu.Unlock()
 				
-				return
+				return // Exit the monitoring loop
 			}
 			
 			// Save progress to database
@@ -324,6 +353,125 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 			}
 		}
 	}
+}
+
+// StopScan stops the currently running scan - FIXED
+func (s *ScanService) StopScan(scanID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.activeScan == nil || s.activeScan.ID != scanID {
+		return fmt.Errorf("no active scan with ID %s", scanID)
+	}
+
+	// Mark as stopped first
+	s.activeScan.stopped = true
+	
+	// Stop the scanner
+	s.activeScan.Scanner.Stop()
+	
+	// Update database status
+	s.activeScan.ScanDB.Status = string(scanner.StatusCancelled)
+	endTime := time.Now()
+	s.activeScan.ScanDB.EndTime = &endTime
+	
+	// Save current results
+	s.activeScan.mu.Lock()
+	if len(s.activeScan.Results) > 0 {
+		resultsJSON, _ := json.Marshal(s.activeScan.Results)
+		s.activeScan.ScanDB.Results = string(resultsJSON)
+	}
+	s.activeScan.mu.Unlock()
+	
+	s.db.Save(s.activeScan.ScanDB)
+	
+	// Broadcast cancellation
+	websocket.BroadcastScanError(scanID, "Scan cancelled by user")
+	
+	// Clear active scan
+	s.activeScan = nil
+	
+	s.logger.Info("Scan stopped by user", "scan_id", scanID)
+	
+	return nil
+}
+
+// GetScanResults returns discovered devices from a scan - ENHANCED
+func (s *ScanService) GetScanResults(scanID string) ([]DiscoveredDevice, error) {
+	var results []DiscoveredDevice
+
+	s.logger.Info("Getting scan results", "scan_id", scanID)
+
+	// First check if this is the active scan
+	s.mu.RLock()
+	activeScan := s.activeScan
+	s.mu.RUnlock()
+	
+	// If it's the active scan and has results, use in-memory results
+	if activeScan != nil && activeScan.ID == scanID {
+		activeScan.mu.Lock()
+		s.logger.Info("Using active scan results", "scan_id", scanID, "count", len(activeScan.Results))
+		for _, device := range activeScan.Results {
+			discoveredDevice := s.convertToDiscoveredDevice(device)
+			
+			// Check if device is already in inventory
+			var existingAsset models.Asset
+			err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
+			if err == nil {
+				discoveredDevice.InInventory = true
+				discoveredDevice.AssetID = existingAsset.ID.String()
+				discoveredDevice.IsNew = false
+			} else {
+				discoveredDevice.InInventory = false
+				discoveredDevice.IsNew = true
+			}
+			
+			results = append(results, discoveredDevice)
+		}
+		activeScan.mu.Unlock()
+		
+		return results, nil
+	}
+
+	// Load scan from database
+	var scanDB models.NetworkScan
+	if err := s.db.First(&scanDB, "id = ?", scanID).Error; err != nil {
+		s.logger.Error("Scan not found in database", "scan_id", scanID, "error", err)
+		return nil, fmt.Errorf("scan not found")
+	}
+
+	// Parse results from JSON
+	if scanDB.Results != "" {
+		var devices []*scanner.DeviceResult
+		if err := json.Unmarshal([]byte(scanDB.Results), &devices); err != nil {
+			s.logger.Error("Failed to parse scan results", "error", err, "scan_id", scanID)
+			return nil, fmt.Errorf("failed to parse scan results: %w", err)
+		}
+
+		s.logger.Info("Loaded scan results from database", "scan_id", scanID, "device_count", len(devices))
+
+		for _, device := range devices {
+			discoveredDevice := s.convertToDiscoveredDevice(device)
+			
+			// Check if device is already in inventory
+			var existingAsset models.Asset
+			err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
+			if err == nil {
+				discoveredDevice.InInventory = true
+				discoveredDevice.AssetID = existingAsset.ID.String()
+				discoveredDevice.IsNew = false
+			} else {
+				discoveredDevice.InInventory = false
+				discoveredDevice.IsNew = true
+			}
+			
+			results = append(results, discoveredDevice)
+		}
+	} else {
+		s.logger.Warn("No results found for scan", "scan_id", scanID)
+	}
+
+	return results, nil
 }
 
 // broadcastScanCompleteWithResults sends completion notification with results
@@ -338,6 +486,10 @@ func (s *ScanService) broadcastScanCompleteWithResults(activeScan *ActiveScan) {
 	}
 	activeScan.mu.Unlock()
 	
+	s.logger.Info("Broadcasting scan complete with results", 
+		"scan_id", activeScan.ID, 
+		"device_count", len(devices))
+	
 	// Create enhanced completion message
 	hub := websocket.GetHub()
 	hub.BroadcastMessage("scan_complete_with_results", map[string]interface{}{
@@ -346,6 +498,72 @@ func (s *ScanService) broadcastScanCompleteWithResults(activeScan *ActiveScan) {
 		"devices":       devices,
 		"timestamp":     time.Now(),
 	})
+}
+
+// GetScanHistory returns scan history
+func (s *ScanService) GetScanHistory(limit int) ([]models.NetworkScan, error) {
+	var scans []models.NetworkScan
+	
+	query := s.db.Order("created_at DESC")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	
+	if err := query.Find(&scans).Error; err != nil {
+		return nil, err
+	}
+	
+	s.logger.Info("Loaded scan history", "count", len(scans))
+	
+	return scans, nil
+}
+
+// GetActiveScan returns the currently active scan if any
+func (s *ScanService) GetActiveScan() *ActiveScan {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.activeScan
+}
+
+// Helper methods remain the same...
+
+// checkExistingDevice checks if device already exists in inventory
+func (s *ScanService) checkExistingDevice(device *scanner.DeviceResult) {
+	var existingAsset models.Asset
+	err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
+	if err == nil {
+		device.IsNew = false
+		device.Fingerprint["existing_asset_id"] = existingAsset.ID.String()
+		
+		// Update last seen time
+		s.db.Model(&existingAsset).Update("last_seen", time.Now())
+	} else {
+		device.IsNew = true
+	}
+}
+
+// convertToDiscoveredDevice converts scanner result to UI model
+func (s *ScanService) convertToDiscoveredDevice(result *scanner.DeviceResult) DiscoveredDevice {
+	device := DiscoveredDevice{
+		ID:           uuid.New().String(),
+		IPAddress:    result.IPAddress,
+		MACAddress:   result.MACAddress,
+		Hostname:     result.Hostname,
+		DeviceType:   result.DeviceType,
+		Vendor:       result.Vendor,
+		Model:        result.Model,
+		Protocol:     result.Protocol,
+		OpenPorts:    result.OpenPorts,
+		ResponseTime: result.ResponseTime.String(),
+		IsNew:        result.IsNew,
+		Fingerprint:  result.Fingerprint,
+	}
+
+	if existingID, ok := result.Fingerprint["existing_asset_id"].(string); ok {
+		device.ExistingID = existingID
+	}
+
+	return device
 }
 
 // updateAssetOnlineStatus updates asset online status
@@ -387,136 +605,6 @@ func (s *ScanService) updateOfflineAssets(activeScan *ActiveScan) {
 			s.updateAssetOnlineStatus(targetIP, false)
 		}
 	}
-}
-
-// GetScanResults returns discovered devices from a scan - ENHANCED
-func (s *ScanService) GetScanResults(scanID string) ([]DiscoveredDevice, error) {
-	var results []DiscoveredDevice
-
-	// First check if this is the active scan
-	s.mu.RLock()
-	activeScan := s.activeScan
-	s.mu.RUnlock()
-	
-	// If it's the active scan and completed, use in-memory results
-	if activeScan != nil && activeScan.ID == scanID {
-		activeScan.mu.Lock()
-		for _, device := range activeScan.Results {
-			discoveredDevice := s.convertToDiscoveredDevice(device)
-			
-			// Check if device is already in inventory
-			var existingAsset models.Asset
-			err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
-			if err == nil {
-				discoveredDevice.InInventory = true
-				discoveredDevice.AssetID = existingAsset.ID.String()
-				discoveredDevice.IsNew = false
-			} else {
-				discoveredDevice.InInventory = false
-				discoveredDevice.IsNew = true
-			}
-			
-			results = append(results, discoveredDevice)
-		}
-		activeScan.mu.Unlock()
-		
-		if len(results) > 0 {
-			return results, nil
-		}
-	}
-
-	// Load scan from database
-	var scanDB models.NetworkScan
-	if err := s.db.First(&scanDB, "id = ?", scanID).Error; err != nil {
-		return nil, fmt.Errorf("scan not found")
-	}
-
-	// Parse results from JSON
-	if scanDB.Results != "" {
-		var devices []*scanner.DeviceResult
-		if err := json.Unmarshal([]byte(scanDB.Results), &devices); err != nil {
-			s.logger.Error("Failed to parse scan results", "error", err, "scan_id", scanID)
-			return nil, fmt.Errorf("failed to parse scan results: %w", err)
-		}
-
-		s.logger.Info("Loaded scan results", "scan_id", scanID, "device_count", len(devices))
-
-		for _, device := range devices {
-			discoveredDevice := s.convertToDiscoveredDevice(device)
-			
-			// Check if device is already in inventory
-			var existingAsset models.Asset
-			err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
-			if err == nil {
-				discoveredDevice.InInventory = true
-				discoveredDevice.AssetID = existingAsset.ID.String()
-				discoveredDevice.IsNew = false
-			} else {
-				discoveredDevice.InInventory = false
-				discoveredDevice.IsNew = true
-			}
-			
-			results = append(results, discoveredDevice)
-		}
-	}
-
-	return results, nil
-}
-
-// checkExistingDevice checks if device already exists in inventory
-func (s *ScanService) checkExistingDevice(device *scanner.DeviceResult) {
-	var existingAsset models.Asset
-	err := s.db.Where("ip_address = ?", device.IPAddress).First(&existingAsset).Error
-	if err == nil {
-		device.IsNew = false
-		device.Fingerprint["existing_asset_id"] = existingAsset.ID.String()
-		
-		// Update last seen time
-		s.db.Model(&existingAsset).Update("last_seen", time.Now())
-	} else {
-		device.IsNew = true
-	}
-}
-
-// convertToDiscoveredDevice converts scanner result to UI model
-func (s *ScanService) convertToDiscoveredDevice(result *scanner.DeviceResult) DiscoveredDevice {
-	device := DiscoveredDevice{
-		ID:           uuid.New().String(),
-		IPAddress:    result.IPAddress,
-		MACAddress:   result.MACAddress,
-		Hostname:     result.Hostname,
-		DeviceType:   result.DeviceType,
-		Vendor:       result.Vendor,
-		Model:        result.Model,
-		Protocol:     result.Protocol,
-		OpenPorts:    result.OpenPorts,
-		ResponseTime: result.ResponseTime.String(),
-		IsNew:        result.IsNew,
-		Fingerprint:  result.Fingerprint,
-	}
-
-	if existingID, ok := result.Fingerprint["existing_asset_id"].(string); ok {
-		device.ExistingID = existingID
-	}
-
-	return device
-}
-
-// Additional helper methods remain the same...
-// (GetScanHistory, AddDeviceToInventory, GetActiveScan, etc.)
-
-// StopScan stops the currently running scan
-func (s *ScanService) StopScan(scanID string) error {
-	s.mu.RLock()
-	activeScan := s.activeScan
-	s.mu.RUnlock()
-
-	if activeScan == nil || activeScan.ID != scanID {
-		return fmt.Errorf("no active scan with ID %s", scanID)
-	}
-
-	activeScan.Scanner.Stop()
-	return nil
 }
 
 // GetScanProgress returns the progress of a scan
@@ -581,22 +669,6 @@ func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, err
 		EstimatedTime:   "0",
 		Errors:          []string{},
 	}, nil
-}
-
-// GetScanHistory returns scan history
-func (s *ScanService) GetScanHistory(limit int) ([]models.NetworkScan, error) {
-	var scans []models.NetworkScan
-	
-	query := s.db.Order("created_at DESC")
-	if limit > 0 {
-		query = query.Limit(limit)
-	}
-	
-	if err := query.Find(&scans).Error; err != nil {
-		return nil, err
-	}
-	
-	return scans, nil
 }
 
 // AddDeviceToInventory adds a discovered device to the asset inventory
@@ -695,13 +767,6 @@ func (s *ScanService) AddDeviceToInventory(scanID string, deviceIP string) (*mod
 	s.logger.Info("Device added to inventory", "ip", deviceIP, "asset_id", asset.ID.String())
 
 	return asset, nil
-}
-
-// GetActiveScan returns the currently active scan if any
-func (s *ScanService) GetActiveScan() *ActiveScan {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.activeScan
 }
 
 // ValidateIPRange validates if the IP range is valid and accessible
