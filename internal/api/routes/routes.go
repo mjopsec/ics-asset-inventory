@@ -15,7 +15,7 @@ func SetupAuthRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
 	auth := router.Group("/api/auth")
 	{
 		auth.POST("/login", authHandler.Login)
-		auth.POST("/register", authHandler.Register) // Add this line
+		auth.POST("/register", authHandler.Register)
 		auth.POST("/logout", authHandler.Logout)
 	}
 	
@@ -27,7 +27,6 @@ func SetupAuthRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
 		authProtected.POST("/refresh", authHandler.RefreshToken)
 	}
 }
-
 
 // SetupAssetRoutes configures asset-related routes
 func SetupAssetRoutes(router *gin.Engine, assetHandler *handlers.AssetHandler) {
@@ -89,13 +88,6 @@ func SetupDashboardRoutes(router *gin.Engine, dashboardHandler *handlers.Dashboa
 func SetupWebRoutes(router *gin.Engine) {
 	// Public route - Login page
 	router.GET("/login", func(c *gin.Context) {
-		// Check if already logged in
-		token := c.GetHeader("Authorization")
-		if token != "" {
-			// Validate token in cookie/localStorage will be handled by frontend
-			// Just serve the login page
-		}
-		
 		c.HTML(http.StatusOK, "login.html", gin.H{
 			"title": "ICS Asset Inventory - Login",
 		})
@@ -110,7 +102,7 @@ func SetupWebRoutes(router *gin.Engine) {
 
 	// Protected routes - All web pages require authentication
 	protected := router.Group("/")
-	protected.Use(middleware.WebAuthRequired()) // Special middleware for web routes
+	protected.Use(middleware.WebAuthRequired())
 	{
 		// Main dashboard page
 		protected.GET("/", func(c *gin.Context) {
@@ -184,12 +176,14 @@ func SetupAPIInfoRoutes(router *gin.Engine) {
 			"version":     "1.0.0",
 			"description": "Industrial Control Systems Asset Management API",
 			"endpoints": gin.H{
-				"auth":      "/api/auth",
-				"assets":    "/api/assets (requires auth)",
-				"groups":    "/api/groups (requires auth)", 
-				"dashboard": "/api/dashboard (requires auth)",
-				"health":    "/health",
-				"system":    "/api/system (requires auth)",
+				"auth":       "/api/auth",
+				"assets":     "/api/assets (requires auth)",
+				"groups":     "/api/groups (requires auth)", 
+				"dashboard":  "/api/dashboard (requires auth)",
+				"discovery":  "/api/discovery (requires auth)",
+				"monitoring": "/api/monitoring (requires auth)",
+				"health":     "/health",
+				"system":     "/api/system (requires auth)",
 			},
 			"authentication": gin.H{
 				"type":   "Bearer Token",
@@ -242,6 +236,8 @@ func SetupAllRoutes(
 	assetHandler *handlers.AssetHandler,
 	groupHandler *handlers.GroupHandler,
 	dashboardHandler *handlers.DashboardHandler,
+	discoveryHandler *handlers.DiscoveryHandler,
+	monitoringHandler *handlers.MonitoringHandler,
 ) {
 	// Setup static routes first (public)
 	SetupStaticRoutes(router)
@@ -249,7 +245,7 @@ func SetupAllRoutes(
 	// Setup auth routes (mixed public/protected)
 	SetupAuthRoutes(router, authHandler)
 	
-	// Setup health routes (public) - use the one from health.go
+	// Setup health routes (public)
 	SetupHealthRoutes(router)
 	
 	// Setup protected system routes
@@ -265,7 +261,12 @@ func SetupAllRoutes(
 	SetupAssetRoutes(router, assetHandler)
 	SetupGroupRoutes(router, groupHandler)
 	SetupDashboardRoutes(router, dashboardHandler)
+	SetupDiscoveryRoutes(router, discoveryHandler)
+	SetupMonitoringRoutes(router, monitoringHandler)
 	SetupTagRoutes(router)
+	
+	// Setup WebSocket route (protected)
+	SetupWebSocketRoute(router)
 	
 	// Catch-all route - redirect to login
 	router.NoRoute(func(c *gin.Context) {
@@ -281,6 +282,16 @@ func SetupAllRoutes(
 		// For web routes, redirect to login
 		c.Redirect(http.StatusTemporaryRedirect, "/login")
 	})
+}
+
+// Add this new function for WebSocket routes
+func SetupWebSocketRoute(router *gin.Engine) {
+	// WebSocket endpoint requires authentication
+	ws := router.Group("/ws")
+	ws.Use(middleware.AuthRequired())
+	{
+		ws.GET("/events", handlers.HandleWebSocket)
+	}
 }
 
 // Basic tag handlers (placeholder implementations)
