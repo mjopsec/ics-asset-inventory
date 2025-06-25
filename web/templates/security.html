@@ -724,6 +724,53 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Session Warning Modal */
+        .session-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .session-modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .session-modal-icon {
+            font-size: 48px;
+            color: var(--warning-color);
+            margin-bottom: 16px;
+        }
+
+        .session-modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .session-modal-text {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .session-modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -1021,205 +1068,241 @@
         </main>
     </div>
 
+    <!-- Session Warning Modal -->
+    <div class="session-modal" id="sessionModal">
+        <div class="session-modal-content">
+            <div class="session-modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="session-modal-title">Session Warning</h3>
+            <p class="session-modal-text">Your session has expired or is invalid. Would you like to continue working?</p>
+            <div class="session-modal-buttons">
+                <button class="btn btn-secondary" onclick="continueWithoutAuth()">Continue Without Auth</button>
+                <button class="btn btn-primary" onclick="redirectToLogin()">Go to Login</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
-        // Global variables to store API intervals and cleanup functions
+        // Global variables
         let apiIntervals = [];
         let activeCharts = [];
         let cleanupFunctions = [];
-        let isRunningAssessment = false; // Flag to prevent multiple assessments
+        let isRunningAssessment = false;
+        let sessionValid = true;
+        let retryAttempts = 0;
+        const MAX_RETRY_ATTEMPTS = 3;
 
-        // API Integration for Security Page
+        // Enhanced API with better error handling
         const SecurityAPI = {
-            // Helper function to get auth token safely
+            // Helper to get auth token - FIXED to match assets.html
             getAuthToken: function() {
-                return localStorage.getItem('auth_token');
+                // Try localStorage first (key should be 'token' not 'auth_token')
+                let token = localStorage.getItem('token');
+                if (token) return token;
+                
+                // Fallback to cookie
+                return getCookie('auth_token');
             },
 
-            // Helper function to check auth before API call
-            checkAuth: function() {
-                const token = this.getAuthToken();
-                if (!token) {
-                    console.warn('No auth token found');
-                    return false;
-                }
-                return true;
+            // Check if we have a token
+            hasAuthToken: function() {
+                return !!this.getAuthToken();
             },
 
-            // Helper to handle API errors consistently
-            handleApiError: function(error, response) {
+            // Enhanced error handler that doesn't logout
+            handleApiError: async function(error, response) {
                 console.error('API Error:', error);
-                if (response && response.status === 401) {
-                    console.error('Authentication failed - but not logging out');
-                    // Don't redirect or logout, just show notification
-                    showNotification('Session expired. Please refresh the page.', 'warning');
-                    return null;
+                
+                if (response) {
+                    const responseData = await response.json().catch(() => ({}));
+                    
+                    if (response.status === 401) {
+                        const errorCode = responseData.code || '';
+                        
+                        // Don't logout immediately
+                        if (errorCode === 'SESSION_EXPIRED' || errorCode === 'INVALID_SESSION') {
+                            console.warn('Session issue detected, but not logging out');
+                            sessionValid = false;
+                            
+                            // Show session modal instead of logging out
+                            if (retryAttempts < MAX_RETRY_ATTEMPTS) {
+                                retryAttempts++;
+                                showSessionWarning();
+                            }
+                            
+                            return { error: 'session_issue', data: null };
+                        }
+                    }
+                    
+                    // For other errors, just return error data
+                    return { error: responseData.error || 'Unknown error', data: null };
                 }
-                throw error;
+                
+                return { error: error.message, data: null };
             },
 
-            // Run passive security assessment - FIXED
+            // Safe API call wrapper
+            safeApiCall: async function(url, options = {}) {
+                try {
+                    // Always add auth header
+                    const token = this.getAuthToken();
+                    if (!options.headers) {
+                        options.headers = {};
+                    }
+                    
+                    if (token) {
+                        options.headers['Authorization'] = 'Bearer ' + token;
+                    }
+                    
+                    // Add default headers
+                    if (!options.headers['Content-Type'] && (options.method === 'POST' || options.method === 'PUT')) {
+                        options.headers['Content-Type'] = 'application/json';
+                    }
+                    
+                    const response = await fetch(url, options);
+                    
+                    if (!response.ok) {
+                        // Handle 401 specially
+                        if (response.status === 401) {
+                            // Check if we're already showing session modal
+                            if (!document.getElementById('sessionModal').style.display || 
+                                document.getElementById('sessionModal').style.display === 'none') {
+                                // Only redirect if not in modal
+                                window.location.href = '/login';
+                            }
+                            return { error: 'session_issue', data: null };
+                        }
+                        
+                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        return { error: errorData.error || `HTTP ${response.status}`, data: null };
+                    }
+                    
+                    const data = await response.json();
+                    return { error: null, data };
+                    
+                } catch (error) {
+                    console.error('API call failed:', error);
+                    return { error: error.message, data: null };
+                }
+            },
+
+            // Run assessment with better error handling
             runAssessment: async function(assetIds, checkTypes) {
-                if (!this.checkAuth()) return null;
-                
-                try {
-                    const response = await fetch('/api/security/assessment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + this.getAuthToken()
-                        },
-                        body: JSON.stringify({
-                            asset_ids: assetIds,
-                            check_types: checkTypes,
-                            use_cache: true,
-                            generate_report: true
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        return this.handleApiError(new Error('Assessment failed'), response);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    return this.handleApiError(error);
-                }
+                return await this.safeApiCall('/api/security/assessment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        asset_ids: assetIds,
+                        check_types: checkTypes,
+                        use_cache: true,
+                        generate_report: true
+                    })
+                });
             },
 
-            // Get vulnerabilities - FIXED
+            // Get vulnerabilities
             getVulnerabilities: async function(filters = {}) {
-                if (!this.checkAuth()) return { vulnerabilities: [] };
-                
-                try {
-                    const params = new URLSearchParams(filters);
-                    const response = await fetch(`/api/security/vulnerabilities?${params}`, {
-                        headers: {
-                            'Authorization': 'Bearer ' + this.getAuthToken()
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        return this.handleApiError(new Error('Failed to fetch vulnerabilities'), response);
-                    }
-                    
-                    return await response.json();
-                } catch (error) {
-                    console.error('Error fetching vulnerabilities:', error);
-                    return { vulnerabilities: [] };
-                }
+                const params = new URLSearchParams(filters);
+                return await this.safeApiCall(`/api/security/vulnerabilities?${params}`);
             },
 
-            // Get security dashboard - FIXED
+            // Get dashboard
             getDashboard: async function() {
-                if (!this.checkAuth()) return {};
-                
-                try {
-                    const response = await fetch('/api/security/dashboard', {
-                        headers: {
-                            'Authorization': 'Bearer ' + this.getAuthToken()
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        return this.handleApiError(new Error('Failed to fetch dashboard'), response);
-                    }
-                    
-                    return await response.json();
-                } catch (error) {
-                    console.error('Error fetching dashboard:', error);
-                    return {};
-                }
+                return await this.safeApiCall('/api/security/dashboard');
             },
 
-            // Get compliance status
+            // Get compliance
             getCompliance: async function() {
-                if (!this.checkAuth()) return { standards: [] };
-                
-                try {
-                    const response = await fetch('/api/security/compliance', {
-                        headers: {
-                            'Authorization': 'Bearer ' + this.getAuthToken()
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        return this.handleApiError(new Error('Failed to fetch compliance'), response);
-                    }
-                    
-                    return await response.json();
-                } catch (error) {
-                    console.error('Error fetching compliance:', error);
-                    return { standards: [] };
-                }
+                return await this.safeApiCall('/api/security/compliance');
             },
 
             // Get risk matrix
             getRiskMatrix: async function() {
-                if (!this.checkAuth()) return {};
-                
-                try {
-                    const response = await fetch('/api/security/risk-matrix', {
-                        headers: {
-                            'Authorization': 'Bearer ' + this.getAuthToken()
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        return this.handleApiError(new Error('Failed to fetch risk matrix'), response);
-                    }
-                    
-                    return await response.json();
-                } catch (error) {
-                    console.error('Error fetching risk matrix:', error);
-                    return {};
-                }
+                return await this.safeApiCall('/api/security/risk-matrix');
             }
         };
 
-        // Page cleanup function
-        function cleanupSecurityPage() {
-            console.log('Cleaning up security page resources...');
-            
-            // Clear all intervals
-            apiIntervals.forEach(interval => clearInterval(interval));
-            apiIntervals = [];
-            
-            // Destroy charts
-            activeCharts.forEach(chart => {
-                if (chart && typeof chart.destroy === 'function') {
-                    chart.destroy();
-                }
-            });
-            activeCharts = [];
-            
-            // Call any additional cleanup functions
-            cleanupFunctions.forEach(fn => {
-                if (typeof fn === 'function') {
-                    fn();
-                }
-            });
-            cleanupFunctions = [];
-            
-            // Remove event listeners from window
-            window.removeEventListener('beforeunload', cleanupSecurityPage);
+        // Session handling functions
+        function showSessionWarning() {
+            const modal = document.getElementById('sessionModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
         }
 
-        // Initialize page on load
+        function hideSessionWarning() {
+            const modal = document.getElementById('sessionModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function continueWithoutAuth() {
+            hideSessionWarning();
+            sessionValid = false;
+            showNotification('Continuing in read-only mode. Some features may be limited.', 'warning');
+        }
+
+        function redirectToLogin() {
+            window.location.href = '/login';
+        }
+
+        // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Security page loading...');
             
-            // Add cleanup on page unload
-            window.addEventListener('beforeunload', cleanupSecurityPage);
-            
-            // Initialize charts
+            // Initialize charts first
             initializeCharts();
             
-            // Initialize with real data
-            initializeSecurityPage();
+            // Load data - no need to check auth here, API will handle it
+            loadSecurityData();
             
             // Set up event listeners
             setupEventListeners();
+            
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', cleanupSecurityPage);
         });
+
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Load security data with better error handling
+        async function loadSecurityData() {
+            console.log('Loading security data...');
+            
+            // Load dashboard
+            const dashboardResult = await SecurityAPI.getDashboard();
+            if (!dashboardResult.error && dashboardResult.data) {
+                updateSecurityOverview(dashboardResult.data);
+            }
+            
+            // Load vulnerabilities
+            const vulnResult = await SecurityAPI.getVulnerabilities();
+            if (!vulnResult.error && vulnResult.data) {
+                updateVulnerabilityTable(vulnResult.data.vulnerabilities || []);
+                updateVulnerabilityCharts(vulnResult.data.severity_distribution || []);
+            }
+            
+            // Load compliance
+            const complianceResult = await SecurityAPI.getCompliance();
+            if (!complianceResult.error && complianceResult.data) {
+                updateComplianceCards(complianceResult.data.standards || []);
+            }
+            
+            // Load risk matrix
+            const riskResult = await SecurityAPI.getRiskMatrix();
+            if (!riskResult.error && riskResult.data) {
+                updateRiskMatrix(riskResult.data);
+            }
+        }
 
         // Initialize charts
         function initializeCharts() {
@@ -1262,7 +1345,6 @@
                 }
             });
             
-            // Store chart reference
             window.vulnChart = vulnChart;
             activeCharts.push(vulnChart);
 
@@ -1316,80 +1398,14 @@
             activeCharts.push(trendChart);
         }
 
-        // Load real data - FIXED to handle errors better
-        async function initializeSecurityPage() {
-            try {
-                showLoadingState();
-                
-                // Check if we still have auth token
-                if (!SecurityAPI.checkAuth()) {
-                    console.error('No auth token available');
-                    hideLoadingState();
-                    return;
-                }
-                
-                // Load data one by one to prevent overload
-                try {
-                    const dashboard = await SecurityAPI.getDashboard();
-                    if (dashboard) {
-                        updateSecurityOverview(dashboard);
-                    }
-                } catch (error) {
-                    console.error('Error loading dashboard:', error);
-                }
-                
-                try {
-                    const vulnData = await SecurityAPI.getVulnerabilities();
-                    if (vulnData) {
-                        updateVulnerabilityTable(vulnData.vulnerabilities || []);
-                        updateVulnerabilityCharts(vulnData.severity_distribution || []);
-                    }
-                } catch (error) {
-                    console.error('Error loading vulnerabilities:', error);
-                }
-                
-                try {
-                    const compliance = await SecurityAPI.getCompliance();
-                    if (compliance) {
-                        updateComplianceCards(compliance.standards || []);
-                    }
-                } catch (error) {
-                    console.error('Error loading compliance:', error);
-                }
-                
-                try {
-                    const riskData = await SecurityAPI.getRiskMatrix();
-                    if (riskData) {
-                        updateRiskMatrix(riskData);
-                    }
-                } catch (error) {
-                    console.error('Error loading risk matrix:', error);
-                }
-                
-                hideLoadingState();
-                
-            } catch (error) {
-                console.error('Error initializing security page:', error);
-                hideLoadingState();
-                showNotification('Some data could not be loaded', 'warning');
-            }
-        }
-
         // Update functions
         function updateSecurityOverview(dashboard) {
             const vulns = dashboard.vulnerabilities || {};
             
-            const criticalCard = document.querySelector('.security-card:nth-child(1) .security-value');
-            if (criticalCard) criticalCard.textContent = vulns.critical || 0;
-            
-            const highCard = document.querySelector('.security-card:nth-child(2) .security-value');
-            if (highCard) highCard.textContent = vulns.high || 0;
-            
-            const mediumCard = document.querySelector('.security-card:nth-child(3) .security-value');
-            if (mediumCard) mediumCard.textContent = vulns.medium || 0;
-            
-            const scoreCard = document.querySelector('.security-card:nth-child(4) .security-value');
-            if (scoreCard) scoreCard.textContent = (dashboard.security_score || 0) + '%';
+            document.querySelector('.security-card:nth-child(1) .security-value').textContent = vulns.critical || 0;
+            document.querySelector('.security-card:nth-child(2) .security-value').textContent = vulns.high || 0;
+            document.querySelector('.security-card:nth-child(3) .security-value').textContent = vulns.medium || 0;
+            document.querySelector('.security-card:nth-child(4) .security-value').textContent = (dashboard.security_score || 0) + '%';
         }
 
         function updateVulnerabilityTable(vulnerabilities) {
@@ -1504,24 +1520,18 @@
         }
 
         function updateRiskMatrix(riskData) {
-            if (!riskData) return;
+            if (!riskData || !riskData.assets_at_risk) return;
             
-            if (riskData.assets_at_risk) {
-                updateRiskTable(riskData.assets_at_risk);
-            }
-        }
-
-        function updateRiskTable(assets) {
             const tbody = document.getElementById('riskTableBody');
             if (!tbody) return;
             
             tbody.innerHTML = '';
             
-            assets.forEach(asset => {
+            riskData.assets_at_risk.forEach(asset => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${asset.risk || 'Unknown Risk'}</td>
-                    <td>${asset.asset_name || asset.asset || 'Unknown'}</td>
+                    <td>${asset.asset_name || 'Unknown'}</td>
                     <td>${asset.likelihood || 'Unknown'}</td>
                     <td>${asset.impact || 'Unknown'}</td>
                     <td><span class="severity-badge ${asset.risk_level}">${asset.risk_score || 0}</span></td>
@@ -1579,25 +1589,12 @@
         }
 
         async function exportComplianceReport(standard) {
-            try {
-                const response = await fetch(`/api/security/report/export?format=pdf&standard=${encodeURIComponent(standard)}`, {
-                    headers: {
-                        'Authorization': 'Bearer ' + SecurityAPI.getAuthToken()
-                    }
-                });
-                const data = await response.json();
+            const result = await SecurityAPI.safeApiCall(`/api/security/report/export?format=pdf&standard=${encodeURIComponent(standard)}`);
+            if (!result.error) {
                 showNotification('Report generated successfully', 'success');
-            } catch (error) {
-                showNotification('Failed to export report: ' + error.message, 'error');
+            } else {
+                showNotification('Failed to export report', 'error');
             }
-        }
-
-        function showLoadingState() {
-            console.log('Loading security data...');
-        }
-
-        function hideLoadingState() {
-            console.log('Loading complete');
         }
 
         function showNotification(message, type = 'info') {
@@ -1641,14 +1638,6 @@
                 });
             });
             
-            // Cleanup navigation links to prevent token issues
-            document.querySelectorAll('.nav-item').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    // Clean up before navigation
-                    cleanupSecurityPage();
-                });
-            });
-            
             // Filter dropdowns
             const severityFilter = document.getElementById('severityFilter');
             const assetTypeFilter = document.getElementById('assetTypeFilter');
@@ -1668,8 +1657,10 @@
                             if (!filters[key]) delete filters[key];
                         });
                         
-                        const vulnData = await SecurityAPI.getVulnerabilities(filters);
-                        updateVulnerabilityTable(vulnData.vulnerabilities || []);
+                        const result = await SecurityAPI.getVulnerabilities(filters);
+                        if (!result.error && result.data) {
+                            updateVulnerabilityTable(result.data.vulnerabilities || []);
+                        }
                     });
                 }
             });
@@ -1681,8 +1672,10 @@
                 searchInput.addEventListener('input', function() {
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(async () => {
-                        const vulnData = await SecurityAPI.getVulnerabilities({ search: this.value });
-                        updateVulnerabilityTable(vulnData.vulnerabilities || []);
+                        const result = await SecurityAPI.getVulnerabilities({ search: this.value });
+                        if (!result.error && result.data) {
+                            updateVulnerabilityTable(result.data.vulnerabilities || []);
+                        }
                     }, 500);
                 });
             }
@@ -1709,56 +1702,40 @@
             }
         }
 
-        // Run security assessment - FIXED to prevent logout
+        // Run security assessment with better error handling
         async function runSecurityAssessment() {
-            // Prevent multiple simultaneous assessments
             if (isRunningAssessment) {
                 showNotification('Assessment already in progress', 'warning');
                 return;
             }
             
+            if (!confirm('Run passive security assessment on all assets? This will not interact with devices directly.')) {
+                return;
+            }
+            
+            isRunningAssessment = true;
+            const runBtn = document.getElementById('runSecurityScanBtn');
+            if (runBtn) {
+                runBtn.disabled = true;
+                runBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Running Assessment...';
+            }
+            
             try {
-                if (!confirm('Run passive security assessment on all assets? This will not interact with devices directly.')) {
-                    return;
-                }
+                // Get assets - use the correct auth token
+                const token = SecurityAPI.getAuthToken();
+                const assetResult = await SecurityAPI.safeApiCall('/api/assets?limit=100');
                 
-                isRunningAssessment = true;
-                const runBtn = document.getElementById('runSecurityScanBtn');
-                if (runBtn) {
-                    runBtn.disabled = true;
-                    runBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Running Assessment...';
-                }
-                
-                // Get assets with better error handling
-                let assetData;
-                try {
-                    const assetResponse = await fetch('/api/assets?limit=100', {
-                        headers: {
-                            'Authorization': 'Bearer ' + SecurityAPI.getAuthToken()
-                        }
-                    });
-                    
-                    if (!assetResponse.ok) {
-                        const errorData = await assetResponse.json();
-                        console.error('Asset fetch error:', errorData);
-                        
-                        // Don't logout, just show error
-                        if (assetResponse.status === 401) {
-                            showNotification('Session error. Please refresh the page.', 'warning');
-                            return;
-                        }
-                        throw new Error(errorData.error || 'Failed to fetch assets');
+                if (assetResult.error) {
+                    // Check if it's auth error
+                    if (assetResult.error === 'session_issue') {
+                        // Don't show auth error, session modal will handle it
+                        return;
                     }
-                    
-                    assetData = await assetResponse.json();
-                } catch (error) {
-                    console.error('Error fetching assets:', error);
-                    showNotification('Failed to fetch assets. Please try again.', 'error');
+                    showNotification('Failed to fetch assets: ' + assetResult.error, 'error');
                     return;
                 }
                 
-                // Check if we have data property
-                const assets = assetData.data || assetData.assets || [];
+                const assets = assetResult.data?.data || [];
                 const assetIds = assets.map(asset => asset.id);
                 
                 if (assetIds.length === 0) {
@@ -1768,63 +1745,107 @@
                 
                 showNotification(`Running security assessment on ${assetIds.length} assets...`, 'info');
                 
-                // Run assessment with better error handling
-                let assessmentResult;
-                try {
-                    assessmentResult = await SecurityAPI.runAssessment(
-                        assetIds,
-                        ['vulnerability', 'compliance', 'configuration']
-                    );
-                } catch (error) {
-                    console.error('Assessment error:', error);
-                    showNotification('Assessment failed. Please check your connection and try again.', 'error');
+                // Run assessment
+                const assessmentResult = await SecurityAPI.runAssessment(
+                    assetIds,
+                    ['vulnerability', 'compliance', 'configuration']
+                );
+                
+                if (assessmentResult.error) {
+                    if (assessmentResult.error === 'session_issue') {
+                        return;
+                    }
+                    showNotification('Assessment failed: ' + assessmentResult.error, 'error');
                     return;
                 }
                 
-                if (assessmentResult && assessmentResult.status === 'success') {
-                    const assetsAssessed = assessmentResult.data?.assets_assessed || assetIds.length;
-                    showNotification(
-                        `Assessment completed successfully. ${assetsAssessed} assets assessed.`,
-                        'success'
-                    );
-                    
-                    // Reload data with delay to prevent overload
-                    setTimeout(async () => {
-                        try {
-                            // Only reload vulnerability data instead of entire page
-                            const vulnData = await SecurityAPI.getVulnerabilities();
-                            if (vulnData) {
-                                updateVulnerabilityTable(vulnData.vulnerabilities || []);
-                                updateVulnerabilityCharts(vulnData.severity_distribution || []);
-                            }
-                            
-                            // Update dashboard overview
-                            const dashboard = await SecurityAPI.getDashboard();
-                            if (dashboard) {
-                                updateSecurityOverview(dashboard);
-                            }
-                        } catch (error) {
-                            console.error('Error refreshing data:', error);
-                            // Don't show error notification, data might still be ok
-                        }
-                    }, 1000);
-                } else {
-                    showNotification('Assessment completed with warnings. Check console for details.', 'warning');
-                    console.log('Assessment result:', assessmentResult);
-                }
+                const assessedCount = assessmentResult.data?.data?.assets_assessed || assetIds.length;
+                showNotification(`Assessment completed successfully. ${assessedCount} assets assessed.`, 'success');
+                
+                // Reload data after a short delay
+                setTimeout(() => {
+                    loadSecurityData();
+                }, 1000);
                 
             } catch (error) {
                 console.error('Assessment error:', error);
-                showNotification('An unexpected error occurred. Please try again.', 'error');
+                showNotification('An unexpected error occurred', 'error');
             } finally {
                 isRunningAssessment = false;
-                const runBtn = document.getElementById('runSecurityScanBtn');
                 if (runBtn) {
                     runBtn.disabled = false;
                     runBtn.innerHTML = '<i class="fas fa-sync"></i> Run Security Scan';
                 }
             }
         }
+
+        // Cleanup function
+        function cleanupSecurityPage() {
+            console.log('Cleaning up security page...');
+            
+            // Clear intervals
+            apiIntervals.forEach(interval => clearInterval(interval));
+            apiIntervals = [];
+            
+            // Destroy charts
+            activeCharts.forEach(chart => {
+                if (chart && typeof chart.destroy === 'function') {
+                    chart.destroy();
+                }
+            });
+            activeCharts = [];
+            
+            // Call cleanup functions
+            cleanupFunctions.forEach(fn => {
+                if (typeof fn === 'function') {
+                    fn();
+                }
+            });
+            cleanupFunctions = [];
+        }
+
+        // Auto-refresh data periodically (optional)
+        function startAutoRefresh() {
+            // Only auto-refresh if we have valid session
+            if (sessionValid && SecurityAPI.hasAuthToken()) {
+                const refreshInterval = setInterval(async () => {
+                    if (!sessionValid) {
+                        clearInterval(refreshInterval);
+                        return;
+                    }
+                    
+                    console.log('Auto-refreshing security data...');
+                    await loadSecurityData();
+                }, 5 * 60 * 1000); // Refresh every 5 minutes
+                
+                apiIntervals.push(refreshInterval);
+            }
+        }
+
+        // Handle visibility change to pause/resume updates
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('Page hidden, pausing updates');
+                // Could pause intervals here if needed
+            } else {
+                console.log('Page visible, resuming updates');
+                // Could resume intervals here if needed
+            }
+        });
+
+        // Global error handler for uncaught errors
+        window.addEventListener('error', function(event) {
+            console.error('Uncaught error:', event.error);
+            // Don't show notification for every error to avoid spam
+        });
+
+        // Handle beforeunload to save any pending changes
+        window.addEventListener('beforeunload', function(event) {
+            if (isRunningAssessment) {
+                event.preventDefault();
+                event.returnValue = 'Security assessment is still running. Are you sure you want to leave?';
+            }
+        });
     </script>
 </body>
 </html>
