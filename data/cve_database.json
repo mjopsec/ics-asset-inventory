@@ -1,0 +1,185 @@
+[
+  {
+    "id": "CVE-2023-32315",
+    "description": "Remote Code Execution vulnerability in Modbus TCP implementation allows unauthenticated attackers to execute arbitrary code",
+    "severity": "critical",
+    "cvss_score": 9.8,
+    "published": "2023-05-15T00:00:00Z",
+    "modified": "2023-05-20T00:00:00Z",
+    "products": [
+      {
+        "vendor": "Schneider Electric",
+        "product": "Modicon M340",
+        "version": "3.20"
+      },
+      {
+        "vendor": "Schneider Electric",
+        "product": "Modicon M580",
+        "version": "3.10"
+      }
+    ],
+    "references": [
+      "https://www.cisa.gov/uscert/ics/advisories/icsa-23-135-01",
+      "https://www.schneider-electric.com/en/download/document/SEVD-2023-135-01/"
+    ],
+    "solution": "Apply firmware update version 3.30 or later. Implement network segmentation and firewall rules to restrict Modbus TCP access."
+  },
+  {
+    "id": "CVE-2023-28456",
+    "description": "Authentication Bypass in HMI Web Interface allows remote attackers to gain unauthorized access",
+    "severity": "high",
+    "cvss_score": 8.2,
+    "published": "2023-04-10T00:00:00Z",
+    "modified": "2023-04-12T00:00:00Z",
+    "products": [
+      {
+        "vendor": "Siemens",
+        "product": "SIMATIC HMI Comfort Panels",
+        "version": "16.0"
+      },
+      {
+        "vendor": "Siemens",
+        "product": "SIMATIC WinCC",
+        "version": "7.5"
+      }
+    ],
+    "references": [
+      "https://cert-portal.siemens.com/productcert/pdf/ssa-28456.pdf"
+    ],
+    "solution": "Update to version 17.0 or apply security patch. Disable web interface if not required."
+  },
+  {
+    "id": "CVE-2023-25789",
+    "description": "Buffer Overflow in DNP3 protocol parser can cause denial of service or remote code execution",
+    "severity": "critical",
+    "cvss_score": 9.1,
+    "published": "2023-03-22T00:00:00Z",
+    "modified": "2023-03-25T00:00:00Z",
+    "products": [
+      {
+        "vendor": "ABB",
+        "product": "RTU560",
+        "version": "12.0"
+      },
+      {
+        "vendor": "GE",
+        "product": "D20MX",
+        "version": "5.0"
+      }
+    ],
+    "references": [
+      "https://search.abb.com/library/Download.aspx?DocumentID=9AKK107991A2862"
+    ],
+    "solution": "Apply vendor-provided patches. Implement DNP3 secure authentication where possible."
+  },
+  {
+    "id": "CVE-2023-22145",
+    "description": "Weak encryption in configuration files exposes sensitive credentials",
+    "severity": "medium",
+    "cvss_score": 6.5,
+    "published": "2023-02-14T00:00:00Z",
+    "modified": "2023-02-16T00:00:00Z",
+    "products": [
+      {
+        "vendor": "Rockwell Automation",
+        "product": "FactoryTalk View",
+        "version": "12.0"
+      }
+    ],
+    "references": [
+      "https://rockwellautomation.custhelp.com/app/answers/answer_view/a_id/1135752"
+    ],
+    "solution": "Update to version 13.0. Implement file system access controls."
+  },
+  {
+    "id": "CVE-2023-41789",
+    "description": "Improper Input Validation in EtherNet/IP implementation",
+    "severity": "high",
+    "cvss_score": 7.5,
+    "published": "2023-08-10T00:00:00Z",
+    "modified": "2023-08-12T00:00:00Z",
+    "products": [
+      {
+        "vendor": "Rockwell Automation",
+        "product": "ControlLogix 5580",
+        "version": "32.0"
+      },
+      {
+        "vendor": "Rockwell Automation",
+        "product": "CompactLogix 5380",
+        "version": "32.0"
+      }
+    ],
+    "references": [
+      "https://www.cisa.gov/uscert/ics/advisories/icsa-23-222-01"
+    ],
+    "solution": "Update to firmware version 33.0 or later. Enable CIP Security if supported."
+  },
+  {
+    "id": "CVE-2023-38547",
+    "description": "Hard-coded credentials in Siemens S7 communication module",
+    "severity": "critical",
+    "cvss_score": 9.0,
+    "published": "2023-07-20T00:00:00Z",
+    "modified": "2023-07-22T00:00:00Z",
+    "products": [
+      {
+        "vendor": "Siemens",
+        "product": "SIMATIC S7-1200",
+        "version": "4.4"
+      },
+      {
+        "vendor": "Siemens",
+        "product": "SIMATIC S7-1500",
+        "version": "2.9"
+      }
+    ],
+    "references": [
+      "https://cert-portal.siemens.com/productcert/pdf/ssa-38547.pdf"
+    ],
+    "solution": "Update to latest firmware version. Change default credentials immediately."
+  },
+  {
+    "id": "CVE-2023-29456",
+    "description": "Path Traversal vulnerability in BACnet implementation",
+    "severity": "medium",
+    "cvss_score": 5.3,
+    "published": "2023-04-30T00:00:00Z",
+    "modified": "2023-05-02T00:00:00Z",
+    "products": [
+      {
+        "vendor": "Johnson Controls",
+        "product": "Metasys",
+        "version": "11.0"
+      }
+    ],
+    "references": [
+      "https://www.johnsoncontrols.com/cyber-solutions/security-advisories"
+    ],
+    "solution": "Apply security patch. Restrict BACnet/IP access to trusted networks only."
+  },
+  {
+    "id": "CVE-2023-36789",
+    "description": "Denial of Service vulnerability in SNMP implementation",
+    "severity": "medium",
+    "cvss_score": 6.5,
+    "published": "2023-06-15T00:00:00Z",
+    "modified": "2023-06-17T00:00:00Z",
+    "products": [
+      {
+        "vendor": "Cisco",
+        "product": "IE 3000",
+        "version": "15.2"
+      },
+      {
+        "vendor": "Cisco",
+        "product": "IE 4000",
+        "version": "15.2"
+      }
+    ],
+    "references": [
+      "https://tools.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-36789"
+    ],
+    "solution": "Update to IOS version 15.3 or later. Use SNMPv3 with authentication."
+  }
+]

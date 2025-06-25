@@ -130,10 +130,13 @@
             background-color: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
             padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .page-header {
-            margin-bottom: 32px;
+            flex: 1;
         }
 
         .page-title {
@@ -146,6 +149,95 @@
         .page-subtitle {
             font-size: 16px;
             color: var(--text-secondary);
+        }
+
+        /* User Profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .notifications {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background-color: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .notification-icon:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-menu:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--text-tertiary);
         }
 
         /* Content Area */
@@ -557,17 +649,17 @@
             display: inline-block;
         }
 
-        .scan-type-badge.network {
+        .scan-type-badge.quick {
             background-color: #DBEAFE;
             color: #1E40AF;
         }
 
-        .scan-type-badge.protocol {
+        .scan-type-badge.full {
             background-color: #D1FAE5;
             color: #065F46;
         }
 
-        .scan-type-badge.security {
+        .scan-type-badge.custom {
             background-color: #FEE2E2;
             color: #991B1B;
         }
@@ -692,6 +784,29 @@
             display: block;
         }
 
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 400px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -723,6 +838,216 @@
             .protocol-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .user-info {
+                display: none;
+            }
+        }
+
+        /* Logout button styling */
+        .nav-item.logout {
+            margin-top: auto;
+            color: var(--danger-color);
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .nav-item.logout:hover {
+            background-color: #FEE2E2;
+            color: var(--danger-color);
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 8px 0;
+        }
+
+        .user-menu-container {
+            position: relative;
+        }
+
+        /* Passive Scanning Styles - ADD THESE */
+        .scan-mode-indicator {
+            background-color: #DBEAFE;
+            border: 1px solid #60A5FA;
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #1E40AF;
+            font-size: 14px;
+        }
+
+        .scan-mode-indicator i {
+            font-size: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        .passive-stats {
+            margin-left: auto;
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+        }
+
+        .passive-stats strong {
+            color: #1E40AF;
+            font-weight: 600;
+        }
+
+        /* Protocol Enhancement Indicator */
+        .protocol-enhancement {
+            background-color: #F0FDF4;
+            border: 1px solid #86EFAC;
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #166534;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .protocol-enhancement i {
+            color: #22C55E;
+        }
+
+        /* Auto-classified indicator */
+        .auto-classified {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background-color: #FEF3C7;
+            color: #92400E;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .auto-classified i {
+            font-size: 10px;
+        }
+
+        /* Enhanced device card for better classification display */
+        .device-classification {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .classification-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .classification-badge i {
+            font-size: 12px;
+            color: var(--primary-color);
+        }
+
+        /* Network interface selector for passive mode */
+        .network-interface-group {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+
+        .network-interface-group.visible {
+            display: block;
+        }
+
+        .interface-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .interface-item {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .interface-item:hover {
+            border-color: var(--primary-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .interface-item.selected {
+            background-color: #DBEAFE;
+            border-color: var(--primary-color);
+            color: #1E40AF;
+        }
+
+        .interface-name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .interface-ip {
+            font-size: 12px;
+            color: var(--text-tertiary);
         }
     </style>
 </head>
@@ -761,6 +1086,10 @@
                     <i class="fas fa-cog"></i>
                     Settings
                 </a>
+                <a href="#" class="nav-item logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
             </nav>
         </aside>
 
@@ -771,6 +1100,11 @@
                 <div class="page-header">
                     <h1 class="page-title">Network Discovery</h1>
                     <p class="page-subtitle">Discover and identify industrial control system devices on your network</p>
+                </div>
+                
+                <!-- User Profile Section -->
+                <div class="user-profile" id="userProfileContainer">
+                    <!-- Profile will be injected here by user-profile.js -->
                 </div>
             </header>
 
@@ -801,25 +1135,36 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label class="form-label">IP Range / Subnet</label>
-                                    <input type="text" class="form-input" id="ipRange" placeholder="192.168.1.0/24" required>
+                                    <input type="text" class="form-input" id="ipRange" name="ipRange" placeholder="192.168.1.0/24, 192.168.1.100, 192.168.1.1-192.168.1.10" required>
                                     <span class="form-hint">Enter IP range or CIDR notation</span>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Scan Type</label>
-                                    <select class="form-input" id="scanType">
+                                    <select class="form-input" id="scanType" name="scanType">
                                         <option value="quick">Quick Scan (Common Ports)</option>
                                         <option value="full">Full Scan (All Ports)</option>
                                         <option value="custom">Custom Port Range</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label class="form-label">Scan Mode</label>
+                                    <select class="form-input" id="scanMode" name="scanMode" onchange="handleScanModeChange()">
+                                        <option value="active">Active Scan (Traditional)</option>
+                                        <option value="passive">Passive Monitoring Only</option>
+                                        <option value="hybrid">Hybrid (Active + Passive)</option>
+                                    </select>
+                                    <span class="form-hint">
+                                        <i class="fas fa-info-circle"></i> Passive mode monitors network traffic without sending packets
+                                    </span>
+                                </div>
+                                <div class="form-group">
                                     <label class="form-label">Timeout (seconds)</label>
-                                    <input type="number" class="form-input" id="timeout" value="30" min="10" max="300">
+                                    <input type="number" class="form-input" id="timeout" name="timeout" value="30" min="10" max="300">
                                     <span class="form-hint">Connection timeout per device</span>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Max Concurrent Scans</label>
-                                    <input type="number" class="form-input" id="concurrent" value="50" min="1" max="100">
+                                    <input type="number" class="form-input" id="concurrent" name="concurrent" value="50" min="1" max="100">
                                     <span class="form-hint">Number of parallel scans</span>
                                 </div>
                             </div>
@@ -906,7 +1251,14 @@
                                 <i class="fas fa-stop"></i> Stop Scan
                             </button>
                         </div>
-                        
+                        <div class="scan-mode-indicator" id="scanModeIndicator" style="display: none;">
+                            <i class="fas fa-wifi"></i>
+                            <span>Passive Monitoring Active</span>
+                            <div class="passive-stats">
+                                <span>Packets: <strong id="passivePackets">0</strong></span>
+                                <span>Hosts: <strong id="passiveHosts">0</strong></span>
+                            </div>
+                        </div>
                         <div class="progress-bar-container">
                             <div class="progress-bar" id="progressBar"></div>
                         </div>
@@ -945,52 +1297,15 @@
                                 <button class="btn btn-secondary">
                                     <i class="fas fa-filter"></i> Filter
                                 </button>
-                                <button class="btn btn-primary">
+                                <button class="btn btn-primary" onclick="addAllDevicesToInventory()">
                                     <i class="fas fa-plus"></i> Add All to Inventory
                                 </button>
                             </div>
                         </div>
 
                         <div class="device-grid" id="discoveredDevices">
-                            <!-- Sample discovered device -->
-                            <div class="device-card">
-                                <div class="device-header">
-                                    <div class="device-info">
-                                        <div class="device-name">Unknown PLC Device</div>
-                                        <div class="device-ip">192.168.1.101</div>
-                                    </div>
-                                    <div class="device-status new">New</div>
-                                </div>
-                                <div class="device-details">
-                                    <div class="device-detail">
-                                        <div class="device-detail-label">Protocol</div>
-                                        <div class="device-detail-value">Modbus TCP</div>
-                                    </div>
-                                    <div class="device-detail">
-                                        <div class="device-detail-label">Port</div>
-                                        <div class="device-detail-value">502</div>
-                                    </div>
-                                    <div class="device-detail">
-                                        <div class="device-detail-label">Vendor</div>
-                                        <div class="device-detail-value">Siemens</div>
-                                    </div>
-                                    <div class="device-detail">
-                                        <div class="device-detail-label">Response Time</div>
-                                        <div class="device-detail-value">12ms</div>
-                                    </div>
-                                </div>
-                                <div class="device-actions">
-                                    <button class="btn btn-secondary">
-                                        <i class="fas fa-info-circle"></i> Details
-                                    </button>
-                                    <button class="btn btn-primary">
-                                        <i class="fas fa-plus"></i> Add to Inventory
-                                    </button>
-                                </div>
-                            </div>
-
                             <!-- Empty state -->
-                            <div class="empty-state" style="grid-column: 1 / -1; display: none;">
+                            <div class="empty-state" style="grid-column: 1 / -1;">
                                 <i class="fas fa-search"></i>
                                 <div class="empty-state-title">No Recent Results</div>
                                 <div class="empty-state-text">Run a network scan to discover devices</div>
@@ -1020,29 +1335,9 @@
                                 </thead>
                                 <tbody id="scanHistoryBody">
                                     <tr>
-                                        <td>2024-01-20 14:30:00</td>
-                                        <td><span class="scan-type-badge network">Network</span></td>
-                                        <td>192.168.1.0/24</td>
-                                        <td>2m 45s</td>
-                                        <td>23</td>
-                                        <td><span class="scan-status completed"><i class="fas fa-check-circle"></i> Completed</span></td>
-                                        <td>
-                                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                                <i class="fas fa-eye"></i> View
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>2024-01-20 10:15:00</td>
-                                        <td><span class="scan-type-badge protocol">Protocol</span></td>
-                                        <td>Modbus Devices</td>
-                                        <td>1m 20s</td>
-                                        <td>8</td>
-                                        <td><span class="scan-status completed"><i class="fas fa-check-circle"></i> Completed</span></td>
-                                        <td>
-                                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                                <i class="fas fa-eye"></i> View
-                                            </button>
+                                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                                            <i class="fas fa-history" style="font-size: 32px; opacity: 0.3; margin-bottom: 12px; display: block;"></i>
+                                            No scan history available
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1054,238 +1349,151 @@
         </main>
     </div>
 
+    <!-- Include User Profile Component -->
+    <script src="/static/js/user-profile.js"></script>
+    <!-- Include WebSocket client -->
+    <script src="/static/js/websocket.js"></script>
+    <!-- Include Discovery page JavaScript -->
+    <script src="/static/js/discovery.js"></script>
+    <!-- Include Discovery Detail page JavaScript -->
+    <script src="/static/js/discovery-detail-modal.js"></script>
+
     <script>
-        // Tab switching
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
+        // Initialize user profile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize user profile component
+            const profileContainer = document.getElementById('userProfileContainer');
+            if (profileContainer && window.UserProfile) {
+                profileContainer.innerHTML = window.UserProfile.createHTML();
+                window.UserProfile.init();
+            }
+        });
 
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(tabName + 'Tab').classList.add('active');
-        }
-
-        // Protocol selection
+        // Protocol selection toggle
         function toggleProtocol(card) {
             card.classList.toggle('selected');
             const checkbox = card.querySelector('input[type="checkbox"]');
             checkbox.checked = !checkbox.checked;
         }
 
-        // Form handling
-        document.getElementById('scanForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            startScan();
-        });
-
-        // Start scan
-        function startScan() {
-            const formData = new FormData(document.getElementById('scanForm'));
-            const scanConfig = {
-                ipRange: formData.get('ipRange'),
-                scanType: formData.get('scanType'),
-                timeout: formData.get('timeout'),
-                concurrent: formData.get('concurrent'),
-                protocols: Array.from(document.querySelectorAll('input[name="protocols"]:checked')).map(cb => cb.value)
-            };
-
-            console.log('Starting scan with config:', scanConfig);
-
-            // Show progress
-            document.getElementById('scanProgress').classList.add('active');
+        // Handle scan mode change
+        function handleScanModeChange() {
+            const scanMode = document.getElementById('scanMode').value;
+            const interfaceGroup = document.querySelector('.network-interface-group');
             
-            // Simulate scan progress
-            simulateScan();
-        }
-
-        // Simulate scan progress
-        function simulateScan() {
-            let progress = 0;
-            let devicesFound = 0;
-            let ipsScanned = 0;
-            let protocolsDetected = new Set();
-            let startTime = Date.now();
-
-            const interval = setInterval(() => {
-                progress += Math.random() * 10;
-                if (progress > 100) progress = 100;
-
-                // Update progress bar
-                document.getElementById('progressBar').style.width = progress + '%';
-                document.getElementById('progressText').textContent = Math.floor(progress) + '%';
-
-                // Update elapsed time
-                const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                const minutes = Math.floor(elapsed / 60);
-                const seconds = elapsed % 60;
-                document.getElementById('progressTime').textContent = `Elapsed: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-                // Update stats
-                ipsScanned = Math.floor(progress * 2.54);
-                document.getElementById('ipsScanned').textContent = ipsScanned;
-
-                // Randomly find devices
-                if (Math.random() > 0.8 && devicesFound < 23) {
-                    devicesFound++;
-                    document.getElementById('devicesFound').textContent = devicesFound;
-                    
-                    // Add random protocols
-                    const protocols = ['Modbus', 'DNP3', 'EtherNet/IP', 'BACnet'];
-                    protocolsDetected.add(protocols[Math.floor(Math.random() * protocols.length)]);
-                    document.getElementById('protocolsDetected').textContent = protocolsDetected.size;
+            if (scanMode === 'passive' || scanMode === 'hybrid') {
+                // Show network interface selector
+                if (!interfaceGroup) {
+                    createInterfaceSelector();
+                } else {
+                    interfaceGroup.classList.add('visible');
                 }
-
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    completeScan();
-                }
-            }, 200);
-        }
-
-        // Complete scan
-        function completeScan() {
-            setTimeout(() => {
-                document.getElementById('scanProgress').classList.remove('active');
-                showNotification('Scan completed successfully!', 'success');
                 
-                // Show results
-                switchTab('results');
-                loadScanResults();
-            }, 1000);
-        }
-
-        // Stop scan
-        function stopScan() {
-            document.getElementById('scanProgress').classList.remove('active');
-            showNotification('Scan stopped by user', 'info');
-        }
-
-        // Reset form
-        function resetForm() {
-            document.getElementById('scanForm').reset();
-            document.querySelectorAll('.protocol-card').forEach(card => {
-                card.classList.remove('selected');
-                card.querySelector('input[type="checkbox"]').checked = false;
-            });
-        }
-
-        // Load scan results
-        function loadScanResults() {
-            const deviceGrid = document.getElementById('discoveredDevices');
-            
-            // Sample discovered devices
-            const sampleDevices = [
-                {
-                    name: 'Siemens S7-1200',
-                    ip: '192.168.1.101',
-                    protocol: 'Modbus TCP',
-                    port: 502,
-                    vendor: 'Siemens',
-                    responseTime: '12ms',
-                    status: 'new'
-                },
-                {
-                    name: 'Allen-Bradley CompactLogix',
-                    ip: '192.168.1.102',
-                    protocol: 'EtherNet/IP',
-                    port: 44818,
-                    vendor: 'Rockwell Automation',
-                    responseTime: '8ms',
-                    status: 'new'
-                },
-                {
-                    name: 'Schneider M340',
-                    ip: '192.168.1.103',
-                    protocol: 'Modbus TCP',
-                    port: 502,
-                    vendor: 'Schneider Electric',
-                    responseTime: '15ms',
-                    status: 'existing'
+                // Update scan button text
+                const scanButton = document.querySelector('button[type="submit"]');
+                if (scanMode === 'passive') {
+                    scanButton.innerHTML = '<i class="fas fa-wifi"></i> Start Monitoring';
+                } else {
+                    scanButton.innerHTML = '<i class="fas fa-play"></i> Start Hybrid Scan';
                 }
-            ];
-
-            // Clear existing content
-            deviceGrid.innerHTML = '';
-
-            // Add device cards
-            sampleDevices.forEach(device => {
-                const card = createDeviceCard(device);
-                deviceGrid.appendChild(card);
-            });
+                
+                // Show passive indicator during scan
+                if (currentScan) {
+                    document.getElementById('scanModeIndicator').style.display = 'flex';
+                }
+            } else {
+                // Hide interface selector
+                if (interfaceGroup) {
+                    interfaceGroup.classList.remove('visible');
+                }
+                
+                // Reset scan button text
+                const scanButton = document.querySelector('button[type="submit"]');
+                scanButton.innerHTML = '<i class="fas fa-play"></i> Start Scan';
+                
+                // Hide passive indicator
+                document.getElementById('scanModeIndicator').style.display = 'none';
+            }
         }
 
-        // Create device card
-        function createDeviceCard(device) {
-            const card = document.createElement('div');
-            card.className = 'device-card';
+        // Create network interface selector
+        function createInterfaceSelector() {
+            const formElement = document.getElementById('scanForm');
+            const protocolSection = document.querySelector('.form-group:last-child');
             
-            card.innerHTML = `
-                <div class="device-header">
-                    <div class="device-info">
-                        <div class="device-name">${device.name}</div>
-                        <div class="device-ip">${device.ip}</div>
+            const interfaceHTML = `
+                <div class="network-interface-group visible">
+                    <label class="form-label">
+                        <i class="fas fa-ethernet"></i> Network Interface for Passive Monitoring
+                    </label>
+                    <div class="interface-list">
+                        <div class="interface-item selected" onclick="selectInterface(this, 'eth0')">
+                            <div class="interface-name">eth0</div>
+                            <div class="interface-ip">Primary Network</div>
+                        </div>
+                        <div class="interface-item" onclick="selectInterface(this, 'eth1')">
+                            <div class="interface-name">eth1</div>
+                            <div class="interface-ip">Secondary Network</div>
+                        </div>
+                        <div class="interface-item" onclick="selectInterface(this, 'any')">
+                            <div class="interface-name">any</div>
+                            <div class="interface-ip">All Interfaces</div>
+                        </div>
                     </div>
-                    <div class="device-status ${device.status}">${device.status === 'new' ? 'New' : 'Existing'}</div>
-                </div>
-                <div class="device-details">
-                    <div class="device-detail">
-                        <div class="device-detail-label">Protocol</div>
-                        <div class="device-detail-value">${device.protocol}</div>
-                    </div>
-                    <div class="device-detail">
-                        <div class="device-detail-label">Port</div>
-                        <div class="device-detail-value">${device.port}</div>
-                    </div>
-                    <div class="device-detail">
-                        <div class="device-detail-label">Vendor</div>
-                        <div class="device-detail-value">${device.vendor}</div>
-                    </div>
-                    <div class="device-detail">
-                        <div class="device-detail-label">Response Time</div>
-                        <div class="device-detail-value">${device.responseTime}</div>
-                    </div>
-                </div>
-                <div class="device-actions">
-                    <button class="btn btn-secondary" onclick="viewDeviceDetails('${device.ip}')">
-                        <i class="fas fa-info-circle"></i> Details
-                    </button>
-                    <button class="btn btn-primary" onclick="addToInventory('${device.ip}')">
-                        <i class="fas fa-plus"></i> Add to Inventory
-                    </button>
+                    <input type="hidden" id="networkInterface" name="networkInterface" value="eth0">
                 </div>
             `;
             
-            return card;
+            // Insert after protocols section
+            protocolSection.insertAdjacentHTML('afterend', interfaceHTML);
         }
 
-        // View device details
-        function viewDeviceDetails(ip) {
-            console.log('View details for device:', ip);
-            // TODO: Implement device details modal
+        // Select network interface
+        function selectInterface(element, interfaceName) {
+            // Remove selected class from all items
+            document.querySelectorAll('.interface-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked item
+            element.classList.add('selected');
+            
+            // Update hidden input
+            document.getElementById('networkInterface').value = interfaceName;
         }
 
-        // Add device to inventory
-        function addToInventory(ip) {
-            console.log('Add device to inventory:', ip);
-            showNotification('Device added to inventory', 'success');
+        // Update passive monitoring stats
+        function updatePassiveStats(packets, hosts) {
+            const packetsElement = document.getElementById('passivePackets');
+            const hostsElement = document.getElementById('passiveHosts');
+            
+            if (packetsElement) packetsElement.textContent = packets;
+            if (hostsElement) hostsElement.textContent = hosts;
         }
 
-        // Show notification
-        function showNotification(message, type) {
-            // TODO: Implement notification system
-            console.log(`${type}: ${message}`);
-        }
-
-        // Initialize page
+        // Add protocol enhancement indicators
         document.addEventListener('DOMContentLoaded', function() {
-            // Set default selected protocols
-            document.querySelectorAll('.protocol-card.selected input[type="checkbox"]').forEach(cb => {
-                cb.checked = true;
+            const protocolEnhancements = {
+                'modbus': 'Deep packet inspection for function codes',
+                'dnp3': 'Outstation identification & classification',
+                'ethernet_ip': 'CIP object detection & vendor ID',
+                'bacnet': 'Device object property discovery',
+                's7': 'PLC model & firmware detection',
+                'snmp': 'MIB-based device profiling'
+            };
+            
+            // Add enhancement badges to existing protocol cards
+            document.querySelectorAll('.protocol-card').forEach(card => {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                if (checkbox && protocolEnhancements[checkbox.value]) {
+                    const enhancement = document.createElement('div');
+                    enhancement.className = 'protocol-enhancement';
+                    enhancement.innerHTML = `
+                        <i class="fas fa-bolt"></i>
+                        <span>${protocolEnhancements[checkbox.value]}</span>
+                    `;
+                    card.appendChild(enhancement);
+                }
             });
         });
     </script>
