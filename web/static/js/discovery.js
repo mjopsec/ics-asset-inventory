@@ -121,7 +121,7 @@ function handleWebSocketMessage(message) {
     }
 }
 
-// Handle scan completion with results - FIXED
+// Handle scan completion with results - ENHANCED
 function handleScanCompleteWithResults(data) {
     console.log('Scan completed with results:', data);
     
@@ -133,12 +133,20 @@ function handleScanCompleteWithResults(data) {
     
     // Clear previous results for new scan
     scanResults = [];
+    allDiscoveredDevices.clear();
     
     if (data.devices && Array.isArray(data.devices)) {
         data.devices.forEach(device => {
             // Add metadata
             device.scan_timestamp = data.timestamp;
             device.scan_id = data.scan_id;
+            
+            // Ensure all required fields are present
+            device.ip_address = device.ip_address || 'Unknown';
+            device.device_type = device.device_type || 'Unknown Device';
+            device.vendor = device.vendor || 'Unknown';
+            device.protocol = device.protocol || 'Unknown';
+            device.open_ports = device.open_ports || [];
             
             // Store in our Map
             allDiscoveredDevices.set(device.ip_address, device);
@@ -294,7 +302,7 @@ function clearDisplayedResults() {
     }
 }
 
-// Display scan results with better handling - FIXED
+// Display scan results with better handling - ENHANCED
 function displayScanResults() {
     const deviceGrid = document.getElementById('discoveredDevices');
     if (!deviceGrid) {
@@ -320,11 +328,23 @@ function displayScanResults() {
         return;
     }
 
+    // Sort devices by IP address for consistent display
+    const sortedResults = [...scanResults].sort((a, b) => {
+        const ipA = (a.ip_address || '').split('.').map(num => parseInt(num) || 0);
+        const ipB = (b.ip_address || '').split('.').map(num => parseInt(num) || 0);
+        for (let i = 0; i < 4; i++) {
+            if (ipA[i] !== ipB[i]) return ipA[i] - ipB[i];
+        }
+        return 0;
+    });
+
     // Create device cards
-    scanResults.forEach((device, index) => {
+    sortedResults.forEach((device, index) => {
         const deviceCard = createDeviceCard(device);
         deviceGrid.appendChild(deviceCard);
     });
+
+    console.log('Devices displayed successfully');
 }
 
 // Create device card element - Enhanced
@@ -461,10 +481,10 @@ function handleDeviceFound(data) {
 function handleScanComplete(data) {
     console.log('Scan complete (legacy):', data);
     if (currentScan && data.scan_id === currentScan.scan_id) {
-        // Reload results to get complete data
+        // Wait a bit for results to be fully saved
         setTimeout(() => {
             loadScanResults(data.scan_id);
-        }, 2000);
+        }, 3000);
     }
 }
 
@@ -548,7 +568,7 @@ async function updateScanProgress(scanId) {
                         displayScanResults();
                         switchTab('results');
                     }
-                }, 2000);
+                }, 3000);
             }
             
             // Clear current scan
@@ -592,7 +612,7 @@ function displayProgress(progress) {
     if (errorsCount) errorsCount.textContent = progress.errors ? progress.errors.length : 0;
 }
 
-// Load scan results with better error handling - FIXED
+// Load scan results with better error handling - ENHANCED
 async function loadScanResults(scanId) {
     try {
         const token = getAuthToken();
@@ -615,12 +635,20 @@ async function loadScanResults(scanId) {
         
         // Clear current scan results
         scanResults = [];
+        allDiscoveredDevices.clear();
         
         // Process each device
         devices.forEach(device => {
             // Add metadata
             device.scan_timestamp = new Date().toISOString();
             device.scan_id = scanId;
+            
+            // Ensure all fields are present
+            device.ip_address = device.ip_address || 'Unknown';
+            device.device_type = device.device_type || 'Unknown Device';
+            device.vendor = device.vendor || 'Unknown';
+            device.protocol = device.protocol || 'Unknown';
+            device.open_ports = device.open_ports || [];
             
             // Store in our Map to persist across scans
             allDiscoveredDevices.set(device.ip_address, device);
