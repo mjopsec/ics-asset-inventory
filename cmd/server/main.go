@@ -73,6 +73,11 @@ func main() {
 		logger.Fatal("Database connection test failed", "error", err)
 	}
 	logger.Info("✅ Database connection test passed")
+	
+	// Initialize monitoring service
+	logger.Info("🔍 Initializing monitoring service...")
+	handlers.InitMonitoringService()
+	logger.Info("✅ Monitoring service initialized")
 
 	// Set Gin mode
 	gin.SetMode(cfg.Server.Mode)
@@ -151,6 +156,10 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	assetHandler := handlers.NewAssetHandler()
 	groupHandler := handlers.NewGroupHandler()
 	dashboardHandler := handlers.NewDashboardHandler()
+	discoveryHandler := handlers.NewDiscoveryHandler()
+	monitoringHandler := handlers.NewMonitoringHandler()
+	securityHandler := handlers.NewSecurityHandler()
+	complianceHandler := handlers.NewComplianceHandler()
 
 	// Setup all routes with authentication
 	routes.SetupAllRoutes(
@@ -159,6 +168,10 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 		assetHandler,
 		groupHandler,
 		dashboardHandler,
+		discoveryHandler,
+		monitoringHandler,
+		securityHandler,
+		complianceHandler,
 	)
 
 	return router

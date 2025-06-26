@@ -18,6 +18,8 @@ type Session struct {
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
 	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+	LastUsed  time.Time `json:"last_used"`
 }
 
 // SessionStore manages active sessions
@@ -29,6 +31,11 @@ type SessionStore struct {
 // Global session store
 var store = &SessionStore{
 	sessions: make(map[string]*Session),
+}
+
+// Initialize cleanup task on startup
+func init() {
+	InitCleanupTask()
 }
 
 // HashPassword creates a SHA256 hash of the password
@@ -58,26 +65,27 @@ func CreateSession(userID, username, email, role string, duration time.Duration)
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
+	now := time.Now()
 	session := &Session{
 		Token:     token,
 		UserID:    userID,
 		Username:  username,
 		Email:     email,
 		Role:      role,
-		ExpiresAt: time.Now().Add(duration),
+		ExpiresAt: now.Add(duration),
+		CreatedAt: now,
+		LastUsed:  now,
 	}
 
 	store.mu.Lock()
 	store.sessions[token] = session
 	store.mu.Unlock()
 
-	// Clean up expired sessions periodically
-	go cleanupExpiredSessions()
-
 	return session, nil
 }
 
 // ValidateSession checks if a session token is valid
+// IMPORTANT: This function should NOT modify the session unless necessary
 func ValidateSession(token string) (*Session, error) {
 	if token == "" {
 		return nil, errors.New("empty token")
@@ -91,15 +99,24 @@ func ValidateSession(token string) (*Session, error) {
 		return nil, errors.New("invalid session")
 	}
 
+	// Check if session has expired
 	if time.Now().After(session.ExpiresAt) {
-		// Remove expired session
-		store.mu.Lock()
-		delete(store.sessions, token)
-		store.mu.Unlock()
+		// Session expired, but don't remove it immediately
+		// Let the cleanup task handle it or explicit logout
 		return nil, errors.New("session expired")
 	}
 
-	return session, nil
+	// Update last used time only if it's been more than 5 minutes
+	// This prevents excessive locking and updates
+	if time.Since(session.LastUsed) > 5*time.Minute {
+		store.mu.Lock()
+		session.LastUsed = time.Now()
+		store.mu.Unlock()
+	}
+
+	// Return a copy to avoid race conditions
+	sessionCopy := *session
+	return &sessionCopy, nil
 }
 
 // RefreshSession extends the expiration time of a session
@@ -112,17 +129,25 @@ func RefreshSession(token string, duration time.Duration) error {
 		return errors.New("session not found")
 	}
 
+	// Only extend if session is still valid
+	if time.Now().After(session.ExpiresAt) {
+		return errors.New("cannot refresh expired session")
+	}
+
 	session.ExpiresAt = time.Now().Add(duration)
+	session.LastUsed = time.Now()
 	return nil
 }
 
-// InvalidateSession removes a session
+// InvalidateSession removes a session (used for explicit logout)
 func InvalidateSession(token string) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 
 	if _, exists := store.sessions[token]; !exists {
-		return errors.New("session not found")
+		// Don't return error if session doesn't exist
+		// It might have been already cleaned up
+		return nil
 	}
 
 	delete(store.sessions, token)
@@ -144,7 +169,9 @@ func GetUserSessions(userID string) []*Session {
 	var userSessions []*Session
 	for _, session := range store.sessions {
 		if session.UserID == userID {
-			userSessions = append(userSessions, session)
+			// Return a copy
+			sessionCopy := *session
+			userSessions = append(userSessions, &sessionCopy)
 		}
 	}
 	return userSessions
@@ -156,19 +183,86 @@ func cleanupExpiredSessions() {
 	defer store.mu.Unlock()
 
 	now := time.Now()
+	expiredTokens := []string{}
+	
 	for token, session := range store.sessions {
-		if now.After(session.ExpiresAt) {
-			delete(store.sessions, token)
+		// Only cleanup sessions that have been expired for more than 1 hour
+		// This gives users a grace period
+		if now.After(session.ExpiresAt.Add(1 * time.Hour)) {
+			expiredTokens = append(expiredTokens, token)
 		}
+	}
+	
+	for _, token := range expiredTokens {
+		delete(store.sessions, token)
+	}
+	
+	if len(expiredTokens) > 0 {
+		fmt.Printf("Cleaned up %d expired sessions\n", len(expiredTokens))
 	}
 }
 
 // InitCleanupTask starts a background task to clean up expired sessions
 func InitCleanupTask() {
-	ticker := time.NewTicker(5 * time.Minute)
 	go func() {
+		// Run cleanup every 30 minutes
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		
 		for range ticker.C {
 			cleanupExpiredSessions()
 		}
 	}()
+}
+
+// InvalidateAllUserSessions removes all sessions for a specific user
+func InvalidateAllUserSessions(userID string) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	tokensToDelete := []string{}
+	for token, session := range store.sessions {
+		if session.UserID == userID {
+			tokensToDelete = append(tokensToDelete, token)
+		}
+	}
+
+	for _, token := range tokensToDelete {
+		delete(store.sessions, token)
+	}
+
+	return nil
+}
+
+// GetSessionInfo returns information about a session without validating it
+func GetSessionInfo(token string) (*Session, error) {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+
+	session, exists := store.sessions[token]
+	if !exists {
+		return nil, errors.New("session not found")
+	}
+
+	// Return a copy
+	sessionCopy := *session
+	return &sessionCopy, nil
+}
+
+// ExtendSessionIfNeeded extends session if it's close to expiry
+// This is a helper function to prevent unexpected logouts
+func ExtendSessionIfNeeded(token string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	session, exists := store.sessions[token]
+	if !exists {
+		return
+	}
+
+	// If session expires in less than 2 hours, extend it
+	if time.Until(session.ExpiresAt) < 2*time.Hour {
+		session.ExpiresAt = time.Now().Add(24 * time.Hour)
+		session.LastUsed = time.Now()
+	}
 }

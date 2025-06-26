@@ -219,7 +219,7 @@
             color: var(--text-secondary);
         }
 
-        /* Vulnerability Chart Section */
+        /* Chart Section */
         .chart-section {
             background-color: var(--bg-secondary);
             border-radius: var(--radius-lg);
@@ -259,8 +259,13 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background-color: var(--primary-dark);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-secondary {
@@ -272,6 +277,15 @@
         .btn-secondary:hover {
             background-color: var(--bg-tertiary);
             color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #DC2626;
         }
 
         /* Vulnerabilities Table */
@@ -423,6 +437,11 @@
         .status-badge.resolved {
             background-color: #D1FAE5;
             color: #065F46;
+        }
+
+        .status-badge.false_positive {
+            background-color: #E0E7FF;
+            color: #3730A3;
         }
 
         /* Compliance Section */
@@ -631,6 +650,667 @@
             display: block;
         }
 
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Vulnerability Details */
+        .vuln-details {
+            display: grid;
+            gap: 20px;
+        }
+
+        .vuln-detail-section {
+            padding: 16px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+
+        .vuln-detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .vuln-detail-value {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .vuln-references {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vuln-reference {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .vuln-reference:hover {
+            text-decoration: underline;
+        }
+
+        /* Asset Selection */
+        .asset-selection {
+            display: grid;
+            gap: 16px;
+        }
+
+        .asset-select-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-select-info {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .asset-select-filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .asset-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        .asset-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .asset-item:last-child {
+            border-bottom: none;
+        }
+
+        .asset-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .asset-checkbox {
+            margin-right: 12px;
+        }
+
+        .asset-info {
+            flex: 1;
+        }
+
+        .asset-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .asset-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .asset-criticality {
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .asset-criticality.critical {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .asset-criticality.high {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .asset-criticality.medium {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .asset-criticality.low {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        /* Progress Bar */
+        .assessment-progress {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 999px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            transition: opacity 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification-error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .notification-warning {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .notification-info {
+            border-left: 4px solid var(--info-color);
+        }
+
+        .notification i {
+            font-size: 20px;
+        }
+
+        .notification-success i { color: var(--success-color); }
+        .notification-error i { color: var(--danger-color); }
+        .notification-warning i { color: var(--warning-color); }
+        .notification-info i { color: var(--info-color); }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Risk Table */
+        .risk-item-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .risk-score-badge {
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .risk-score-badge.critical {
+            background-color: var(--danger-color);
+        }
+
+        .risk-score-badge.high {
+            background-color: var(--warning-color);
+        }
+
+        .risk-score-badge.medium {
+            background-color: var(--info-color);
+        }
+
+        .risk-score-badge.low {
+            background-color: var(--success-color);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            color: var(--text-tertiary);
+            margin-bottom: 20px;
+        }
+
+        .empty-state-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Compliance Modal Styles */
+        .compliance-assessment-config {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .config-section {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 24px;
+        }
+
+        .config-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .config-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .standards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .standard-option {
+            cursor: pointer;
+        }
+
+        .standard-option input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .standard-card {
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .standard-option input[type="checkbox"]:checked + .standard-card {
+            border-color: var(--primary-color);
+            background-color: #EFF6FF;
+        }
+
+        .standard-icon {
+            font-size: 32px;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+
+        .standard-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .standard-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .scope-options {
+            display: flex;
+            gap: 24px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .category-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .category-option:hover {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--primary-color);
+        }
+
+        .category-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .category-option i {
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Compliance Details Styles */
+        .compliance-details {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .compliance-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .compliance-checks {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .check-category {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .category-header {
+            padding: 16px 20px;
+            background-color: var(--bg-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .category-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+        }
+
+        .stat-passed {
+            color: var(--success-color);
+        }
+
+        .stat-failed {
+            color: var(--danger-color);
+        }
+
+        .check-items {
+            padding: 20px;
+            display: none;
+        }
+
+        .check-category.expanded .check-items {
+            display: block;
+        }
+
+        .check-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .check-item:last-child {
+            border-bottom: none;
+        }
+
+        .check-info {
+            flex: 1;
+        }
+
+        .check-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .check-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .check-result {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-status {
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .check-status.pass {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .check-status.fail {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .check-status.not_applicable {
+            background-color: #E0E7FF;
+            color: #3730A3;
+        }
+
+        .evidence-link {
+            font-size: 12px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .evidence-link:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -721,7 +1401,7 @@
             <header class="topbar">
                 <div class="page-header">
                     <h1 class="page-title">Security Assessment</h1>
-                    <p class="page-subtitle">Monitor vulnerabilities, compliance status, and security risks across your ICS infrastructure</p>
+                    <p class="page-subtitle">Passive security monitoring and vulnerability assessment for OT/ICS environments</p>
                 </div>
             </header>
 
@@ -733,41 +1413,41 @@
                         <div class="security-icon critical">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <div class="security-value">3</div>
+                        <div class="security-value" id="criticalCount">0</div>
                         <div class="security-label">Critical Vulnerabilities</div>
                     </div>
                     <div class="security-card">
                         <div class="security-icon high">
                             <i class="fas fa-exclamation-circle"></i>
                         </div>
-                        <div class="security-value">12</div>
+                        <div class="security-value" id="highCount">0</div>
                         <div class="security-label">High Risk Issues</div>
                     </div>
                     <div class="security-card">
                         <div class="security-icon medium">
                             <i class="fas fa-info-circle"></i>
                         </div>
-                        <div class="security-value">28</div>
+                        <div class="security-value" id="mediumCount">0</div>
                         <div class="security-label">Medium Risk Issues</div>
                     </div>
                     <div class="security-card">
                         <div class="security-icon low">
                             <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="security-value">89%</div>
+                        <div class="security-value" id="securityScore">100%</div>
                         <div class="security-label">Overall Security Score</div>
                     </div>
                 </div>
 
                 <!-- Tabs -->
                 <div class="tabs">
-                    <div class="tab active" onclick="switchTab('vulnerabilities')">
+                    <div class="tab active" data-tab="vulnerabilities">
                         <i class="fas fa-bug"></i> Vulnerabilities
                     </div>
-                    <div class="tab" onclick="switchTab('compliance')">
+                    <div class="tab" data-tab="compliance">
                         <i class="fas fa-clipboard-check"></i> Compliance
                     </div>
-                    <div class="tab" onclick="switchTab('risk')">
+                    <div class="tab" data-tab="risk">
                         <i class="fas fa-chart-line"></i> Risk Analysis
                     </div>
                 </div>
@@ -778,9 +1458,14 @@
                     <div class="chart-section">
                         <div class="section-header">
                             <h2 class="section-title">Vulnerability Distribution</h2>
-                            <button class="btn btn-primary">
-                                <i class="fas fa-sync"></i> Run Security Scan
-                            </button>
+                            <div>
+                                <button class="btn btn-secondary" id="loadCVEBtn">
+                                    <i class="fas fa-database"></i> Load CVE Database
+                                </button>
+                                <button class="btn btn-primary" id="runSecurityScanBtn">
+                                    <i class="fas fa-sync"></i> Run Passive Assessment
+                                </button>
+                            </div>
                         </div>
                         <div class="chart-grid">
                             <div class="chart-container">
@@ -795,29 +1480,30 @@
                     <!-- Vulnerabilities Table -->
                     <div class="vulnerabilities-table">
                         <div class="table-filters">
-                            <select class="filter-select">
+                            <select class="filter-select" id="severityFilter">
                                 <option value="">All Severities</option>
                                 <option value="critical">Critical</option>
                                 <option value="high">High</option>
                                 <option value="medium">Medium</option>
                                 <option value="low">Low</option>
                             </select>
-                            <select class="filter-select">
+                            <select class="filter-select" id="assetTypeFilter">
                                 <option value="">All Assets</option>
-                                <option value="plc">PLCs</option>
-                                <option value="hmi">HMIs</option>
-                                <option value="rtu">RTUs</option>
-                                <option value="server">Servers</option>
+                                <option value="PLC">PLCs</option>
+                                <option value="HMI">HMIs</option>
+                                <option value="RTU">RTUs</option>
+                                <option value="Server">Servers</option>
                             </select>
-                            <select class="filter-select">
+                            <select class="filter-select" id="statusFilter">
                                 <option value="">All Status</option>
                                 <option value="open">Open</option>
                                 <option value="acknowledged">Acknowledged</option>
                                 <option value="resolved">Resolved</option>
+                                <option value="false_positive">False Positive</option>
                             </select>
                             <div class="search-box">
                                 <i class="fas fa-search"></i>
-                                <input type="text" placeholder="Search vulnerabilities...">
+                                <input type="text" placeholder="Search vulnerabilities..." id="searchInput">
                             </div>
                         </div>
                         <table class="data-table">
@@ -833,61 +1519,16 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="vulnerabilityTableBody">
                                 <tr>
-                                    <td>CVE-2023-32315</td>
-                                    <td>Remote Code Execution in Modbus Implementation</td>
-                                    <td>Main PLC Controller</td>
-                                    <td><span class="severity-badge critical">CRITICAL</span></td>
-                                    <td><span class="cvss-score critical">9.8</span></td>
-                                    <td><span class="status-badge open"><i class="fas fa-circle"></i> Open</span></td>
-                                    <td>2024-01-20</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                            <i class="fas fa-eye"></i> View
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>CVE-2023-28456</td>
-                                    <td>Authentication Bypass in HMI Web Interface</td>
-                                    <td>HMI Panel Line 1</td>
-                                    <td><span class="severity-badge high">HIGH</span></td>
-                                    <td><span class="cvss-score high">8.2</span></td>
-                                    <td><span class="status-badge acknowledged"><i class="fas fa-circle"></i> Acknowledged</span></td>
-                                    <td>2024-01-18</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                            <i class="fas fa-eye"></i> View
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>CVE-2023-25789</td>
-                                    <td>Buffer Overflow in DNP3 Parser</td>
-                                    <td>Remote Terminal Unit 3</td>
-                                    <td><span class="severity-badge critical">CRITICAL</span></td>
-                                    <td><span class="cvss-score critical">9.1</span></td>
-                                    <td><span class="status-badge open"><i class="fas fa-circle"></i> Open</span></td>
-                                    <td>2024-01-19</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                            <i class="fas fa-eye"></i> View
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>CVE-2023-22145</td>
-                                    <td>Weak Encryption in Configuration Files</td>
-                                    <td>SCADA Server Primary</td>
-                                    <td><span class="severity-badge medium">MEDIUM</span></td>
-                                    <td><span class="cvss-score">6.5</span></td>
-                                    <td><span class="status-badge resolved"><i class="fas fa-check-circle"></i> Resolved</span></td>
-                                    <td>2024-01-15</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                            <i class="fas fa-eye"></i> View
-                                        </button>
+                                    <td colspan="8" style="text-align: center; padding: 40px;">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">
+                                                <i class="fas fa-shield-alt"></i>
+                                            </div>
+                                            <div class="empty-state-title">No Vulnerabilities Found</div>
+                                            <div class="empty-state-text">Run a passive security assessment to check for vulnerabilities</div>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -897,129 +1538,8 @@
 
                 <!-- Compliance Tab -->
                 <div id="complianceTab" class="tab-content">
-                    <div class="compliance-grid">
-                        <!-- IEC 62443 Compliance -->
-                        <div class="compliance-card">
-                            <div class="compliance-header">
-                                <h3 class="compliance-title">IEC 62443 Compliance</h3>
-                                <span class="compliance-score warning">78%</span>
-                            </div>
-                            <div class="compliance-progress">
-                                <div class="compliance-progress-bar warning" style="width: 78%;"></div>
-                            </div>
-                            <div class="compliance-items">
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Network Segmentation</span>
-                                </div>
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Access Control</span>
-                                </div>
-                                <div class="compliance-item failed">
-                                    <i class="fas fa-times-circle"></i>
-                                    <span>Secure Remote Access</span>
-                                </div>
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Patch Management</span>
-                                </div>
-                                <div class="compliance-item failed">
-                                    <i class="fas fa-times-circle"></i>
-                                    <span>Security Monitoring</span>
-                                </div>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="btn btn-secondary">
-                                    <i class="fas fa-file-alt"></i> View Report
-                                </button>
-                                <button class="btn btn-primary">
-                                    <i class="fas fa-download"></i> Export
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- NIST Framework -->
-                        <div class="compliance-card">
-                            <div class="compliance-header">
-                                <h3 class="compliance-title">NIST Cybersecurity Framework</h3>
-                                <span class="compliance-score good">92%</span>
-                            </div>
-                            <div class="compliance-progress">
-                                <div class="compliance-progress-bar good" style="width: 92%;"></div>
-                            </div>
-                            <div class="compliance-items">
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Identify</span>
-                                </div>
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Protect</span>
-                                </div>
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Detect</span>
-                                </div>
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Respond</span>
-                                </div>
-                                <div class="compliance-item failed">
-                                    <i class="fas fa-times-circle"></i>
-                                    <span>Recover</span>
-                                </div>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="btn btn-secondary">
-                                    <i class="fas fa-file-alt"></i> View Report
-                                </button>
-                                <button class="btn btn-primary">
-                                    <i class="fas fa-download"></i> Export
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Custom Security Policy -->
-                        <div class="compliance-card">
-                            <div class="compliance-header">
-                                <h3 class="compliance-title">Corporate Security Policy</h3>
-                                <span class="compliance-score poor">65%</span>
-                            </div>
-                            <div class="compliance-progress">
-                                <div class="compliance-progress-bar poor" style="width: 65%;"></div>
-                            </div>
-                            <div class="compliance-items">
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Password Policy</span>
-                                </div>
-                                <div class="compliance-item failed">
-                                    <i class="fas fa-times-circle"></i>
-                                    <span>Encryption Standards</span>
-                                </div>
-                                <div class="compliance-item failed">
-                                    <i class="fas fa-times-circle"></i>
-                                    <span>Backup Procedures</span>
-                                </div>
-                                <div class="compliance-item passed">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Incident Response</span>
-                                </div>
-                                <div class="compliance-item failed">
-                                    <i class="fas fa-times-circle"></i>
-                                    <span>Security Training</span>
-                                </div>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="btn btn-secondary">
-                                    <i class="fas fa-file-alt"></i> View Report
-                                </button>
-                                <button class="btn btn-primary">
-                                    <i class="fas fa-download"></i> Export
-                                </button>
-                            </div>
-                        </div>
+                    <div class="compliance-grid" id="complianceGrid">
+                        <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
 
@@ -1035,32 +1555,8 @@
                         
                         <div style="text-align: center; margin-bottom: 20px;">
                             <p style="color: var(--text-secondary); margin-bottom: 20px;">Risk = Likelihood × Impact</p>
-                            <div class="risk-matrix">
-                                <div class="risk-cell critical">5</div>
-                                <div class="risk-cell critical">10</div>
-                                <div class="risk-cell critical">15</div>
-                                <div class="risk-cell critical">20</div>
-                                <div class="risk-cell critical">25</div>
-                                <div class="risk-cell high">4</div>
-                                <div class="risk-cell high">8</div>
-                                <div class="risk-cell high">12</div>
-                                <div class="risk-cell critical">16</div>
-                                <div class="risk-cell critical">20</div>
-                                <div class="risk-cell medium">3</div>
-                                <div class="risk-cell medium">6</div>
-                                <div class="risk-cell high">9</div>
-                                <div class="risk-cell high">12</div>
-                                <div class="risk-cell critical">15</div>
-                                <div class="risk-cell low">2</div>
-                                <div class="risk-cell medium">4</div>
-                                <div class="risk-cell medium">6</div>
-                                <div class="risk-cell high">8</div>
-                                <div class="risk-cell high">10</div>
-                                <div class="risk-cell low">1</div>
-                                <div class="risk-cell low">2</div>
-                                <div class="risk-cell medium">3</div>
-                                <div class="risk-cell medium">4</div>
-                                <div class="risk-cell medium">5</div>
+                            <div class="risk-matrix" id="riskMatrix">
+                                <!-- Will be populated by JavaScript -->
                             </div>
                             <div class="risk-labels">
                                 <span>Very Low</span>
@@ -1077,7 +1573,7 @@
                     <div class="chart-section">
                         <div class="section-header">
                             <h2 class="section-title">Top Security Risks</h2>
-                            <button class="btn btn-primary">
+                            <button class="btn btn-primary" onclick="generateRiskReport()">
                                 <i class="fas fa-file-export"></i> Generate Risk Report
                             </button>
                         </div>
@@ -1085,46 +1581,20 @@
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Risk</th>
                                         <th>Asset</th>
+                                        <th>Type</th>
+                                        <th>Vulnerabilities</th>
                                         <th>Likelihood</th>
                                         <th>Impact</th>
                                         <th>Risk Score</th>
                                         <th>Mitigation</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="riskTableBody">
                                     <tr>
-                                        <td>Unpatched Critical Vulnerability</td>
-                                        <td>Main PLC Controller</td>
-                                        <td>High</td>
-                                        <td>Critical</td>
-                                        <td><span class="severity-badge critical">20</span></td>
-                                        <td>Apply security patch immediately</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Weak Authentication</td>
-                                        <td>HMI Panel Line 1</td>
-                                        <td>Medium</td>
-                                        <td>High</td>
-                                        <td><span class="severity-badge high">12</span></td>
-                                        <td>Implement multi-factor authentication</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Exposed Network Services</td>
-                                        <td>Remote Terminal Unit 3</td>
-                                        <td>High</td>
-                                        <td>Medium</td>
-                                        <td><span class="severity-badge high">12</span></td>
-                                        <td>Configure firewall rules</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Outdated Firmware</td>
-                                        <td>Industrial Switch A</td>
-                                        <td>Low</td>
-                                        <td>Medium</td>
-                                        <td><span class="severity-badge medium">6</span></td>
-                                        <td>Schedule firmware update</td>
+                                        <td colspan="7" style="text-align: center; padding: 40px;">
+                                            <p style="color: var(--text-secondary);">No risk analysis available. Run a security assessment first.</p>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1135,39 +1605,332 @@
         </main>
     </div>
 
+    <!-- Vulnerability Details Modal -->
+    <div class="modal" id="vulnModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Vulnerability Details</h2>
+                <button class="modal-close" onclick="closeVulnModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="vulnModalBody">
+                <!-- Will be populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeVulnModal()">Close</button>
+                <button class="btn btn-primary" id="updateVulnStatusBtn">Update Status</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Selection Modal -->
+    <div class="modal" id="assetSelectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Select Assets for Assessment</h2>
+                <button class="modal-close" onclick="closeAssetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="asset-selection">
+                    <div class="asset-select-header">
+                        <div class="asset-select-info">
+                            <span id="selectedAssetCount">0</span> assets selected
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="selectAllAssets()">Select All</button>
+                            <button class="btn btn-secondary" onclick="deselectAllAssets()">Deselect All</button>
+                        </div>
+                    </div>
+                    <div class="asset-select-filters">
+                        <select class="filter-select" id="assetModalTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="PLC">PLCs</option>
+                            <option value="HMI">HMIs</option>
+                            <option value="RTU">RTUs</option>
+                            <option value="Server">Servers</option>
+                        </select>
+                        <select class="filter-select" id="assetModalCriticalityFilter">
+                            <option value="">All Criticality</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="asset-list" id="assetList">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                    <div class="assessment-progress" id="assessmentProgress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Assessing assets...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAssetModal()">Cancel</button>
+                <button class="btn btn-primary" id="runAssessmentBtn" onclick="runSelectedAssessment()">
+                    Run Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Assessment Modal -->
+    <div class="modal" id="complianceModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Compliance Assessment Configuration</h2>
+                <button class="modal-close" onclick="closeComplianceModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="compliance-assessment-config">
+                    <!-- Standard Selection -->
+                    <div class="config-section">
+                        <h3 class="config-title">Select Compliance Standards</h3>
+                        <div class="standards-grid">
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="IEC-62443" checked>
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-industry"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>IEC 62443</h4>
+                                        <p>Industrial Automation and Control Systems Security</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="NIST">
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>NIST Framework</h4>
+                                        <p>Cybersecurity Framework for Critical Infrastructure</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="ISO27001">
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-certificate"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>ISO 27001</h4>
+                                        <p>Information Security Management Systems</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="NERC-CIP">
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>NERC CIP</h4>
+                                        <p>Critical Infrastructure Protection Standards</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Assessment Scope -->
+                    <div class="config-section">
+                        <h3 class="config-title">Assessment Scope</h3>
+                        <div class="scope-options">
+                            <label class="radio-option">
+                                <input type="radio" name="scope" value="all" checked>
+                                <span>All Assets</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="scope" value="critical">
+                                <span>Critical Assets Only</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="scope" value="selected">
+                                <span>Selected Assets</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Check Categories -->
+                    <div class="config-section">
+                        <h3 class="config-title">Compliance Check Categories</h3>
+                        <div class="categories-grid">
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="access_control" checked>
+                                <i class="fas fa-key"></i>
+                                <span>Access Control</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="network_security" checked>
+                                <i class="fas fa-network-wired"></i>
+                                <span>Network Security</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="data_protection" checked>
+                                <i class="fas fa-lock"></i>
+                                <span>Data Protection</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="system_integrity" checked>
+                                <i class="fas fa-shield-virus"></i>
+                                <span>System Integrity</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="incident_response" checked>
+                                <i class="fas fa-ambulance"></i>
+                                <span>Incident Response</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="physical_security" checked>
+                                <i class="fas fa-building-shield"></i>
+                                <span>Physical Security</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Assessment Options -->
+                    <div class="config-section">
+                        <h3 class="config-title">Assessment Options</h3>
+                        <div class="option-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="generateEvidence" checked>
+                                <span>Generate Evidence Report</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="includeRecommendations" checked>
+                                <span>Include Remediation Recommendations</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="compareBaseline">
+                                <span>Compare with Previous Baseline</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeComplianceModal()">Cancel</button>
+                <button class="btn btn-primary" id="runComplianceBtn" onclick="runComplianceAssessment()">
+                    <i class="fas fa-play"></i> Run Compliance Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Details Modal -->
+    <div class="modal" id="complianceDetailsModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="complianceDetailsTitle">Compliance Details</h2>
+                <button class="modal-close" onclick="closeComplianceDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="complianceDetailsBody">
+                <!-- Content will be populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeComplianceDetailsModal()">Close</button>
+                <button class="btn btn-primary" onclick="exportComplianceReport()">
+                    <i class="fas fa-download"></i> Export Report
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
-        // Tab switching
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(tabName + 'Tab').classList.add('active');
-
-            // Initialize charts when switching to risk tab
-            if (tabName === 'risk' && !window.riskChartsInitialized) {
-                // Initialize risk charts here if needed
-                window.riskChartsInitialized = true;
+        // Enhanced Security Page JavaScript
+        
+        // Global variables
+        let vulnerabilities = [];
+        let selectedAssets = new Set();
+        let isAssessing = false;
+        let currentVuln = null;
+        let assets = [];
+        let cveDatabase = [];
+        
+        // Chart instances
+        let vulnChart = null;
+        let trendChart = null;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Security page loaded');
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Load initial data
+            loadSecurityData();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize risk matrix
+            initializeRiskMatrix();
+        });
+        
+        // API helper
+        async function apiCall(url, options = {}) {
+            const token = localStorage.getItem('token') || getCookie('auth_token');
+            
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            };
+            
+            try {
+                const response = await fetch(url, { ...defaultOptions, ...options });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return null;
+                    }
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`API error: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', url, data); // Debug logging
+                return data;
+            } catch (error) {
+                console.error('API Call Error:', error);
+                throw error;
             }
         }
-
+        
+        // Get cookie helper
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
         // Initialize charts
-        document.addEventListener('DOMContentLoaded', function() {
+        function initializeCharts() {
             // Vulnerability Distribution Chart
             const vulnCtx = document.getElementById('vulnChart').getContext('2d');
-            const vulnChart = new Chart(vulnCtx, {
+            vulnChart = new Chart(vulnCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Critical', 'High', 'Medium', 'Low'],
                     datasets: [{
-                        data: [3, 12, 28, 45],
+                        data: [0, 0, 0, 0],
                         backgroundColor: [
                             '#EF4444',
                             '#F59E0B',
@@ -1198,30 +1961,36 @@
                     }
                 }
             });
-
+            
             // Vulnerability Trend Chart
             const trendCtx = document.getElementById('trendChart').getContext('2d');
-            const trendChart = new Chart(trendCtx, {
+            trendChart = new Chart(trendCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    labels: getLast7Days(),
                     datasets: [{
                         label: 'Critical',
-                        data: [5, 4, 6, 3, 2, 3],
+                        data: [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#EF4444',
                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
                         tension: 0.4
                     }, {
                         label: 'High',
-                        data: [15, 18, 14, 16, 13, 12],
+                        data: [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#F59E0B',
                         backgroundColor: 'rgba(245, 158, 11, 0.1)',
                         tension: 0.4
                     }, {
                         label: 'Medium',
-                        data: [32, 35, 30, 33, 29, 28],
+                        data: [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#3B82F6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Low',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         tension: 0.4
                     }]
                 },
@@ -1231,7 +2000,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Vulnerability Trends',
+                            text: 'Vulnerability Trends (Last 7 Days)',
                             font: {
                                 size: 16
                             }
@@ -1239,47 +2008,1374 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
                         }
                     }
                 }
             });
-
-            // Load security data
-            loadSecurityData();
-        });
-
-        // Load security data from API
+        }
+        
+        // Get last 7 days labels
+        function getLast7Days() {
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                days.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            }
+            return days;
+        }
+        
+        // Load security data
         async function loadSecurityData() {
             try {
-                // Fetch security assessments
-                const response = await fetch('/api/dashboard/alerts');
-                const data = await response.json();
-                
-                if (data.alerts) {
-                    // Update UI with real data
-                    console.log('Security alerts loaded:', data.alerts);
+                // Load dashboard data
+                const dashboard = await apiCall('/api/security/dashboard');
+                if (dashboard) {
+                    updateDashboard(dashboard);
                 }
+                
+                // Load vulnerabilities
+                const vulnData = await apiCall('/api/security/vulnerabilities');
+                if (vulnData) {
+                    vulnerabilities = vulnData.vulnerabilities || [];
+                    updateVulnerabilityTable(vulnerabilities);
+                    updateVulnerabilityChart(vulnData.severity_distribution || []);
+                }
+                
+                // Load compliance data
+                const compliance = await apiCall('/api/security/compliance');
+                if (compliance) {
+                    updateComplianceSection(compliance);
+                }
+                
+                // Load risk matrix
+                const riskData = await apiCall('/api/security/risk-matrix');
+                if (riskData) {
+                    updateRiskMatrix(riskData);
+                }
+                
             } catch (error) {
                 console.error('Error loading security data:', error);
+                showNotification('Failed to load security data', 'error');
+            }
+        }
+        
+        // Update dashboard
+        function updateDashboard(data) {
+            const vulns = data.vulnerabilities || {};
+            
+            document.getElementById('criticalCount').textContent = vulns.critical || 0;
+            document.getElementById('highCount').textContent = vulns.high || 0;
+            document.getElementById('mediumCount').textContent = vulns.medium || 0;
+            document.getElementById('securityScore').textContent = (data.security_score || 100) + '%';
+        }
+        
+        // Update vulnerability table
+        function updateVulnerabilityTable(vulns) {
+            const tbody = document.getElementById('vulnerabilityTableBody');
+            tbody.innerHTML = '';
+            
+            if (vulns.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="empty-state-title">No Vulnerabilities Found</div>
+                                <div class="empty-state-text">Run a passive security assessment to check for vulnerabilities</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            vulns.forEach(vuln => {
+                const row = createVulnerabilityRow(vuln);
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Create vulnerability row
+        function createVulnerabilityRow(vuln) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${vuln.cve || 'N/A'}</td>
+                <td>${vuln.title || vuln.description || 'No description'}</td>
+                <td>${vuln.asset ? vuln.asset.name : 'Unknown'}</td>
+                <td><span class="severity-badge ${vuln.severity}">${vuln.severity.toUpperCase()}</span></td>
+                <td><span class="cvss-score ${getCVSSClass(vuln.cvss_score)}">${vuln.cvss_score ? vuln.cvss_score.toFixed(1) : 'N/A'}</span></td>
+                <td>
+                    <span class="status-badge ${vuln.status}">
+                        <i class="fas fa-${getStatusIcon(vuln.status)}"></i> 
+                        ${formatStatus(vuln.status)}
+                    </span>
+                </td>
+                <td>${formatDate(vuln.created_at)}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" 
+                            onclick="viewVulnerability('${vuln.id}')">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                </td>
+            `;
+            return row;
+        }
+        
+        // Update vulnerability chart
+        function updateVulnerabilityChart(distribution) {
+            const counts = {
+                critical: 0,
+                high: 0,
+                medium: 0,
+                low: 0
+            };
+            
+            distribution.forEach(item => {
+                if (counts.hasOwnProperty(item.severity)) {
+                    counts[item.severity] = item.count;
+                }
+            });
+            
+            vulnChart.data.datasets[0].data = [
+                counts.critical,
+                counts.high,
+                counts.medium,
+                counts.low
+            ];
+            vulnChart.update();
+        }
+        
+        // Update compliance section
+        function updateComplianceSection(compliance) {
+            const grid = document.getElementById('complianceGrid');
+            grid.innerHTML = '';
+            
+            const standards = compliance.standards || [];
+            standards.forEach(standard => {
+                const card = createComplianceCard(standard);
+                grid.appendChild(card);
+            });
+        }
+        
+        // Create compliance card
+        function createComplianceCard(standard) {
+            const card = document.createElement('div');
+            card.className = 'compliance-card';
+            
+            const scoreClass = getScoreClass(standard.compliance_rate);
+            const categories = standard.categories || {};
+            
+            card.innerHTML = `
+                <div class="compliance-header">
+                    <h3 class="compliance-title">${standard.name}</h3>
+                    <span class="compliance-score ${scoreClass}">${standard.compliance_rate.toFixed(1)}%</span>
+                </div>
+                <div class="compliance-progress">
+                    <div class="compliance-progress-bar ${scoreClass}" style="width: ${standard.compliance_rate}%;"></div>
+                </div>
+                <div class="compliance-items">
+                    ${Object.entries(categories).map(([key, value]) => {
+                        const passed = value === 'pass';
+                        return `
+                            <div class="compliance-item ${passed ? 'passed' : 'failed'}">
+                                <i class="fas fa-${passed ? 'check' : 'times'}-circle"></i>
+                                <span>${formatCategoryName(key)}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="viewComplianceDetails('${standard.name}')">
+                        <i class="fas fa-file-alt"></i> View Details
+                    </button>
+                    <button class="btn btn-primary" onclick="exportCompliance('${standard.name}')">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Initialize risk matrix
+        function initializeRiskMatrix() {
+            const matrix = document.getElementById('riskMatrix');
+            if (!matrix) return;
+            
+            const riskLevels = [
+                ['medium', 'high', 'critical', 'critical', 'critical'],
+                ['low', 'medium', 'high', 'critical', 'critical'],
+                ['low', 'medium', 'medium', 'high', 'critical'],
+                ['low', 'low', 'medium', 'medium', 'high'],
+                ['low', 'low', 'low', 'medium', 'medium']
+            ];
+            
+            const values = [
+                [5, 10, 15, 20, 25],
+                [4, 8, 12, 16, 20],
+                [3, 6, 9, 12, 15],
+                [2, 4, 6, 8, 10],
+                [1, 2, 3, 4, 5]
+            ];
+            
+            matrix.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 5; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `risk-cell ${riskLevels[i][j]}`;
+                    cell.textContent = values[i][j];
+                    cell.title = `Likelihood: ${5-i}, Impact: ${j+1}`;
+                    matrix.appendChild(cell);
+                }
+            }
+        }
+        
+        // Update risk matrix with data
+        function updateRiskMatrix(data) {
+            const tbody = document.getElementById('riskTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            const risks = data.assets_at_risk || [];
+            if (risks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <p style="color: var(--text-secondary);">No risk analysis available. Run a security assessment first.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            risks.forEach(risk => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${risk.asset_name}</td>
+                    <td>${risk.asset_type}</td>
+                    <td>${risk.vuln_count}</td>
+                    <td>${risk.likelihood}</td>
+                    <td>${risk.impact}</td>
+                    <td>
+                        <span class="risk-score-badge ${risk.risk_level}">
+                            ${risk.risk_score}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"
+                                onclick="viewMitigation('${risk.asset_id}')">
+                            View Plan
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.getAttribute('data-tab'));
+                });
+            });
+            
+            // Run assessment button
+            document.getElementById('runSecurityScanBtn').addEventListener('click', showAssetSelectionModal);
+            
+            // Load CVE database button
+            document.getElementById('loadCVEBtn').addEventListener('click', loadCVEDatabase);
+            
+            // Filters
+            ['severityFilter', 'assetTypeFilter', 'statusFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', filterVulnerabilities);
+                }
+            });
+            
+            // Search
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(filterVulnerabilities, 300);
+                });
+            }
+            
+            // Asset modal filters
+            ['assetModalTypeFilter', 'assetModalCriticalityFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', filterAssetList);
+                }
+            });
+        }
+        
+        // Switch tabs
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const tabContent = document.getElementById(tabName + 'Tab');
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+        }
+        
+        // Show asset selection modal
+        async function showAssetSelectionModal() {
+            try {
+                // Load assets
+                const response = await apiCall('/api/assets?limit=1000');
+                if (!response) return;
+                
+                assets = response.data || [];
+                selectedAssets.clear();
+                
+                // Populate asset list
+                populateAssetList(assets);
+                
+                // Show modal
+                document.getElementById('assetSelectionModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Error loading assets:', error);
+                showNotification('Failed to load assets', 'error');
+            }
+        }
+        
+        // Populate asset list
+        function populateAssetList(assetList) {
+            const container = document.getElementById('assetList');
+            container.innerHTML = '';
+            
+            assetList.forEach(asset => {
+                const item = document.createElement('div');
+                item.className = 'asset-item';
+                item.innerHTML = `
+                    <input type="checkbox" class="asset-checkbox" value="${asset.id}"
+                           onchange="toggleAssetSelection('${asset.id}')">
+                    <div class="asset-info">
+                        <div class="asset-name">${asset.name}</div>
+                        <div class="asset-details">
+                            ${asset.asset_type} | ${asset.ip_address || 'No IP'} | 
+                            ${asset.vendor || 'Unknown vendor'}
+                        </div>
+                    </div>
+                    <span class="asset-criticality ${asset.criticality}">${asset.criticality.toUpperCase()}</span>
+                `;
+                container.appendChild(item);
+            });
+            
+            updateSelectedCount();
+        }
+        
+        // Toggle asset selection
+        function toggleAssetSelection(assetId) {
+            if (selectedAssets.has(assetId)) {
+                selectedAssets.delete(assetId);
+            } else {
+                selectedAssets.add(assetId);
+            }
+            updateSelectedCount();
+        }
+        
+        // Update selected count
+        function updateSelectedCount() {
+            document.getElementById('selectedAssetCount').textContent = selectedAssets.size;
+            document.getElementById('runAssessmentBtn').disabled = selectedAssets.size === 0;
+        }
+        
+        // Select all assets
+        function selectAllAssets() {
+            const checkboxes = document.querySelectorAll('.asset-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                selectedAssets.add(checkbox.value);
+            });
+            updateSelectedCount();
+        }
+        
+        // Deselect all assets
+        function deselectAllAssets() {
+            const checkboxes = document.querySelectorAll('.asset-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedAssets.clear();
+            updateSelectedCount();
+        }
+        
+        // Filter asset list
+        function filterAssetList() {
+            const typeFilter = document.getElementById('assetModalTypeFilter').value;
+            const criticalityFilter = document.getElementById('assetModalCriticalityFilter').value;
+            
+            const filtered = assets.filter(asset => {
+                if (typeFilter && asset.asset_type !== typeFilter) return false;
+                if (criticalityFilter && asset.criticality !== criticalityFilter) return false;
+                return true;
+            });
+            
+            populateAssetList(filtered);
+        }
+        
+        // Close asset modal
+        function closeAssetModal() {
+            document.getElementById('assetSelectionModal').style.display = 'none';
+            selectedAssets.clear();
+        }
+        
+        // Run selected assessment
+        async function runSelectedAssessment() {
+            if (selectedAssets.size === 0) {
+                showNotification('Please select at least one asset', 'warning');
+                return;
+            }
+            
+            if (isAssessing) {
+                showNotification('Assessment already in progress', 'warning');
+                return;
+            }
+            
+            isAssessing = true;
+            const btn = document.getElementById('runAssessmentBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Running Assessment...';
+            
+            // Show progress
+            document.getElementById('assessmentProgress').style.display = 'block';
+            updateProgress(0, 'Starting assessment...');
+            
+            try {
+                const assetIds = Array.from(selectedAssets);
+                const checkTypes = ['vulnerability', 'compliance', 'configuration'];
+                
+                // Simulate progress for passive assessment
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress > 90) progress = 90;
+                    updateProgress(progress, `Assessing ${assetIds.length} assets...`);
+                }, 500);
+                
+                // Run assessment
+                const response = await apiCall('/api/security/assessment', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        asset_ids: assetIds,
+                        check_types: checkTypes,
+                        use_cache: true,
+                        generate_report: true
+                    })
+                });
+                
+                clearInterval(progressInterval);
+                
+                if (response) {
+                    updateProgress(100, 'Assessment completed!');
+                    
+                    // Handle different response formats
+                    let results = [];
+                    if (response.data) {
+                        // Response wrapped in data property
+                        if (Array.isArray(response.data)) {
+                            results = response.data;
+                        } else if (response.data.results && Array.isArray(response.data.results)) {
+                            results = response.data.results;
+                        } else if (response.data.data && Array.isArray(response.data.data)) {
+                            results = response.data.data;
+                        }
+                    } else if (Array.isArray(response)) {
+                        // Direct array response
+                        results = response;
+                    } else if (response.results && Array.isArray(response.results)) {
+                        results = response.results;
+                    }
+                    
+                    const vulnCount = countVulnerabilities(results);
+                    showNotification(`Assessment completed. Found ${vulnCount} vulnerabilities.`, 'success');
+                    
+                    // Close modal after a short delay
+                    setTimeout(() => {
+                        closeAssetModal();
+                        // Reload security data
+                        loadSecurityData();
+                    }, 1500);
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+                
+            } catch (error) {
+                console.error('Assessment error:', error);
+                showNotification('Assessment failed: ' + error.message, 'error');
+            } finally {
+                isAssessing = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> Run Assessment';
+                
+                // Hide progress after delay
+                setTimeout(() => {
+                    document.getElementById('assessmentProgress').style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // Update progress
+        function updateProgress(percent, text) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+        
+        // Count vulnerabilities in results
+        function countVulnerabilities(results) {
+            let count = 0;
+            if (Array.isArray(results)) {
+                results.forEach(result => {
+                    if (result.vulnerabilities && Array.isArray(result.vulnerabilities)) {
+                        count += result.vulnerabilities.length;
+                    }
+                });
+            }
+            return count;
+        }
+        
+        // Load CVE database
+        async function loadCVEDatabase() {
+            const btn = document.getElementById('loadCVEBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Loading CVE Database...';
+            
+            try {
+                const response = await apiCall('/api/security/cve/load?source=offline', {
+                    method: 'POST'
+                });
+                
+                if (response) {
+                    showNotification('CVE database loaded successfully', 'success');
+                    // Optionally reload data
+                    loadSecurityData();
+                }
+                
+            } catch (error) {
+                console.error('Error loading CVE database:', error);
+                showNotification('Failed to load CVE database', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-database"></i> Load CVE Database';
+            }
+        }
+        
+        // View vulnerability details
+        async function viewVulnerability(vulnId) {
+            try {
+                // Find vulnerability in current list
+                const vuln = vulnerabilities.find(v => v.id === vulnId);
+                if (!vuln) {
+                    showNotification('Vulnerability not found', 'error');
+                    return;
+                }
+                
+                currentVuln = vuln;
+                
+                // Populate modal
+                const modalBody = document.getElementById('vulnModalBody');
+                modalBody.innerHTML = `
+                    <div class="vuln-details">
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">CVE ID</div>
+                            <div class="vuln-detail-value">${vuln.cve || 'N/A'}</div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Title</div>
+                            <div class="vuln-detail-value">${vuln.title || 'No title'}</div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Description</div>
+                            <div class="vuln-detail-value">${vuln.description || 'No description available'}</div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Affected Asset</div>
+                            <div class="vuln-detail-value">
+                                ${vuln.asset ? `${vuln.asset.name} (${vuln.asset.ip_address})` : 'Unknown'}
+                            </div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Severity</div>
+                            <div class="vuln-detail-value">
+                                <span class="severity-badge ${vuln.severity}">${vuln.severity.toUpperCase()}</span>
+                                <span class="cvss-score ${getCVSSClass(vuln.cvss_score)}">
+                                    CVSS: ${vuln.cvss_score ? vuln.cvss_score.toFixed(1) : 'N/A'}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Status</div>
+                            <div class="vuln-detail-value">
+                                <select class="filter-select" id="vulnStatusSelect">
+                                    <option value="open" ${vuln.status === 'open' ? 'selected' : ''}>Open</option>
+                                    <option value="acknowledged" ${vuln.status === 'acknowledged' ? 'selected' : ''}>Acknowledged</option>
+                                    <option value="resolved" ${vuln.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                    <option value="false_positive" ${vuln.status === 'false_positive' ? 'selected' : ''}>False Positive</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Remediation</div>
+                            <div class="vuln-detail-value">${vuln.remediation || 'No remediation steps available'}</div>
+                        </div>
+                        
+                        ${vuln.references && vuln.references.length > 0 ? `
+                            <div class="vuln-detail-section">
+                                <div class="vuln-detail-label">References</div>
+                                <div class="vuln-references">
+                                    ${vuln.references.map(ref => `
+                                        <a href="${ref}" target="_blank" class="vuln-reference">
+                                            <i class="fas fa-external-link-alt"></i> ${ref}
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="vuln-detail-section">
+                            <div class="vuln-detail-label">Notes</div>
+                            <textarea class="filter-select" id="vulnNotes" rows="3" style="width: 100%; resize: vertical;">
+${vuln.notes || ''}</textarea>
+                        </div>
+                    </div>
+                `;
+                
+                // Update button handler
+                document.getElementById('updateVulnStatusBtn').onclick = updateVulnerabilityStatus;
+                
+                // Show modal
+                document.getElementById('vulnModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Error viewing vulnerability:', error);
+                showNotification('Failed to load vulnerability details', 'error');
+            }
+        }
+        
+        // Close vulnerability modal
+        function closeVulnModal() {
+            document.getElementById('vulnModal').style.display = 'none';
+            currentVuln = null;
+        }
+        
+        // Update vulnerability status
+        async function updateVulnerabilityStatus() {
+            if (!currentVuln) return;
+            
+            const newStatus = document.getElementById('vulnStatusSelect').value;
+            const notes = document.getElementById('vulnNotes').value;
+            
+            try {
+                const response = await apiCall(`/api/security/vulnerabilities/${currentVuln.id}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        status: newStatus,
+                        notes: notes,
+                        remediation: ''
+                    })
+                });
+                
+                if (response) {
+                    showNotification('Vulnerability status updated', 'success');
+                    closeVulnModal();
+                    // Reload data
+                    loadSecurityData();
+                }
+                
+            } catch (error) {
+                console.error('Error updating vulnerability:', error);
+                showNotification('Failed to update vulnerability status', 'error');
+            }
+        }
+        
+        // Filter vulnerabilities
+        async function filterVulnerabilities() {
+            const severity = document.getElementById('severityFilter').value;
+            const assetType = document.getElementById('assetTypeFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchInput').value;
+            
+            const params = new URLSearchParams();
+            if (severity) params.append('severity', severity);
+            if (assetType) params.append('asset_type', assetType);
+            if (status) params.append('status', status);
+            if (search) params.append('search', search);
+            
+            try {
+                const response = await apiCall(`/api/security/vulnerabilities?${params}`);
+                if (response) {
+                    vulnerabilities = response.vulnerabilities || [];
+                    updateVulnerabilityTable(vulnerabilities);
+                }
+            } catch (error) {
+                console.error('Error filtering vulnerabilities:', error);
+            }
+        }
+        
+        // View compliance details
+        function viewComplianceDetails(standard) {
+            showNotification(`Opening compliance details for ${standard}...`, 'info');
+            // TODO: Implement compliance details view
+        }
+        
+        // Export compliance report
+        async function exportCompliance(standard) {
+            try {
+                const response = await apiCall(`/api/security/report/export?format=pdf&standard=${encodeURIComponent(standard)}`);
+                if (response) {
+                    showNotification('Compliance report generated', 'success');
+                    // TODO: Handle file download
+                }
+            } catch (error) {
+                console.error('Error exporting compliance:', error);
+                showNotification('Failed to export compliance report', 'error');
+            }
+        }
+        
+        // View mitigation plan
+        function viewMitigation(assetId) {
+            showNotification('Opening mitigation plan...', 'info');
+            // TODO: Implement mitigation plan view
+        }
+        
+        // Generate risk report
+        async function generateRiskReport() {
+            try {
+                const response = await apiCall('/api/security/report/export?format=pdf&type=risk');
+                if (response) {
+                    showNotification('Risk report generated', 'success');
+                    // TODO: Handle file download
+                }
+            } catch (error) {
+                console.error('Error generating risk report:', error);
+                showNotification('Failed to generate risk report', 'error');
+            }
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${getNotificationIcon(type)}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        // Helper functions
+        function getCVSSClass(score) {
+            if (!score) return '';
+            if (score >= 9.0) return 'critical';
+            if (score >= 7.0) return 'high';
+            if (score >= 4.0) return 'medium';
+            return 'low';
+        }
+        
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'open': return 'circle';
+                case 'acknowledged': return 'exclamation-circle';
+                case 'resolved': return 'check-circle';
+                case 'false_positive': return 'times-circle';
+                default: return 'circle';
+            }
+        }
+        
+        function formatStatus(status) {
+            return status.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+        
+        function getScoreClass(score) {
+            if (score >= 90) return 'good';
+            if (score >= 70) return 'warning';
+            return 'poor';
+        }
+        
+        function formatCategoryName(category) {
+            return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 'success': return 'check-circle';
+                case 'error': return 'exclamation-circle';
+                case 'warning': return 'exclamation-triangle';
+                default: return 'info-circle';
+            }
+        }
+        
+        // Auto-refresh data every 5 minutes
+        setInterval(() => {
+            if (!isAssessing) {
+                loadSecurityData();
+            }
+        }, 5 * 60 * 1000);
+
+        // Compliance-related variables
+        let complianceAssessments = [];
+        let selectedStandards = new Set();
+        let selectedCategories = new Set();
+        let currentAssessment = null;
+
+        // Initialize compliance features
+        function initializeCompliance() {
+            console.log('Initializing compliance features');
+            
+            // Load compliance standards
+            loadComplianceStandards();
+            
+            // Setup compliance event listeners
+            setupComplianceEventListeners();
+        }
+
+        // Setup compliance event listeners
+        function setupComplianceEventListeners() {
+            // Standard selection
+            document.querySelectorAll('input[name="standard"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedStandards.add(this.value);
+                    } else {
+                        selectedStandards.delete(this.value);
+                    }
+                    updateComplianceButtonState();
+                });
+            });
+            
+            // Category selection
+            document.querySelectorAll('input[name="category"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedCategories.add(this.value);
+                    } else {
+                        selectedCategories.delete(this.value);
+                    }
+                });
+            });
+            
+            // Scope selection
+            document.querySelectorAll('input[name="scope"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const selectedAssetsSection = document.querySelector('.asset-selection');
+                    if (this.value === 'selected') {
+                        // Show asset selection if needed
+                        showComplianceAssetSelection();
+                    }
+                });
+            });
+        }
+
+        // Load compliance standards
+        async function loadComplianceStandards() {
+            try {
+                const response = await apiCall('/api/compliance/standards');
+                if (response && response.standards) {
+                    // Standards are already in the modal, but we can use this data for other purposes
+                    console.log('Loaded compliance standards:', response.standards);
+                }
+            } catch (error) {
+                console.error('Error loading compliance standards:', error);
             }
         }
 
-        // Risk cell click handler
-        document.querySelectorAll('.risk-cell').forEach(cell => {
-            cell.addEventListener('click', function() {
-                const risk = this.textContent;
-                console.log('Risk score clicked:', risk);
-                // TODO: Show assets with this risk score
+        // Show compliance assessment modal
+        function showComplianceModal() {
+            selectedStandards.clear();
+            selectedCategories.clear();
+            
+            // Set default selections
+            document.querySelectorAll('input[name="standard"][checked]').forEach(checkbox => {
+                selectedStandards.add(checkbox.value);
             });
-        });
+            
+            document.querySelectorAll('input[name="category"][checked]').forEach(checkbox => {
+                selectedCategories.add(checkbox.value);
+            });
+            
+            document.getElementById('complianceModal').style.display = 'flex';
+            updateComplianceButtonState();
+        }
 
-        // Filter handlers
-        document.querySelectorAll('.filter-select').forEach(select => {
-            select.addEventListener('change', function() {
-                // TODO: Implement filtering
-                console.log('Filter changed:', this.value);
+        // Close compliance modal
+        function closeComplianceModal() {
+            document.getElementById('complianceModal').style.display = 'none';
+        }
+
+        // Update compliance button state
+        function updateComplianceButtonState() {
+            const btn = document.getElementById('runComplianceBtn');
+            btn.disabled = selectedStandards.size === 0;
+        }
+
+        // Run compliance assessment
+        async function runComplianceAssessment() {
+            if (selectedStandards.size === 0) {
+                showNotification('Please select at least one compliance standard', 'warning');
+                return;
+            }
+            
+            const btn = document.getElementById('runComplianceBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Running Assessment...';
+            
+            try {
+                // Get assessment configuration
+                const scope = document.querySelector('input[name="scope"]:checked').value;
+                const generateEvidence = document.getElementById('generateEvidence').checked;
+                const includeRecommendations = document.getElementById('includeRecommendations').checked;
+                const compareBaseline = document.getElementById('compareBaseline').checked;
+                
+                // Build request
+                const request = {
+                    standards: Array.from(selectedStandards),
+                    scope: scope,
+                    categories: Array.from(selectedCategories),
+                    generate_evidence: generateEvidence,
+                    include_recommendations: includeRecommendations,
+                    compare_baseline: compareBaseline
+                };
+                
+                // If scope is 'selected', add asset IDs
+                if (scope === 'selected') {
+                    request.asset_ids = Array.from(selectedAssets);
+                }
+                
+                // Run assessment
+                const response = await apiCall('/api/compliance/assessment', {
+                    method: 'POST',
+                    body: JSON.stringify(request)
+                });
+                
+                if (response) {
+                    currentAssessment = response;
+                    showNotification(`Compliance assessment completed. Overall score: ${response.overall_score.toFixed(1)}%`, 'success');
+                    
+                    // Close modal
+                    closeComplianceModal();
+                    
+                    // Update compliance tab
+                    updateComplianceResults(response);
+                    
+                    // Reload compliance data
+                    loadComplianceData();
+                }
+                
+            } catch (error) {
+                console.error('Compliance assessment error:', error);
+                showNotification('Failed to run compliance assessment: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> Run Compliance Assessment';
+            }
+        }
+
+        // Update compliance results in UI
+        function updateComplianceResults(assessment) {
+            const grid = document.getElementById('complianceGrid');
+            grid.innerHTML = '';
+            
+            // Display results for each standard
+            assessment.standards.forEach(standard => {
+                const card = createDetailedComplianceCard(standard, assessment.id);
+                grid.appendChild(card);
             });
+            
+            // Switch to compliance tab
+            switchTab('compliance');
+        }
+
+        // Create detailed compliance card
+        function createDetailedComplianceCard(standard, assessmentId) {
+            const card = document.createElement('div');
+            card.className = 'compliance-card';
+            
+            const scoreClass = getScoreClass(standard.compliance_score);
+            
+            // Use 'current' as assessmentId if not provided
+            const actualAssessmentId = assessmentId || 'current';
+            
+            card.innerHTML = `
+                <div class="compliance-header">
+                    <h3 class="compliance-title">${standard.standard}</h3>
+                    <span class="compliance-score ${scoreClass}">${standard.compliance_score.toFixed(1)}%</span>
+                </div>
+                <div class="compliance-progress">
+                    <div class="compliance-progress-bar ${scoreClass}" style="width: ${standard.compliance_score}%;"></div>
+                </div>
+                <div class="compliance-summary" style="margin: 16px 0; font-size: 14px; color: var(--text-secondary);">
+                    ${standard.summary || 'Assessment completed for ' + standard.standard}
+                </div>
+                <div class="compliance-categories">
+                    ${standard.categories.map(category => `
+                        <div class="category-result" style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-weight: 500;">${formatCategoryName(category.category)}</span>
+                                <span style="font-size: 12px; color: ${category.score >= 80 ? 'var(--success-color)' : category.score >= 60 ? 'var(--warning-color)' : 'var(--danger-color)'};">
+                                    ${category.score.toFixed(1)}%
+                                </span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">
+                                ${category.passed_checks}/${category.total_checks} checks passed
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="viewComplianceDetails('${actualAssessmentId}', '${standard.standard}')">
+                        <i class="fas fa-file-alt"></i> View Details
+                    </button>
+                    <button class="btn btn-primary" onclick="exportCompliance('${actualAssessmentId}', '${standard.standard}')">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // View compliance details
+        async function viewComplianceDetails(assessmentId, standard) {
+            try {
+                console.log('Loading compliance details for:', assessmentId, standard);
+                
+                // Show loading state
+                const modalBody = document.getElementById('complianceDetailsBody');
+                modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i><p style="margin-top: 16px;">Loading compliance details...</p></div>';
+                
+                // Update title
+                document.getElementById('complianceDetailsTitle').textContent = `${standard} Compliance Details`;
+                
+                // Show modal
+                document.getElementById('complianceDetailsModal').style.display = 'flex';
+                
+                // If assessmentId is not provided or is from current assessment, use current data
+                if (!assessmentId || assessmentId === 'current') {
+                    if (currentAssessment) {
+                        displayComplianceDetails(currentAssessment, standard);
+                        return;
+                    } else {
+                        // No current assessment, show message
+                        modalBody.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <i class="fas fa-info-circle" style="font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px;"></i>
+                                <p style="color: var(--text-secondary);">No assessment data available. Please run a compliance assessment first.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                }
+                
+                // Get detailed results from API
+                const response = await apiCall(`/api/compliance/assessment/${assessmentId}`);
+                if (response) {
+                    console.log('Received compliance details:', response);
+                    displayComplianceDetails(response, standard);
+                } else {
+                    throw new Error('No response from server');
+                }
+                
+            } catch (error) {
+                console.error('Error loading compliance details:', error);
+                
+                // Show error message in modal
+                const modalBody = document.getElementById('complianceDetailsBody');
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 48px; color: var(--danger-color); margin-bottom: 16px;"></i>
+                        <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">Failed to Load Details</p>
+                        <p style="color: var(--text-secondary);">${error.message || 'Unable to load compliance details. Please try again.'}</p>
+                        <button class="btn btn-secondary" style="margin-top: 16px;" onclick="closeComplianceDetailsModal()">Close</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Display compliance details in modal
+        function displayComplianceDetails(assessment, standardFilter) {
+            const modalBody = document.getElementById('complianceDetailsBody');
+            
+            // Find the specific standard results
+            const standardResults = assessment.standards.find(s => s.standard === standardFilter);
+            if (!standardResults) {
+                modalBody.innerHTML = '<p>No results found for this standard.</p>';
+                return;
+            }
+            
+            modalBody.innerHTML = `
+                <div class="compliance-details">
+                    <div class="compliance-summary">
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.compliance_score.toFixed(1)}%</div>
+                            <div class="summary-label">Overall Compliance</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.categories.reduce((sum, cat) => sum + cat.total_checks, 0)}</div>
+                            <div class="summary-label">Total Checks</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.categories.reduce((sum, cat) => sum + cat.passed_checks, 0)}</div>
+                            <div class="summary-label">Passed</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.categories.reduce((sum, cat) => sum + cat.failed_checks, 0)}</div>
+                            <div class="summary-label">Failed</div>
+                        </div>
+                    </div>
+                    
+                    <div class="compliance-checks">
+                        ${standardResults.categories.map(category => `
+                            <div class="check-category" id="category-${category.category}">
+                                <div class="category-header" onclick="toggleCategory('${category.category}')">
+                                    <div class="category-name">
+                                        <i class="fas fa-chevron-right"></i>
+                                        <span>${formatCategoryName(category.category)}</span>
+                                    </div>
+                                    <div class="category-stats">
+                                        <span class="stat-passed">${category.passed_checks} passed</span>
+                                        <span class="stat-failed">${category.failed_checks} failed</span>
+                                    </div>
+                                </div>
+                                <div class="check-items">
+                                    ${category.checks.map(check => `
+                                        <div class="check-item">
+                                            <div class="check-info">
+                                                <div class="check-title">${check.title}</div>
+                                                <div class="check-description">${check.description}</div>
+                                                ${check.asset_name ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">Asset: ${check.asset_name}</div>` : ''}
+                                            </div>
+                                            <div class="check-result">
+                                                <span class="check-status ${check.status}">${formatStatus(check.status)}</span>
+                                                ${check.evidence ? `<span class="evidence-link" onclick="viewEvidence('${check.id}')">View Evidence</span>` : ''}
+                                            </div>
+                                        </div>
+                                        ${check.status === 'fail' && check.remediation ? `
+                                            <div style="margin-top: 8px; padding: 12px; background-color: var(--bg-tertiary); border-radius: var(--radius-sm); font-size: 14px;">
+                                                <strong>Remediation:</strong> ${check.remediation}
+                                            </div>
+                                        ` : ''}
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${assessment.recommendations && assessment.recommendations.length > 0 ? `
+                        <div style="margin-top: 24px;">
+                            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Recommendations</h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${assessment.recommendations.filter(rec => 
+                                    standardResults.categories.some(cat => cat.category === rec.category)
+                                ).map(rec => `
+                                    <div style="padding: 16px; background-color: var(--bg-tertiary); border-radius: var(--radius-md); border-left: 4px solid ${
+                                        rec.priority === 'critical' ? 'var(--danger-color)' : 
+                                        rec.priority === 'high' ? 'var(--warning-color)' : 
+                                        'var(--info-color)'
+                                    };">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                            <h4 style="font-weight: 600;">${rec.title}</h4>
+                                            <span style="font-size: 12px; padding: 2px 8px; background-color: ${
+                                                rec.priority === 'critical' ? '#FEE2E2' : 
+                                                rec.priority === 'high' ? '#FEF3C7' : 
+                                                '#DBEAFE'
+                                            }; color: ${
+                                                rec.priority === 'critical' ? '#991B1B' : 
+                                                rec.priority === 'high' ? '#92400E' : 
+                                                '#1E40AF'
+                                            }; border-radius: var(--radius-sm);">
+                                                ${rec.priority.toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">${rec.description}</p>
+                                        <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-tertiary);">
+                                            <span><strong>Impact:</strong> ${rec.impact}</span>
+                                            <span><strong>Effort:</strong> ${rec.effort}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Close compliance details modal
+        function closeComplianceDetailsModal() {
+            document.getElementById('complianceDetailsModal').style.display = 'none';
+        }
+
+        // Toggle category expansion
+        function toggleCategory(categoryId) {
+            const category = document.getElementById(`category-${categoryId}`);
+            if (category) {
+                category.classList.toggle('expanded');
+                const icon = category.querySelector('.fa-chevron-right');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-right');
+                    icon.classList.toggle('fa-chevron-down');
+                }
+            }
+        }
+
+        // View evidence
+        function viewEvidence(checkId) {
+            // This would show evidence in a modal or separate view
+            showNotification('Evidence view not yet implemented', 'info');
+        }
+
+        // Export compliance report
+        async function exportComplianceReport() {
+            if (!currentAssessment) {
+                showNotification('No assessment selected', 'warning');
+                return;
+            }
+            
+            try {
+                const format = 'pdf'; // Could add format selection
+                const response = await fetch(`/api/compliance/assessment/${currentAssessment.id}/export?format=${format}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || getCookie('auth_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `compliance_report_${currentAssessment.id}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showNotification('Compliance report exported successfully', 'success');
+                } else {
+                    throw new Error('Export failed');
+                }
+                
+            } catch (error) {
+                console.error('Error exporting compliance report:', error);
+                showNotification('Failed to export compliance report', 'error');
+            }
+        }
+
+        // Show compliance asset selection
+        async function showComplianceAssetSelection() {
+            // Similar to security assessment asset selection
+            // You can reuse the existing asset selection modal or create a separate one
+            showAssetSelectionModal();
+        }
+
+        // Load compliance history
+        async function loadComplianceHistory() {
+            try {
+                const response = await apiCall('/api/compliance/history?limit=10');
+                if (response && response.history) {
+                    complianceAssessments = response.history;
+                    displayComplianceHistory(response.history);
+                }
+            } catch (error) {
+                console.error('Error loading compliance history:', error);
+            }
+        }
+
+        // Display compliance history
+        function displayComplianceHistory(history) {
+            // This would display historical compliance assessments
+            // Could be shown in a table or timeline view
+            console.log('Compliance history:', history);
+        }
+
+        // Get compliance recommendations
+        async function getComplianceRecommendations() {
+            try {
+                const response = await apiCall('/api/compliance/recommendations');
+                if (response && response.recommendations) {
+                    displayComplianceRecommendations(response.recommendations);
+                }
+            } catch (error) {
+                console.error('Error loading compliance recommendations:', error);
+            }
+        }
+
+        // Display compliance recommendations
+        function displayComplianceRecommendations(recommendations) {
+            // This would display prioritized recommendations
+            console.log('Compliance recommendations:', recommendations);
+        }
+
+        // Initialize compliance on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add compliance initialization to existing DOMContentLoaded
+            initializeCompliance();
+            
+            // Add compliance button to the section header
+            const complianceSection = document.querySelector('[data-tab="compliance"]').closest('.chart-section');
+            if (complianceSection) {
+                const header = complianceSection.querySelector('.section-header');
+                if (header && !header.querySelector('#runComplianceAssessmentBtn')) {
+                    const btnDiv = document.createElement('div');
+                    btnDiv.innerHTML = `
+                        <button class="btn btn-primary" id="runComplianceAssessmentBtn" onclick="showComplianceModal()">
+                            <i class="fas fa-clipboard-check"></i> Run Compliance Assessment
+                        </button>
+                    `;
+                    header.appendChild(btnDiv);
+                }
+            }
         });
     </script>
 </body>
