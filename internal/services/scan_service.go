@@ -100,7 +100,7 @@ func NewScanService() *ScanService {
 	}
 }
 
-// StartScan initiates a new network scan
+// StartScan initiates a new network scan - FIXED to handle multiple scans properly
 func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	// Check and stop any existing scan
 	s.mu.Lock()
@@ -110,8 +110,21 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		if s.activeScan.Scanner != nil {
 			s.activeScan.Scanner.Stop()
 		}
-		time.Sleep(500 * time.Millisecond)
+		
+		// Mark the previous scan as cancelled in database
+		if s.activeScan.ScanDB != nil {
+			s.activeScan.ScanDB.Status = string(scanner.StatusCancelled)
+			endTime := time.Now()
+			s.activeScan.ScanDB.EndTime = &endTime
+			s.activeScan.ScanDB.Duration = int64(time.Since(s.activeScan.ScanDB.StartTime).Seconds())
+			s.db.Save(s.activeScan.ScanDB)
+		}
+		
+		// Clear the active scan
 		s.activeScan = nil
+		
+		// Small delay to ensure cleanup
+		time.Sleep(500 * time.Millisecond)
 	}
 	s.mu.Unlock()
 
@@ -217,21 +230,34 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	}, nil
 }
 
-// processResults processes scan results in the background - FIXED
+// processResults processes scan results in the background - FIXED to handle concurrent access
 func (s *ScanService) processResults(activeScan *ActiveScan) {
 	resultChan := activeScan.Scanner.GetResults()
 	deviceCount := 0
 	
+	// Create a local map to track processed devices
+	processedDevices := make(map[string]bool)
+	
 	for result := range resultChan {
 		// Check if scan was stopped
+		activeScan.mu.Lock()
 		if activeScan.stopped {
+			activeScan.mu.Unlock()
 			s.logger.Info("Scan was stopped, ignoring remaining results", "scan_id", activeScan.ID)
 			break
 		}
+		activeScan.mu.Unlock()
+
+		// Skip if already processed (duplicate check)
+		if processedDevices[result.IPAddress] {
+			s.logger.Debug("Skipping duplicate device", "ip", result.IPAddress)
+			continue
+		}
+		processedDevices[result.IPAddress] = true
 
 		deviceCount++
 		
-		// Store the result FIRST before any other processing
+		// Store the result with proper locking
 		activeScan.mu.Lock()
 		activeScan.Results = append(activeScan.Results, result)
 		currentResultCount := len(activeScan.Results)
@@ -278,7 +304,7 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 	s.saveResultsToDatabase(activeScan)
 }
 
-// saveResultsToDatabase saves scan results to database
+// saveResultsToDatabase saves scan results to database - ENHANCED with better locking
 func (s *ScanService) saveResultsToDatabase(activeScan *ActiveScan) {
 	activeScan.mu.Lock()
 	defer activeScan.mu.Unlock()
@@ -303,22 +329,26 @@ func (s *ScanService) saveResultsToDatabase(activeScan *ActiveScan) {
 	}
 }
 
-// monitorProgress monitors scan progress and updates database - FIXED
+// monitorProgress monitors scan progress and updates database - FIXED for proper completion
 func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 	
 	lastProgressLog := time.Now()
 	lastSaveTime := time.Now()
+	completionBroadcast := false
 
 	for {
 		select {
 		case <-ticker.C:
 			// Check if scan was stopped
+			activeScan.mu.Lock()
 			if activeScan.stopped {
+				activeScan.mu.Unlock()
 				s.logger.Info("Progress monitoring stopped for scan", "scan_id", activeScan.ID)
 				return
 			}
+			activeScan.mu.Unlock()
 
 			progress := activeScan.Scanner.GetProgress()
 			
@@ -370,6 +400,12 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 			if progress.Status == scanner.StatusCompleted || 
 			   progress.Status == scanner.StatusFailed || 
 			   progress.Status == scanner.StatusCancelled {
+				
+				// Prevent multiple completion broadcasts
+				if completionBroadcast {
+					return
+				}
+				completionBroadcast = true
 				
 				// Final update
 				endTime := time.Now()

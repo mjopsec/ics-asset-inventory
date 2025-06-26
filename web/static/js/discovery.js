@@ -187,17 +187,33 @@ function handleScanCompleteWithResults(data) {
     currentScan = null;
 }
 
-// Handle scan form submission - FIXED with better validation and protocol handling
+// Handle scan form submission - FIXED with better validation and state management
 async function handleScanSubmit(e) {
     e.preventDefault();
 
     console.log('Starting new scan');
+
+    // IMPORTANT: Stop any existing scan first
+    if (currentScan) {
+        console.log('Stopping existing scan before starting new one');
+        try {
+            await stopScan(true); // true = silent stop
+        } catch (error) {
+            console.error('Error stopping existing scan:', error);
+        }
+    }
 
     // Clear previous scan results BEFORE starting new scan
     scanResults = [];
     allDiscoveredDevices.clear();
     clearDisplayedResults();
     currentScan = null; // Clear any existing scan reference
+    
+    // Clear any existing progress intervals
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
     
     const formData = new FormData(e.target);
     
@@ -687,10 +703,12 @@ async function viewScanResults(scanId) {
     switchTab('results');
 }
 
-// Stop scan - FIXED
-async function stopScan() {
+// Stop scan - FIXED with silent option
+async function stopScan(silent = false) {
     if (!currentScan) {
-        showNotification('No active scan to stop', 'warning');
+        if (!silent) {
+            showNotification('No active scan to stop', 'warning');
+        }
         return;
     }
 
@@ -706,7 +724,9 @@ async function stopScan() {
         });
 
         if (response.ok) {
-            showNotification('Scan stopped', 'info');
+            if (!silent) {
+                showNotification('Scan stopped', 'info');
+            }
             
             // Clear intervals
             if (progressInterval) {
@@ -727,7 +747,9 @@ async function stopScan() {
         }
     } catch (error) {
         console.error('Error stopping scan:', error);
-        showNotification('Failed to stop scan', 'error');
+        if (!silent) {
+            showNotification('Failed to stop scan', 'error');
+        }
     }
 }
 
