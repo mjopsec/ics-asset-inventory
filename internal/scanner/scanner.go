@@ -128,6 +128,25 @@ type CertificateInfo struct {
 	IsSelfSigned bool
 }
 
+var (
+	defaultHub *Hub
+	once       sync.Once
+)
+
+// GetHub returns the WebSocket hub instance (singleton)
+func GetHub() *Hub {
+	once.Do(func() {
+		defaultHub = &Hub{
+			broadcast:  make(chan []byte),
+			register:   make(chan *Client),
+			unregister: make(chan *Client),
+			clients:    make(map[*Client]bool),
+		}
+		go defaultHub.run()
+	})
+	return defaultHub
+}
+
 // NewScanner creates a new network scanner with passive mode support
 func NewScanner(config *ScanConfig, logger *utils.Logger) *Scanner {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -433,7 +452,7 @@ func (s *Scanner) scanHost(host string) {
 	if s.config.ScanType == ScanTypeQuick {
 		commonPorts := []uint16{21, 22, 23, 80, 443}
 		for _, port := range commonPorts {
-			if !contains(portsToScan, port) {
+			if !containsUint16(portsToScan, port) {
 				portsToScan = append(portsToScan, port)
 			}
 		}
@@ -952,8 +971,8 @@ func buildBPFFilter(protocols []string) string {
 	return strings.Join(filters, " or ")
 }
 
-// Helper function to check if slice contains value
-func contains(slice []uint16, val uint16) bool {
+// Helper function to check if slice contains uint16 value
+func containsUint16(slice []uint16, val uint16) bool {
 	for _, item := range slice {
 		if item == val {
 			return true

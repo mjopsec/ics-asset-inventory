@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"ics-asset-inventory/internal/utils" // Fix: Add full import path
+	"ics-asset-inventory/internal/utils"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -314,7 +314,7 @@ func (ps *PassiveScanner) updateProtocolInfo(srcIP, dstIP, protocol, deviceType 
 	// Update source host if local
 	if ps.isLocalIP(srcIP) {
 		host := ps.getOrCreateHost(srcIP)
-		if !contains(host.Protocols, protocol) {
+		if !containsString(host.Protocols, protocol) {
 			host.Protocols = append(host.Protocols, protocol)
 		}
 		if host.DeviceType == "" {
@@ -325,7 +325,7 @@ func (ps *PassiveScanner) updateProtocolInfo(srcIP, dstIP, protocol, deviceType 
 	// Update destination host if local
 	if ps.isLocalIP(dstIP) {
 		host := ps.getOrCreateHost(dstIP)
-		if !contains(host.Protocols, protocol) {
+		if !containsString(host.Protocols, protocol) {
 			host.Protocols = append(host.Protocols, protocol)
 		}
 		if host.DeviceType == "" {
@@ -488,8 +488,8 @@ func (ps *PassiveScanner) getStartTime() time.Time {
 	return earliest
 }
 
-// contains checks if a slice contains a string
-func contains(slice []string, item string) bool {
+// containsString checks if a slice contains a string
+func containsString(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
 			return true
