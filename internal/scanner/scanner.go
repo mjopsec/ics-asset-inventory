@@ -218,10 +218,6 @@ func (s *Scanner) Start() error {
 
 	s.progress.TotalHosts = len(hosts)
 	
-	// Determine ports to scan
-	ports := s.getPortsToScan()
-	s.progress.TotalPorts = len(ports) * len(hosts)
-
 	// Start result processor
 	go s.processResults()
 
@@ -236,7 +232,7 @@ func (s *Scanner) Start() error {
 			return nil
 		default:
 			s.wg.Add(1)
-			go s.scanHost(host, ports)
+			go s.scanHost(host)
 		}
 	}
 
@@ -396,8 +392,8 @@ func (s *Scanner) GetPassiveStatistics() map[string]interface{} {
 	return stats
 }
 
-// scanHost scans a single host (existing implementation)
-func (s *Scanner) scanHost(host string, ports []uint16) {
+// scanHost scans a single host - FIXED to scan all protocol ports
+func (s *Scanner) scanHost(host string) {
 	defer s.wg.Done()
 
 	// Acquire worker slot
@@ -430,28 +426,49 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 	// Resolve hostname
 	device.Hostname = s.resolveHostname(host)
 
-	// Scan ports based on protocols
-	foundDevice := false
-	for _, protocol := range s.config.Protocols {
-		ports := s.getProtocolPorts(protocol)
-		for _, port := range ports {
-			if portInfo := s.checkPort(host, port); portInfo != nil {
-				device.OpenPorts = append(device.OpenPorts, *portInfo)
-				foundDevice = true
-				
-				// Try to identify protocol
-				if device.Protocol == "" {
-					device.Protocol = s.identifyProtocolByPort(port)
-				}
+	// Build comprehensive port list based on selected protocols
+	portsToScan := s.getPortsForProtocols(s.config.Protocols)
+	
+	// Also add common ports if quick scan
+	if s.config.ScanType == ScanTypeQuick {
+		commonPorts := []uint16{21, 22, 23, 80, 443}
+		for _, port := range commonPorts {
+			if !contains(portsToScan, port) {
+				portsToScan = append(portsToScan, port)
 			}
 		}
+	}
+
+	s.logger.Debug("Scanning ports for host", "host", host, "ports", portsToScan)
+
+	// Scan all ports
+	foundDevice := false
+	for _, port := range portsToScan {
+		if portInfo := s.checkPort(host, port); portInfo != nil {
+			device.OpenPorts = append(device.OpenPorts, *portInfo)
+			foundDevice = true
+			
+			// Update progress
+			s.updateProgress(func(p *ScanProgress) {
+				p.OpenPorts++
+			})
+			
+			// Try to identify protocol based on port
+			if device.Protocol == "" {
+				device.Protocol = s.identifyProtocolByPort(port)
+			}
+		}
+		
+		// Update scanned ports progress
+		s.updateProgress(func(p *ScanProgress) {
+			p.ScannedPorts++
+		})
 	}
 
 	if foundDevice {
 		// Update progress
 		s.updateProgress(func(p *ScanProgress) {
 			p.DiscoveredHosts++
-			p.OpenPorts += len(device.OpenPorts)
 		})
 
 		// Identify device type based on ports
@@ -463,17 +480,25 @@ func (s *Scanner) scanHost(host string, ports []uint16) {
 			device.Fingerprint["classification_confidence"] = 75
 		}
 
+		s.logger.Info("Device discovered",
+			"ip", device.IPAddress,
+			"type", device.DeviceType,
+			"protocol", device.Protocol,
+			"openPorts", len(device.OpenPorts))
+
 		// Send result
 		select {
 		case s.results <- device:
 		case <-s.ctx.Done():
 			return
 		}
+	} else {
+		s.logger.Debug("No open ports found on host", "host", host)
 	}
 }
 
-// Helper methods (keep all existing helper methods)
-func (s *Scanner) getProtocolPorts(protocol string) []uint16 {
+// getPortsForProtocols returns all ports for selected protocols
+func (s *Scanner) getPortsForProtocols(protocols []string) []uint16 {
 	protocolPorts := map[string][]uint16{
 		"modbus":      {502},
 		"dnp3":        {20000, 20547},
@@ -481,23 +506,55 @@ func (s *Scanner) getProtocolPorts(protocol string) []uint16 {
 		"bacnet":      {47808},
 		"s7":          {102},
 		"snmp":        {161, 162},
+		"iec104":      {2404},
+		"opcua":       {4840, 48898},
+		"profinet":    {34962, 34963, 34964},
 	}
 	
-	if ports, ok := protocolPorts[protocol]; ok {
-		return ports
+	portSet := make(map[uint16]bool)
+	
+	// Add all ports for selected protocols
+	for _, protocol := range protocols {
+		if ports, ok := protocolPorts[protocol]; ok {
+			for _, port := range ports {
+				portSet[port] = true
+			}
+		}
 	}
-	return []uint16{}
+	
+	// Convert map to slice
+	var ports []uint16
+	for port := range portSet {
+		ports = append(ports, port)
+	}
+	
+	// If no protocols selected, use default set
+	if len(ports) == 0 {
+		ports = []uint16{102, 502, 1911, 2222, 2404, 20000, 20547, 44818, 47808, 161, 162}
+	}
+	
+	return ports
 }
 
+// checkPort checks if a port is open with better timeout handling
 func (s *Scanner) checkPort(host string, port uint16) *PortInfo {
 	address := fmt.Sprintf("%s:%d", host, port)
 	
+	// Use configured timeout
+	timeout := s.config.Timeout
+	if timeout == 0 {
+		timeout = 5 * time.Second
+	}
+	
 	// Try TCP connection
-	conn, err := net.DialTimeout("tcp", address, s.config.Timeout)
+	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
+		// Port is closed or filtered
 		return nil
 	}
 	defer conn.Close()
+
+	s.logger.Debug("Port open", "host", host, "port", port)
 
 	portInfo := &PortInfo{
 		Port:     port,
@@ -505,7 +562,7 @@ func (s *Scanner) checkPort(host string, port uint16) *PortInfo {
 		Service:  s.identifyService(port),
 	}
 
-	// Get banner
+	// Try to grab banner
 	portInfo.Banner = s.grabBanner(conn)
 
 	// Check for SSL/TLS
@@ -517,6 +574,7 @@ func (s *Scanner) checkPort(host string, port uint16) *PortInfo {
 	return portInfo
 }
 
+// identifyDevice identifies device type and details
 func (s *Scanner) identifyDevice(device *DeviceResult) {
 	// Try protocol detection for each open port
 	for _, port := range device.OpenPorts {
@@ -548,26 +606,67 @@ func (s *Scanner) identifyDevice(device *DeviceResult) {
 			device.Protocol = "SNMP"
 			device.DeviceType = "Network Device"
 			return
+		case 2404:
+			device.Protocol = "IEC-104"
+			device.DeviceType = "RTU/Gateway"
+			return
+		case 1911:
+			device.Protocol = "Niagara Fox"
+			device.DeviceType = "Building Controller"
+			return
+		case 4840, 48898:
+			device.Protocol = "OPC UA"
+			device.DeviceType = "OPC Server"
+			return
+		}
+	}
+
+	// Check for common services if no ICS protocol detected
+	for _, port := range device.OpenPorts {
+		switch port.Port {
+		case 22:
+			if device.DeviceType == "" {
+				device.DeviceType = "Linux/Unix Device"
+			}
+		case 23:
+			if device.DeviceType == "" {
+				device.DeviceType = "Network Device"
+			}
+		case 80, 443:
+			if device.DeviceType == "" {
+				device.DeviceType = "Web-enabled Device"
+			}
+		case 3389:
+			if device.DeviceType == "" {
+				device.DeviceType = "Windows Device"
+			}
 		}
 	}
 
 	// Generic identification based on open ports
 	if device.DeviceType == "" {
-		device.DeviceType = "Unknown Device"
+		if len(device.OpenPorts) > 0 {
+			device.DeviceType = "Unknown Device"
+		}
 	}
 }
 
+// identifyProtocolByPort identifies protocol by port number
 func (s *Scanner) identifyProtocolByPort(port uint16) string {
 	protocols := map[uint16]string{
 		102:   "Siemens S7",
 		161:   "SNMP",
 		162:   "SNMP",
 		502:   "Modbus TCP",
+		1911:  "Niagara Fox",
 		2222:  "EtherNet/IP",
+		2404:  "IEC-104",
+		4840:  "OPC UA",
 		20000: "DNP3",
 		20547: "DNP3",
 		44818: "EtherNet/IP",
 		47808: "BACnet",
+		48898: "OPC UA Discovery",
 	}
 	
 	if protocol, ok := protocols[port]; ok {
@@ -576,6 +675,7 @@ func (s *Scanner) identifyProtocolByPort(port uint16) string {
 	return ""
 }
 
+// parseIPRange parses IP ranges - FIXED for better single IP handling
 func (s *Scanner) parseIPRange(ipRange string) ([]string, error) {
 	var hosts []string
 	hostMap := make(map[string]bool) // To avoid duplicates
@@ -623,11 +723,6 @@ func (s *Scanner) parseIPRange(ipRange string) ([]string, error) {
 		} else if _, ipNet, err := net.ParseCIDR(entry); err == nil {
 			// CIDR notation (e.g., 192.168.1.0/24)
 			for ip := ipNet.IP.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
-				// Skip network and broadcast addresses for /24 and smaller
-				ones, _ := ipNet.Mask.Size()
-				if ones >= 24 && (ip[3] == 0 || ip[3] == 255) {
-					continue
-				}
 				ipStr := ip.String()
 				if !hostMap[ipStr] {
 					hostMap[ipStr] = true
@@ -743,9 +838,11 @@ func (s *Scanner) identifyService(port uint16) string {
 		1911:  "Niagara Fox",
 		2222:  "EtherNet/IP",
 		2404:  "IEC-104",
+		4840:  "OPC UA",
 		20000: "DNP3",
 		44818: "EtherNet/IP",
 		47808: "BACnet",
+		48898: "OPC UA Discovery",
 	}
 	
 	if service, ok := services[port]; ok {
@@ -853,4 +950,14 @@ func buildBPFFilter(protocols []string) string {
 	}
 	
 	return strings.Join(filters, " or ")
+}
+
+// Helper function to check if slice contains value
+func contains(slice []uint16, val uint16) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }

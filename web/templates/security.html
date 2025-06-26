@@ -1023,6 +1023,294 @@
             margin-bottom: 24px;
         }
 
+        /* Compliance Modal Styles */
+        .compliance-assessment-config {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .config-section {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 24px;
+        }
+
+        .config-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .config-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .standards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .standard-option {
+            cursor: pointer;
+        }
+
+        .standard-option input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .standard-card {
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .standard-option input[type="checkbox"]:checked + .standard-card {
+            border-color: var(--primary-color);
+            background-color: #EFF6FF;
+        }
+
+        .standard-icon {
+            font-size: 32px;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+
+        .standard-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .standard-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .scope-options {
+            display: flex;
+            gap: 24px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .category-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .category-option:hover {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--primary-color);
+        }
+
+        .category-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .category-option i {
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Compliance Details Styles */
+        .compliance-details {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .compliance-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .compliance-checks {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .check-category {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .category-header {
+            padding: 16px 20px;
+            background-color: var(--bg-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .category-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+        }
+
+        .stat-passed {
+            color: var(--success-color);
+        }
+
+        .stat-failed {
+            color: var(--danger-color);
+        }
+
+        .check-items {
+            padding: 20px;
+            display: none;
+        }
+
+        .check-category.expanded .check-items {
+            display: block;
+        }
+
+        .check-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .check-item:last-child {
+            border-bottom: none;
+        }
+
+        .check-info {
+            flex: 1;
+        }
+
+        .check-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .check-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .check-result {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-status {
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .check-status.pass {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .check-status.fail {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .check-status.not_applicable {
+            background-color: #E0E7FF;
+            color: #3730A3;
+        }
+
+        .evidence-link {
+            font-size: 12px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .evidence-link:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -1383,6 +1671,177 @@
                 <button class="btn btn-secondary" onclick="closeAssetModal()">Cancel</button>
                 <button class="btn btn-primary" id="runAssessmentBtn" onclick="runSelectedAssessment()">
                     Run Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Assessment Modal -->
+    <div class="modal" id="complianceModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Compliance Assessment Configuration</h2>
+                <button class="modal-close" onclick="closeComplianceModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="compliance-assessment-config">
+                    <!-- Standard Selection -->
+                    <div class="config-section">
+                        <h3 class="config-title">Select Compliance Standards</h3>
+                        <div class="standards-grid">
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="IEC-62443" checked>
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-industry"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>IEC 62443</h4>
+                                        <p>Industrial Automation and Control Systems Security</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="NIST">
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>NIST Framework</h4>
+                                        <p>Cybersecurity Framework for Critical Infrastructure</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="ISO27001">
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-certificate"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>ISO 27001</h4>
+                                        <p>Information Security Management Systems</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="standard-option">
+                                <input type="checkbox" name="standard" value="NERC-CIP">
+                                <div class="standard-card">
+                                    <div class="standard-icon">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="standard-info">
+                                        <h4>NERC CIP</h4>
+                                        <p>Critical Infrastructure Protection Standards</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Assessment Scope -->
+                    <div class="config-section">
+                        <h3 class="config-title">Assessment Scope</h3>
+                        <div class="scope-options">
+                            <label class="radio-option">
+                                <input type="radio" name="scope" value="all" checked>
+                                <span>All Assets</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="scope" value="critical">
+                                <span>Critical Assets Only</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="scope" value="selected">
+                                <span>Selected Assets</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Check Categories -->
+                    <div class="config-section">
+                        <h3 class="config-title">Compliance Check Categories</h3>
+                        <div class="categories-grid">
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="access_control" checked>
+                                <i class="fas fa-key"></i>
+                                <span>Access Control</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="network_security" checked>
+                                <i class="fas fa-network-wired"></i>
+                                <span>Network Security</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="data_protection" checked>
+                                <i class="fas fa-lock"></i>
+                                <span>Data Protection</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="system_integrity" checked>
+                                <i class="fas fa-shield-virus"></i>
+                                <span>System Integrity</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="incident_response" checked>
+                                <i class="fas fa-ambulance"></i>
+                                <span>Incident Response</span>
+                            </label>
+                            <label class="category-option">
+                                <input type="checkbox" name="category" value="physical_security" checked>
+                                <i class="fas fa-building-shield"></i>
+                                <span>Physical Security</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Assessment Options -->
+                    <div class="config-section">
+                        <h3 class="config-title">Assessment Options</h3>
+                        <div class="option-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="generateEvidence" checked>
+                                <span>Generate Evidence Report</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="includeRecommendations" checked>
+                                <span>Include Remediation Recommendations</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="compareBaseline">
+                                <span>Compare with Previous Baseline</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeComplianceModal()">Cancel</button>
+                <button class="btn btn-primary" id="runComplianceBtn" onclick="runComplianceAssessment()">
+                    <i class="fas fa-play"></i> Run Compliance Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Details Modal -->
+    <div class="modal" id="complianceDetailsModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="complianceDetailsTitle">Compliance Details</h2>
+                <button class="modal-close" onclick="closeComplianceDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="complianceDetailsBody">
+                <!-- Content will be populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeComplianceDetailsModal()">Close</button>
+                <button class="btn btn-primary" onclick="exportComplianceReport()">
+                    <i class="fas fa-download"></i> Export Report
                 </button>
             </div>
         </div>
@@ -2403,6 +2862,521 @@ ${vuln.notes || ''}</textarea>
                 loadSecurityData();
             }
         }, 5 * 60 * 1000);
+
+        // Compliance-related variables
+        let complianceAssessments = [];
+        let selectedStandards = new Set();
+        let selectedCategories = new Set();
+        let currentAssessment = null;
+
+        // Initialize compliance features
+        function initializeCompliance() {
+            console.log('Initializing compliance features');
+            
+            // Load compliance standards
+            loadComplianceStandards();
+            
+            // Setup compliance event listeners
+            setupComplianceEventListeners();
+        }
+
+        // Setup compliance event listeners
+        function setupComplianceEventListeners() {
+            // Standard selection
+            document.querySelectorAll('input[name="standard"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedStandards.add(this.value);
+                    } else {
+                        selectedStandards.delete(this.value);
+                    }
+                    updateComplianceButtonState();
+                });
+            });
+            
+            // Category selection
+            document.querySelectorAll('input[name="category"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedCategories.add(this.value);
+                    } else {
+                        selectedCategories.delete(this.value);
+                    }
+                });
+            });
+            
+            // Scope selection
+            document.querySelectorAll('input[name="scope"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const selectedAssetsSection = document.querySelector('.asset-selection');
+                    if (this.value === 'selected') {
+                        // Show asset selection if needed
+                        showComplianceAssetSelection();
+                    }
+                });
+            });
+        }
+
+        // Load compliance standards
+        async function loadComplianceStandards() {
+            try {
+                const response = await apiCall('/api/compliance/standards');
+                if (response && response.standards) {
+                    // Standards are already in the modal, but we can use this data for other purposes
+                    console.log('Loaded compliance standards:', response.standards);
+                }
+            } catch (error) {
+                console.error('Error loading compliance standards:', error);
+            }
+        }
+
+        // Show compliance assessment modal
+        function showComplianceModal() {
+            selectedStandards.clear();
+            selectedCategories.clear();
+            
+            // Set default selections
+            document.querySelectorAll('input[name="standard"][checked]').forEach(checkbox => {
+                selectedStandards.add(checkbox.value);
+            });
+            
+            document.querySelectorAll('input[name="category"][checked]').forEach(checkbox => {
+                selectedCategories.add(checkbox.value);
+            });
+            
+            document.getElementById('complianceModal').style.display = 'flex';
+            updateComplianceButtonState();
+        }
+
+        // Close compliance modal
+        function closeComplianceModal() {
+            document.getElementById('complianceModal').style.display = 'none';
+        }
+
+        // Update compliance button state
+        function updateComplianceButtonState() {
+            const btn = document.getElementById('runComplianceBtn');
+            btn.disabled = selectedStandards.size === 0;
+        }
+
+        // Run compliance assessment
+        async function runComplianceAssessment() {
+            if (selectedStandards.size === 0) {
+                showNotification('Please select at least one compliance standard', 'warning');
+                return;
+            }
+            
+            const btn = document.getElementById('runComplianceBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Running Assessment...';
+            
+            try {
+                // Get assessment configuration
+                const scope = document.querySelector('input[name="scope"]:checked').value;
+                const generateEvidence = document.getElementById('generateEvidence').checked;
+                const includeRecommendations = document.getElementById('includeRecommendations').checked;
+                const compareBaseline = document.getElementById('compareBaseline').checked;
+                
+                // Build request
+                const request = {
+                    standards: Array.from(selectedStandards),
+                    scope: scope,
+                    categories: Array.from(selectedCategories),
+                    generate_evidence: generateEvidence,
+                    include_recommendations: includeRecommendations,
+                    compare_baseline: compareBaseline
+                };
+                
+                // If scope is 'selected', add asset IDs
+                if (scope === 'selected') {
+                    request.asset_ids = Array.from(selectedAssets);
+                }
+                
+                // Run assessment
+                const response = await apiCall('/api/compliance/assessment', {
+                    method: 'POST',
+                    body: JSON.stringify(request)
+                });
+                
+                if (response) {
+                    currentAssessment = response;
+                    showNotification(`Compliance assessment completed. Overall score: ${response.overall_score.toFixed(1)}%`, 'success');
+                    
+                    // Close modal
+                    closeComplianceModal();
+                    
+                    // Update compliance tab
+                    updateComplianceResults(response);
+                    
+                    // Reload compliance data
+                    loadComplianceData();
+                }
+                
+            } catch (error) {
+                console.error('Compliance assessment error:', error);
+                showNotification('Failed to run compliance assessment: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> Run Compliance Assessment';
+            }
+        }
+
+        // Update compliance results in UI
+        function updateComplianceResults(assessment) {
+            const grid = document.getElementById('complianceGrid');
+            grid.innerHTML = '';
+            
+            // Display results for each standard
+            assessment.standards.forEach(standard => {
+                const card = createDetailedComplianceCard(standard, assessment.id);
+                grid.appendChild(card);
+            });
+            
+            // Switch to compliance tab
+            switchTab('compliance');
+        }
+
+        // Create detailed compliance card
+        function createDetailedComplianceCard(standard, assessmentId) {
+            const card = document.createElement('div');
+            card.className = 'compliance-card';
+            
+            const scoreClass = getScoreClass(standard.compliance_score);
+            
+            // Use 'current' as assessmentId if not provided
+            const actualAssessmentId = assessmentId || 'current';
+            
+            card.innerHTML = `
+                <div class="compliance-header">
+                    <h3 class="compliance-title">${standard.standard}</h3>
+                    <span class="compliance-score ${scoreClass}">${standard.compliance_score.toFixed(1)}%</span>
+                </div>
+                <div class="compliance-progress">
+                    <div class="compliance-progress-bar ${scoreClass}" style="width: ${standard.compliance_score}%;"></div>
+                </div>
+                <div class="compliance-summary" style="margin: 16px 0; font-size: 14px; color: var(--text-secondary);">
+                    ${standard.summary || 'Assessment completed for ' + standard.standard}
+                </div>
+                <div class="compliance-categories">
+                    ${standard.categories.map(category => `
+                        <div class="category-result" style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-weight: 500;">${formatCategoryName(category.category)}</span>
+                                <span style="font-size: 12px; color: ${category.score >= 80 ? 'var(--success-color)' : category.score >= 60 ? 'var(--warning-color)' : 'var(--danger-color)'};">
+                                    ${category.score.toFixed(1)}%
+                                </span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">
+                                ${category.passed_checks}/${category.total_checks} checks passed
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="viewComplianceDetails('${actualAssessmentId}', '${standard.standard}')">
+                        <i class="fas fa-file-alt"></i> View Details
+                    </button>
+                    <button class="btn btn-primary" onclick="exportCompliance('${actualAssessmentId}', '${standard.standard}')">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // View compliance details
+        async function viewComplianceDetails(assessmentId, standard) {
+            try {
+                console.log('Loading compliance details for:', assessmentId, standard);
+                
+                // Show loading state
+                const modalBody = document.getElementById('complianceDetailsBody');
+                modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i><p style="margin-top: 16px;">Loading compliance details...</p></div>';
+                
+                // Update title
+                document.getElementById('complianceDetailsTitle').textContent = `${standard} Compliance Details`;
+                
+                // Show modal
+                document.getElementById('complianceDetailsModal').style.display = 'flex';
+                
+                // If assessmentId is not provided or is from current assessment, use current data
+                if (!assessmentId || assessmentId === 'current') {
+                    if (currentAssessment) {
+                        displayComplianceDetails(currentAssessment, standard);
+                        return;
+                    } else {
+                        // No current assessment, show message
+                        modalBody.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <i class="fas fa-info-circle" style="font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px;"></i>
+                                <p style="color: var(--text-secondary);">No assessment data available. Please run a compliance assessment first.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                }
+                
+                // Get detailed results from API
+                const response = await apiCall(`/api/compliance/assessment/${assessmentId}`);
+                if (response) {
+                    console.log('Received compliance details:', response);
+                    displayComplianceDetails(response, standard);
+                } else {
+                    throw new Error('No response from server');
+                }
+                
+            } catch (error) {
+                console.error('Error loading compliance details:', error);
+                
+                // Show error message in modal
+                const modalBody = document.getElementById('complianceDetailsBody');
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 48px; color: var(--danger-color); margin-bottom: 16px;"></i>
+                        <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">Failed to Load Details</p>
+                        <p style="color: var(--text-secondary);">${error.message || 'Unable to load compliance details. Please try again.'}</p>
+                        <button class="btn btn-secondary" style="margin-top: 16px;" onclick="closeComplianceDetailsModal()">Close</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Display compliance details in modal
+        function displayComplianceDetails(assessment, standardFilter) {
+            const modalBody = document.getElementById('complianceDetailsBody');
+            
+            // Find the specific standard results
+            const standardResults = assessment.standards.find(s => s.standard === standardFilter);
+            if (!standardResults) {
+                modalBody.innerHTML = '<p>No results found for this standard.</p>';
+                return;
+            }
+            
+            modalBody.innerHTML = `
+                <div class="compliance-details">
+                    <div class="compliance-summary">
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.compliance_score.toFixed(1)}%</div>
+                            <div class="summary-label">Overall Compliance</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.categories.reduce((sum, cat) => sum + cat.total_checks, 0)}</div>
+                            <div class="summary-label">Total Checks</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.categories.reduce((sum, cat) => sum + cat.passed_checks, 0)}</div>
+                            <div class="summary-label">Passed</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value">${standardResults.categories.reduce((sum, cat) => sum + cat.failed_checks, 0)}</div>
+                            <div class="summary-label">Failed</div>
+                        </div>
+                    </div>
+                    
+                    <div class="compliance-checks">
+                        ${standardResults.categories.map(category => `
+                            <div class="check-category" id="category-${category.category}">
+                                <div class="category-header" onclick="toggleCategory('${category.category}')">
+                                    <div class="category-name">
+                                        <i class="fas fa-chevron-right"></i>
+                                        <span>${formatCategoryName(category.category)}</span>
+                                    </div>
+                                    <div class="category-stats">
+                                        <span class="stat-passed">${category.passed_checks} passed</span>
+                                        <span class="stat-failed">${category.failed_checks} failed</span>
+                                    </div>
+                                </div>
+                                <div class="check-items">
+                                    ${category.checks.map(check => `
+                                        <div class="check-item">
+                                            <div class="check-info">
+                                                <div class="check-title">${check.title}</div>
+                                                <div class="check-description">${check.description}</div>
+                                                ${check.asset_name ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">Asset: ${check.asset_name}</div>` : ''}
+                                            </div>
+                                            <div class="check-result">
+                                                <span class="check-status ${check.status}">${formatStatus(check.status)}</span>
+                                                ${check.evidence ? `<span class="evidence-link" onclick="viewEvidence('${check.id}')">View Evidence</span>` : ''}
+                                            </div>
+                                        </div>
+                                        ${check.status === 'fail' && check.remediation ? `
+                                            <div style="margin-top: 8px; padding: 12px; background-color: var(--bg-tertiary); border-radius: var(--radius-sm); font-size: 14px;">
+                                                <strong>Remediation:</strong> ${check.remediation}
+                                            </div>
+                                        ` : ''}
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${assessment.recommendations && assessment.recommendations.length > 0 ? `
+                        <div style="margin-top: 24px;">
+                            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Recommendations</h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${assessment.recommendations.filter(rec => 
+                                    standardResults.categories.some(cat => cat.category === rec.category)
+                                ).map(rec => `
+                                    <div style="padding: 16px; background-color: var(--bg-tertiary); border-radius: var(--radius-md); border-left: 4px solid ${
+                                        rec.priority === 'critical' ? 'var(--danger-color)' : 
+                                        rec.priority === 'high' ? 'var(--warning-color)' : 
+                                        'var(--info-color)'
+                                    };">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                            <h4 style="font-weight: 600;">${rec.title}</h4>
+                                            <span style="font-size: 12px; padding: 2px 8px; background-color: ${
+                                                rec.priority === 'critical' ? '#FEE2E2' : 
+                                                rec.priority === 'high' ? '#FEF3C7' : 
+                                                '#DBEAFE'
+                                            }; color: ${
+                                                rec.priority === 'critical' ? '#991B1B' : 
+                                                rec.priority === 'high' ? '#92400E' : 
+                                                '#1E40AF'
+                                            }; border-radius: var(--radius-sm);">
+                                                ${rec.priority.toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">${rec.description}</p>
+                                        <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-tertiary);">
+                                            <span><strong>Impact:</strong> ${rec.impact}</span>
+                                            <span><strong>Effort:</strong> ${rec.effort}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Close compliance details modal
+        function closeComplianceDetailsModal() {
+            document.getElementById('complianceDetailsModal').style.display = 'none';
+        }
+
+        // Toggle category expansion
+        function toggleCategory(categoryId) {
+            const category = document.getElementById(`category-${categoryId}`);
+            if (category) {
+                category.classList.toggle('expanded');
+                const icon = category.querySelector('.fa-chevron-right');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-right');
+                    icon.classList.toggle('fa-chevron-down');
+                }
+            }
+        }
+
+        // View evidence
+        function viewEvidence(checkId) {
+            // This would show evidence in a modal or separate view
+            showNotification('Evidence view not yet implemented', 'info');
+        }
+
+        // Export compliance report
+        async function exportComplianceReport() {
+            if (!currentAssessment) {
+                showNotification('No assessment selected', 'warning');
+                return;
+            }
+            
+            try {
+                const format = 'pdf'; // Could add format selection
+                const response = await fetch(`/api/compliance/assessment/${currentAssessment.id}/export?format=${format}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || getCookie('auth_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `compliance_report_${currentAssessment.id}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showNotification('Compliance report exported successfully', 'success');
+                } else {
+                    throw new Error('Export failed');
+                }
+                
+            } catch (error) {
+                console.error('Error exporting compliance report:', error);
+                showNotification('Failed to export compliance report', 'error');
+            }
+        }
+
+        // Show compliance asset selection
+        async function showComplianceAssetSelection() {
+            // Similar to security assessment asset selection
+            // You can reuse the existing asset selection modal or create a separate one
+            showAssetSelectionModal();
+        }
+
+        // Load compliance history
+        async function loadComplianceHistory() {
+            try {
+                const response = await apiCall('/api/compliance/history?limit=10');
+                if (response && response.history) {
+                    complianceAssessments = response.history;
+                    displayComplianceHistory(response.history);
+                }
+            } catch (error) {
+                console.error('Error loading compliance history:', error);
+            }
+        }
+
+        // Display compliance history
+        function displayComplianceHistory(history) {
+            // This would display historical compliance assessments
+            // Could be shown in a table or timeline view
+            console.log('Compliance history:', history);
+        }
+
+        // Get compliance recommendations
+        async function getComplianceRecommendations() {
+            try {
+                const response = await apiCall('/api/compliance/recommendations');
+                if (response && response.recommendations) {
+                    displayComplianceRecommendations(response.recommendations);
+                }
+            } catch (error) {
+                console.error('Error loading compliance recommendations:', error);
+            }
+        }
+
+        // Display compliance recommendations
+        function displayComplianceRecommendations(recommendations) {
+            // This would display prioritized recommendations
+            console.log('Compliance recommendations:', recommendations);
+        }
+
+        // Initialize compliance on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add compliance initialization to existing DOMContentLoaded
+            initializeCompliance();
+            
+            // Add compliance button to the section header
+            const complianceSection = document.querySelector('[data-tab="compliance"]').closest('.chart-section');
+            if (complianceSection) {
+                const header = complianceSection.querySelector('.section-header');
+                if (header && !header.querySelector('#runComplianceAssessmentBtn')) {
+                    const btnDiv = document.createElement('div');
+                    btnDiv.innerHTML = `
+                        <button class="btn btn-primary" id="runComplianceAssessmentBtn" onclick="showComplianceModal()">
+                            <i class="fas fa-clipboard-check"></i> Run Compliance Assessment
+                        </button>
+                    `;
+                    header.appendChild(btnDiv);
+                }
+            }
+        });
     </script>
 </body>
 </html>

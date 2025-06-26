@@ -69,7 +69,7 @@ type SecurityAssessmentResult struct {
 	AssetName        string                 `json:"asset_name"`
 	AssessmentDate   time.Time             `json:"assessment_date"`
 	Vulnerabilities  []VulnerabilityMatch  `json:"vulnerabilities"`
-	ComplianceChecks []ComplianceCheck     `json:"compliance_checks"`
+	ComplianceChecks []SecurityComplianceCheck `json:"compliance_checks"`
 	RiskScore        int                   `json:"risk_score"`
 	RiskLevel        string                `json:"risk_level"`
 	Recommendations  []string              `json:"recommendations"`
@@ -89,7 +89,7 @@ type VulnerabilityMatch struct {
 }
 
 // ComplianceCheck represents a compliance verification
-type ComplianceCheck struct {
+type SecurityComplianceCheck struct {
 	Standard    string `json:"standard"` // IEC-62443, NIST, etc.
 	Category    string `json:"category"`
 	Requirement string `json:"requirement"`
@@ -97,6 +97,7 @@ type ComplianceCheck struct {
 	Details     string `json:"details"`
 	Evidence    string `json:"evidence"`
 }
+
 
 // RiskMatrix for risk calculation
 type RiskMatrix struct {
@@ -157,7 +158,7 @@ func (s *SecurityService) RunPassiveAssessment(req *SecurityAssessmentRequest) (
 			AssetName:      asset.Name,
 			AssessmentDate: time.Now(),
 			Vulnerabilities: []VulnerabilityMatch{},
-			ComplianceChecks: []ComplianceCheck{},
+			ComplianceChecks: []SecurityComplianceCheck{}, // CHANGED: Updated to use SecurityComplianceCheck
 			Recommendations: []string{},
 		}
 		
@@ -244,8 +245,8 @@ func (s *SecurityService) isVulnerable(asset *models.Asset, product Product) boo
 }
 
 // checkCompliance performs PASSIVE compliance checking
-func (s *SecurityService) checkCompliance(asset *models.Asset) []ComplianceCheck {
-	checks := []ComplianceCheck{}
+func (s *SecurityService) checkCompliance(asset *models.Asset) []SecurityComplianceCheck {
+	checks := []SecurityComplianceCheck{}
 	
 	// IEC 62443 Basic Checks (based on stored data only)
 	checks = append(checks, s.checkIEC62443Compliance(asset)...)
@@ -260,11 +261,11 @@ func (s *SecurityService) checkCompliance(asset *models.Asset) []ComplianceCheck
 }
 
 // checkIEC62443Compliance checks IEC 62443 requirements passively
-func (s *SecurityService) checkIEC62443Compliance(asset *models.Asset) []ComplianceCheck {
-	checks := []ComplianceCheck{}
+func (s *SecurityService) checkIEC62443Compliance(asset *models.Asset) []SecurityComplianceCheck {
+	checks := []SecurityComplianceCheck{}
 	
 	// FR 1: Identification and Authentication Control
-	authCheck := ComplianceCheck{
+	authCheck := SecurityComplianceCheck{
 		Standard:    "IEC-62443",
 		Category:    "FR 1",
 		Requirement: "Identification and Authentication Control",
@@ -286,7 +287,7 @@ func (s *SecurityService) checkIEC62443Compliance(asset *models.Asset) []Complia
 	checks = append(checks, authCheck)
 	
 	// FR 2: Use Control (based on criticality)
-	useControl := ComplianceCheck{
+	useControl := SecurityComplianceCheck{
 		Standard:    "IEC-62443",
 		Category:    "FR 2",
 		Requirement: "Use Control",
@@ -303,7 +304,7 @@ func (s *SecurityService) checkIEC62443Compliance(asset *models.Asset) []Complia
 	checks = append(checks, useControl)
 	
 	// FR 3: System Integrity (check last update)
-	integrityCheck := ComplianceCheck{
+	integrityCheck := SecurityComplianceCheck{
 		Standard:    "IEC-62443",
 		Category:    "FR 3",
 		Requirement: "System Integrity",
@@ -320,7 +321,7 @@ func (s *SecurityService) checkIEC62443Compliance(asset *models.Asset) []Complia
 	checks = append(checks, integrityCheck)
 	
 	// FR 7: Resource Availability (based on status)
-	availabilityCheck := ComplianceCheck{
+	availabilityCheck := SecurityComplianceCheck{
 		Standard:    "IEC-62443",
 		Category:    "FR 7",
 		Requirement: "Resource Availability",
@@ -339,11 +340,11 @@ func (s *SecurityService) checkIEC62443Compliance(asset *models.Asset) []Complia
 }
 
 // checkNISTCompliance checks NIST framework requirements
-func (s *SecurityService) checkNISTCompliance(asset *models.Asset) []ComplianceCheck {
-	checks := []ComplianceCheck{}
+func (s *SecurityService) checkNISTCompliance(asset *models.Asset) []SecurityComplianceCheck {
+	checks := []SecurityComplianceCheck{}
 	
 	// Identify - Asset Management
-	identifyCheck := ComplianceCheck{
+	identifyCheck := SecurityComplianceCheck{
 		Standard:    "NIST",
 		Category:    "ID.AM",
 		Requirement: "Asset Management",
@@ -355,7 +356,7 @@ func (s *SecurityService) checkNISTCompliance(asset *models.Asset) []ComplianceC
 	
 	// Protect - Access Control
 	if asset.Zone == "DMZ" || asset.Zone == "Control Network" {
-		protectCheck := ComplianceCheck{
+		protectCheck := SecurityComplianceCheck{
 			Standard:    "NIST",
 			Category:    "PR.AC",
 			Requirement: "Access Control",
@@ -370,12 +371,12 @@ func (s *SecurityService) checkNISTCompliance(asset *models.Asset) []ComplianceC
 }
 
 // checkCustomPolicies checks organization-specific policies
-func (s *SecurityService) checkCustomPolicies(asset *models.Asset) []ComplianceCheck {
-	checks := []ComplianceCheck{}
+func (s *SecurityService) checkCustomPolicies(asset *models.Asset) []SecurityComplianceCheck {
+	checks := []SecurityComplianceCheck{}
 	
 	// Example: Check if critical assets have redundancy
 	if asset.Criticality == "critical" {
-		redundancyCheck := ComplianceCheck{
+		redundancyCheck := SecurityComplianceCheck{
 			Standard:    "Corporate Policy",
 			Category:    "Availability",
 			Requirement: "Critical Asset Redundancy",

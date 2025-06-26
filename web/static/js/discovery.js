@@ -179,7 +179,7 @@ function handleScanCompleteWithResults(data) {
     currentScan = null;
 }
 
-// Handle scan form submission - FIXED
+// Handle scan form submission - FIXED with better validation and protocol handling
 async function handleScanSubmit(e) {
     e.preventDefault();
 
@@ -202,9 +202,23 @@ async function handleScanSubmit(e) {
         return;
     }
 
+    // Get IP range value
+    const ipRangeInput = formData.get('ipRange') || document.getElementById('ipRange').value;
+    
+    // Validate IP range format
+    if (!ipRangeInput || ipRangeInput.trim() === '') {
+        showNotification('Please enter an IP range', 'error');
+        return;
+    }
+
+    if (!isValidIPRange(ipRangeInput)) {
+        showNotification('Please enter valid IP range(s). Examples: 192.168.1.0/24, 192.168.1.100, 192.168.1.1-192.168.1.10, or comma-separated', 'error');
+        return;
+    }
+
     // Build scan configuration
     const scanConfig = {
-        ip_range: formData.get('ipRange') || document.getElementById('ipRange').value,
+        ip_range: ipRangeInput.trim(),
         scan_type: formData.get('scanType') || document.getElementById('scanType').value,
         scan_mode: formData.get('scanMode') || 'active',
         timeout: parseInt(formData.get('timeout') || document.getElementById('timeout').value),
@@ -229,16 +243,8 @@ async function handleScanSubmit(e) {
         ];
     }
 
-    // Validate IP range
-    if (!scanConfig.ip_range) {
-        showNotification('Please enter an IP range', 'error');
-        return;
-    }
-
-    if (!isValidIPRange(scanConfig.ip_range)) {
-        showNotification('Please enter valid IP range(s). Examples: 192.168.1.0/24, 192.168.1.100, 192.168.1.1-192.168.1.10, or comma-separated', 'error');
-        return;
-    }
+    // Log scan configuration for debugging
+    console.log('Scan configuration:', scanConfig);
 
     try {
         const token = getAuthToken();
@@ -247,8 +253,6 @@ async function handleScanSubmit(e) {
             window.location.href = '/login';
             return;
         }
-
-        console.log('Sending scan request:', scanConfig);
 
         const response = await fetch('/api/discovery/scan', {
             method: 'POST',
@@ -1129,7 +1133,7 @@ function resetForm() {
     });
 }
 
-// Validate IP range format - ENHANCED for multiple formats
+// Validate IP range format - ENHANCED for multiple formats and better validation
 function isValidIPRange(ipRange) {
     // Split by comma for multiple entries
     const entries = ipRange.split(',').map(e => e.trim()).filter(e => e);
@@ -1149,8 +1153,22 @@ function isValidIPRange(ipRange) {
         // Check for IP range (e.g., 192.168.1.1-192.168.1.254)
         const rangeRegex = /^(\d{1,3}\.){3}\d{1,3}\s*-\s*(\d{1,3}\.){3}\d{1,3}$/;
         
+        // Check if matches any valid format
         if (!cidrRegex.test(entry) && !ipRegex.test(entry) && !rangeRegex.test(entry)) {
+            console.log('Invalid IP format:', entry);
             return false;
+        }
+        
+        // For single IP, validate octets
+        if (ipRegex.test(entry)) {
+            const parts = entry.split('.');
+            for (let part of parts) {
+                const num = parseInt(part);
+                if (num < 0 || num > 255) {
+                    console.log('Invalid IP octet:', part);
+                    return false;
+                }
+            }
         }
     }
     

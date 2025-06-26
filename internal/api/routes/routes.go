@@ -239,6 +239,7 @@ func SetupAllRoutes(
 	discoveryHandler *handlers.DiscoveryHandler,
 	monitoringHandler *handlers.MonitoringHandler,
 	securityHandler *handlers.SecurityHandler,
+	complianceHandler *handlers.ComplianceHandler,
 ) {
 	// Setup static routes first (public)
 	SetupStaticRoutes(router)
@@ -265,6 +266,7 @@ func SetupAllRoutes(
 	SetupDiscoveryRoutes(router, discoveryHandler)
 	SetupMonitoringRoutes(router, monitoringHandler)
 	SetupSecurityRoutes(router, securityHandler)
+	SetupComplianceRoutes(router, complianceHandler)
 	SetupTagRoutes(router)
 	
 	// Setup WebSocket route (protected)

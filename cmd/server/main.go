@@ -159,6 +159,7 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 	discoveryHandler := handlers.NewDiscoveryHandler()
 	monitoringHandler := handlers.NewMonitoringHandler()
 	securityHandler := handlers.NewSecurityHandler()
+	complianceHandler := handlers.NewComplianceHandler()
 
 	// Setup all routes with authentication
 	routes.SetupAllRoutes(
@@ -170,6 +171,7 @@ func setupRouter(cfg *config.Config, logger *utils.Logger) *gin.Engine {
 		discoveryHandler,
 		monitoringHandler,
 		securityHandler,
+		complianceHandler,
 	)
 
 	return router
