@@ -1,3 +1,4 @@
+// internal/services/scan_service.go
 package services
 
 import (
@@ -37,14 +38,14 @@ type ActiveScan struct {
 	stopped  bool
 }
 
-// ScanRequest represents a scan configuration request - FIXED VALIDATION
+// ScanRequest represents a scan configuration request - REMOVED ALL VALIDATION
 type ScanRequest struct {
 	IPRange       string   `json:"ip_range" binding:"required"`
 	ScanType      string   `json:"scan_type" binding:"required,oneof=industrial network custom"`
 	ScanMode      string   `json:"scan_mode"`
-	Timeout       int      `json:"timeout"`            // Removed min validation
-	MaxConcurrent int      `json:"max_concurrent"`     // Removed min validation
-	Protocols     []string `json:"protocols"`          // Removed all validation
+	Timeout       int      `json:"timeout"`
+	MaxConcurrent int      `json:"max_concurrent"`
+	Protocols     []string `json:"protocols"` // NO VALIDATION AT ALL
 	PortRanges    []struct {
 		Start uint16 `json:"start"`
 		End   uint16 `json:"end"`
@@ -102,7 +103,7 @@ func NewScanService() *ScanService {
 	}
 }
 
-// StartScan initiates a new network scan - COMPLETELY REMOVED PROTOCOL VALIDATION
+// StartScan initiates a new network scan - PROTOCOL VALIDATION COMPLETELY REMOVED
 func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	// Log the incoming request for debugging
 	s.logger.Info("Received scan request",
@@ -165,10 +166,9 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		Timeout:       time.Duration(req.Timeout) * time.Second,
 		MaxConcurrent: req.MaxConcurrent,
 		RetryAttempts: 2,
+		Protocols:     req.Protocols, // Use protocols as-is, no validation
 	}
 
-	// NO PROTOCOL VALIDATION - protocols are completely optional
-	
 	// Port ranges handling
 	if len(req.PortRanges) > 0 {
 		config.PortRanges = make([]scanner.PortRange, len(req.PortRanges))
@@ -218,11 +218,6 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 				return nil, fmt.Errorf("custom scan requires port ranges to be specified")
 			}
 		}
-	}
-
-	// Set protocols for passive scanning filter (optional)
-	if len(req.Protocols) > 0 {
-		config.Protocols = req.Protocols
 	}
 
 	// Log total ports to scan

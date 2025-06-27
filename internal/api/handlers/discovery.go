@@ -1,3 +1,4 @@
+// internal/api/handlers/discovery.go
 package handlers
 
 import (
@@ -22,7 +23,7 @@ func NewDiscoveryHandler() *DiscoveryHandler {
 	}
 }
 
-// StartScan initiates a new network scan - FIXED TO REMOVE PROTOCOL VALIDATION
+// StartScan initiates a new network scan - REMOVED ALL PROTOCOL VALIDATION
 // @Summary Start network scan
 // @Description Initiate a new network discovery scan
 // @Tags discovery
@@ -51,8 +52,7 @@ func (h *DiscoveryHandler) StartScan(c *gin.Context) {
 		req.MaxConcurrent = 50
 	}
 	
-	// REMOVED: Protocol validation that was causing the error
-	// The protocols field is now optional and handled by the service
+	// NO PROTOCOL VALIDATION - protocols are completely optional
 
 	response, err := h.scanService.StartScan(&req)
 	if err != nil {

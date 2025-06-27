@@ -1,4 +1,5 @@
-// Discovery Page JavaScript - Fixed Version with Protocol Selection
+// web/static/js/discovery.js
+// Discovery Page JavaScript - Fixed Version WITHOUT Protocol Requirements
 let currentScan = null;
 let progressInterval = null;
 let scanResults = [];
@@ -119,7 +120,7 @@ function handleWebSocketMessage(message) {
     }
 }
 
-// Handle scan form submission - FIXED VERSION WITH PROTOCOLS
+// Handle scan form submission - FIXED VERSION WITHOUT PROTOCOL VALIDATION
 async function handleScanSubmit(e) {
     e.preventDefault();
 
@@ -175,77 +176,24 @@ async function handleScanSubmit(e) {
         ip_range: ipRangeInput.trim(),
         scan_type: scanType,
         timeout: parseInt(formData.get('timeout') || '30'),
-        max_concurrent: 20, // Reduced for better stability
-        protocols: [] // Initialize protocols array
+        max_concurrent: 20 // Reduced for better stability
     };
 
-    // Set protocols and port ranges based on scan type
-    switch (scanType) {
-        case 'industrial':
-            // Industrial protocols
-            scanConfig.protocols = ['modbus', 'dnp3', 'ethernet_ip', 'bacnet', 's7', 'iec104', 'opcua'];
-            // Only scan industrial ports
-            scanConfig.port_ranges = [
-                { start: 102, end: 102 },     // S7
-                { start: 502, end: 502 },     // Modbus
-                { start: 1911, end: 1911 },   // Niagara Fox
-                { start: 2222, end: 2222 },   // EtherNet/IP Alt
-                { start: 2404, end: 2404 },   // IEC-104
-                { start: 4840, end: 4840 },   // OPC UA
-                { start: 20000, end: 20000 }, // DNP3
-                { start: 20547, end: 20547 }, // DNP3 Alt
-                { start: 44818, end: 44818 }, // EtherNet/IP
-                { start: 47808, end: 47808 }  // BACnet
-            ];
-            break;
-            
-        case 'network':
-            // Industrial + common network protocols
-            scanConfig.protocols = ['modbus', 'dnp3', 'ethernet_ip', 'bacnet', 's7', 'snmp', 'http', 'https', 'ssh', 'telnet'];
-            // Industrial + common network ports
-            scanConfig.port_ranges = [
-                // Common network ports
-                { start: 22, end: 23 },       // SSH, Telnet
-                { start: 80, end: 80 },       // HTTP
-                { start: 161, end: 162 },     // SNMP
-                { start: 443, end: 443 },     // HTTPS
-                { start: 3389, end: 3389 },   // RDP
-                // Industrial ports
-                { start: 102, end: 102 },     // S7
-                { start: 502, end: 502 },     // Modbus
-                { start: 1911, end: 1911 },   // Niagara Fox
-                { start: 2222, end: 2222 },   // EtherNet/IP Alt
-                { start: 2404, end: 2404 },   // IEC-104
-                { start: 20000, end: 20000 }, // DNP3
-                { start: 44818, end: 44818 }, // EtherNet/IP
-                { start: 47808, end: 47808 }  // BACnet
-            ];
-            break;
-            
-        case 'custom':
-            // Custom protocols
-            scanConfig.protocols = ['custom'];
-            // Parse custom ports
-            const customPorts = formData.get('customPorts') || document.getElementById('customPorts').value;
-            if (!customPorts) {
-                showNotification('Please enter custom ports', 'error');
-                return;
-            }
-            scanConfig.port_ranges = parseCustomPorts(customPorts);
-            if (scanConfig.port_ranges.length === 0) {
-                showNotification('Invalid custom port format', 'error');
-                return;
-            }
-            break;
-            
-        default:
-            showNotification('Invalid scan type selected', 'error');
-            return;
-    }
+    // REMOVED: protocols array initialization and all protocol handling
+    // The backend will handle port ranges based on scan type
 
-    // Ensure protocols array is not empty
-    if (!scanConfig.protocols || scanConfig.protocols.length === 0) {
-        scanConfig.protocols = ['unknown'];
+    // Handle custom ports for custom scan type
+    if (scanType === 'custom') {
+        const customPorts = formData.get('customPorts') || document.getElementById('customPorts').value;
+        if (!customPorts) {
+            showNotification('Please enter custom ports', 'error');
+            return;
+        }
+        scanConfig.port_ranges = parseCustomPorts(customPorts);
+        if (scanConfig.port_ranges.length === 0) {
+            showNotification('Invalid custom port format', 'error');
+            return;
+        }
     }
 
     // Log scan configuration for debugging
