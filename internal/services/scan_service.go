@@ -37,15 +37,14 @@ type ActiveScan struct {
 	stopped  bool
 }
 
-// ScanRequest represents a scan configuration request
-// UPDATED: Changed scan_type validation to support new types
+// ScanRequest represents a scan configuration request - FIXED VALIDATION
 type ScanRequest struct {
 	IPRange       string   `json:"ip_range" binding:"required"`
-	ScanType      string   `json:"scan_type" binding:"required,oneof=industrial network custom"` // CHANGED: Updated enum values
+	ScanType      string   `json:"scan_type" binding:"required,oneof=industrial network custom"`
 	ScanMode      string   `json:"scan_mode"`
-	Timeout       int      `json:"timeout" binding:"min=10,max=300"`
-	MaxConcurrent int      `json:"max_concurrent" binding:"min=1,max=100"`
-	Protocols     []string `json:"protocols"`
+	Timeout       int      `json:"timeout"`            // Removed min validation
+	MaxConcurrent int      `json:"max_concurrent"`     // Removed min validation
+	Protocols     []string `json:"protocols"`          // Removed all validation
 	PortRanges    []struct {
 		Start uint16 `json:"start"`
 		End   uint16 `json:"end"`
@@ -61,7 +60,6 @@ type ScanResponse struct {
 }
 
 // ScanProgressResponse represents current scan progress
-// UPDATED: Added ports scanned info
 type ScanProgressResponse struct {
 	ScanID          string        `json:"scan_id"`
 	Status          string        `json:"status"`
@@ -69,8 +67,8 @@ type ScanProgressResponse struct {
 	TotalHosts      int           `json:"total_hosts"`
 	ScannedHosts    int           `json:"scanned_hosts"`
 	DiscoveredHosts int           `json:"discovered_hosts"`
-	ScannedPorts    int           `json:"scanned_ports"`    // NEW FIELD
-	TotalPorts      int           `json:"total_ports"`      // NEW FIELD
+	ScannedPorts    int           `json:"scanned_ports"`
+	TotalPorts      int           `json:"total_ports"`
 	ElapsedTime     string        `json:"elapsed_time"`
 	EstimatedTime   string        `json:"estimated_time"`
 	Errors          []string      `json:"errors"`
@@ -104,8 +102,15 @@ func NewScanService() *ScanService {
 	}
 }
 
-// StartScan initiates a new network scan - UPDATED VERSION
+// StartScan initiates a new network scan - COMPLETELY REMOVED PROTOCOL VALIDATION
 func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
+	// Log the incoming request for debugging
+	s.logger.Info("Received scan request",
+		"ip_range", req.IPRange,
+		"scan_type", req.ScanType,
+		"protocols", req.Protocols,
+		"port_ranges", len(req.PortRanges))
+
 	// Check and stop any existing scan
 	s.mu.Lock()
 	if s.activeScan != nil {
@@ -142,23 +147,29 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 		req.ScanMode = "active"
 	}
 
-	// Set default timeout if too low
-	if req.Timeout < 10 {
+	// Set default timeout if not provided or too low
+	if req.Timeout <= 0 || req.Timeout < 10 {
 		req.Timeout = 30
 	}
 
-	// Create scan configuration - UPDATED TO USE NEW SCAN TYPE
+	// Set default max concurrent if not provided
+	if req.MaxConcurrent <= 0 {
+		req.MaxConcurrent = 20
+	}
+
+	// Create scan configuration
 	config := &scanner.ScanConfig{
 		IPRange:       req.IPRange,
-		ScanType:      scanner.ScanType(req.ScanType), // CHANGED: Now uses the ScanType enum
+		ScanType:      scanner.ScanType(req.ScanType),
 		ScanMode:      scanner.ScanMode(req.ScanMode),
 		Timeout:       time.Duration(req.Timeout) * time.Second,
 		MaxConcurrent: req.MaxConcurrent,
 		RetryAttempts: 2,
 	}
 
-	// NEW: Port ranges are now provided directly from frontend based on scan type
-	// No need to determine ports here - frontend already did that
+	// NO PROTOCOL VALIDATION - protocols are completely optional
+	
+	// Port ranges handling
 	if len(req.PortRanges) > 0 {
 		config.PortRanges = make([]scanner.PortRange, len(req.PortRanges))
 		for i, pr := range req.PortRanges {
@@ -167,25 +178,62 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 				End:   pr.End,
 			}
 		}
-		
-		// Log total ports to scan for debugging
-		totalPorts := s.calculateTotalPorts(config.PortRanges)
-		s.logger.Info("Port configuration",
-			"port_ranges", len(config.PortRanges),
-			"total_ports", totalPorts)
+	} else {
+		// If no port ranges provided, use defaults based on scan type
+		switch req.ScanType {
+		case "industrial":
+			config.PortRanges = []scanner.PortRange{
+				{Start: 102, End: 102},     // S7
+				{Start: 502, End: 502},     // Modbus
+				{Start: 1911, End: 1911},   // Niagara Fox
+				{Start: 2222, End: 2222},   // EtherNet/IP Alt
+				{Start: 2404, End: 2404},   // IEC-104
+				{Start: 4840, End: 4840},   // OPC UA
+				{Start: 20000, End: 20000}, // DNP3
+				{Start: 20547, End: 20547}, // DNP3 Alt
+				{Start: 44818, End: 44818}, // EtherNet/IP
+				{Start: 47808, End: 47808}, // BACnet
+			}
+		case "network":
+			config.PortRanges = []scanner.PortRange{
+				// Common network ports
+				{Start: 22, End: 23},       // SSH, Telnet
+				{Start: 80, End: 80},       // HTTP
+				{Start: 161, End: 162},     // SNMP
+				{Start: 443, End: 443},     // HTTPS
+				{Start: 3389, End: 3389},   // RDP
+				// Industrial ports
+				{Start: 102, End: 102},     // S7
+				{Start: 502, End: 502},     // Modbus
+				{Start: 1911, End: 1911},   // Niagara Fox
+				{Start: 2222, End: 2222},   // EtherNet/IP Alt
+				{Start: 2404, End: 2404},   // IEC-104
+				{Start: 20000, End: 20000}, // DNP3
+				{Start: 44818, End: 44818}, // EtherNet/IP
+				{Start: 47808, End: 47808}, // BACnet
+			}
+		case "custom":
+			// For custom, we expect port ranges to be provided
+			if len(config.PortRanges) == 0 {
+				return nil, fmt.Errorf("custom scan requires port ranges to be specified")
+			}
+		}
 	}
 
-	// Set protocols for passive scanning filter (if applicable)
+	// Set protocols for passive scanning filter (optional)
 	if len(req.Protocols) > 0 {
 		config.Protocols = req.Protocols
 	}
 
-	s.logger.Info("Scan configuration",
+	// Log total ports to scan
+	totalPorts := s.calculateTotalPorts(config.PortRanges)
+	s.logger.Info("Scan configuration finalized",
 		"ip_range", req.IPRange,
 		"scan_type", req.ScanType,
 		"scan_mode", req.ScanMode,
 		"timeout", req.Timeout,
-		"port_ranges", len(config.PortRanges))
+		"port_ranges", len(config.PortRanges),
+		"total_ports", totalPorts)
 
 	// Create scanner
 	scannerInstance := scanner.NewScanner(config, s.logger)
@@ -237,7 +285,7 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	// Start progress monitor with WebSocket broadcasting
 	go s.monitorProgress(activeScan)
 
-	s.logger.Info("Scan started", "scan_id", scanDB.ID.String(), "target", req.IPRange)
+	s.logger.Info("Scan started successfully", "scan_id", scanDB.ID.String(), "target", req.IPRange)
 
 	return &ScanResponse{
 		ScanID:    scanDB.ID.String(),
@@ -247,7 +295,7 @@ func (s *ScanService) StartScan(req *ScanRequest) (*ScanResponse, error) {
 	}, nil
 }
 
-// NEW HELPER FUNCTION: Calculate total ports from port ranges
+// calculateTotalPorts calculates total ports from port ranges
 func (s *ScanService) calculateTotalPorts(portRanges []scanner.PortRange) int {
 	total := 0
 	for _, pr := range portRanges {
@@ -330,7 +378,7 @@ func (s *ScanService) processResults(activeScan *ActiveScan) {
 	s.saveResultsToDatabase(activeScan)
 }
 
-// monitorProgress monitors scan progress and updates database - UPDATED VERSION
+// monitorProgress monitors scan progress and updates database
 func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
@@ -353,13 +401,11 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 
 			progress := activeScan.Scanner.GetProgress()
 			
-			// UPDATED: Calculate progress percentage based on ports scanned
+			// Calculate progress percentage based on ports scanned
 			var progressPct float64
 			if progress.TotalPorts > 0 {
-				// More accurate progress based on ports scanned
 				progressPct = float64(progress.ScannedPorts) / float64(progress.TotalPorts) * 100
 			} else if progress.TotalHosts > 0 {
-				// Fallback to host-based progress
 				progressPct = float64(progress.ScannedHosts) / float64(progress.TotalHosts) * 100
 			}
 			
@@ -375,15 +421,15 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 					"progress", fmt.Sprintf("%.1f%%", progressPct),
 					"scanned_hosts", progress.ScannedHosts,
 					"total_hosts", progress.TotalHosts,
-					"scanned_ports", progress.ScannedPorts,  // NEW LOG
-					"total_ports", progress.TotalPorts,      // NEW LOG
+					"scanned_ports", progress.ScannedPorts,
+					"total_ports", progress.TotalPorts,
 					"discovered_hosts", actualDiscoveredCount,
 					"open_ports", progress.OpenPorts,
 					"elapsed", progress.ElapsedTime.String())
 				lastProgressLog = time.Now()
 			}
 			
-			// UPDATED: Broadcast enhanced progress via WebSocket
+			// Broadcast enhanced progress via WebSocket
 			s.broadcastEnhancedProgress(
 				activeScan.ID,
 				progressPct,
@@ -478,7 +524,7 @@ func (s *ScanService) monitorProgress(activeScan *ActiveScan) {
 	}
 }
 
-// NEW FUNCTION: Broadcast enhanced progress with port information
+// broadcastEnhancedProgress broadcasts enhanced progress with port information
 func (s *ScanService) broadcastEnhancedProgress(scanID string, progress float64, totalHosts, scannedHosts, discoveredHosts, scannedPorts, totalPorts int, elapsedTime string) {
 	hub := websocket.GetHub()
 	hub.BroadcastMessage("scan_progress", map[string]interface{}{
@@ -487,13 +533,13 @@ func (s *ScanService) broadcastEnhancedProgress(scanID string, progress float64,
 		"total_hosts":      totalHosts,
 		"scanned_hosts":    scannedHosts,
 		"discovered_hosts": discoveredHosts,
-		"scanned_ports":    scannedPorts,  // NEW FIELD
-		"total_ports":      totalPorts,    // NEW FIELD
+		"scanned_ports":    scannedPorts,
+		"total_ports":      totalPorts,
 		"elapsed_time":     elapsedTime,
 	})
 }
 
-// GetScanProgress returns the progress of a scan - UPDATED VERSION
+// GetScanProgress returns the progress of a scan
 func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, error) {
 	s.mu.RLock()
 	activeScan := s.activeScan
@@ -507,7 +553,7 @@ func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, err
 		actualDiscoveredCount := len(activeScan.Results)
 		activeScan.mu.Unlock()
 		
-		// UPDATED: Calculate progress percentage based on ports
+		// Calculate progress percentage based on ports
 		var progressPct float64
 		if progress.TotalPorts > 0 {
 			progressPct = float64(progress.ScannedPorts) / float64(progress.TotalPorts) * 100
@@ -531,8 +577,8 @@ func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, err
 			TotalHosts:      progress.TotalHosts,
 			ScannedHosts:    progress.ScannedHosts,
 			DiscoveredHosts: actualDiscoveredCount,
-			ScannedPorts:    progress.ScannedPorts,    // NEW FIELD
-			TotalPorts:      progress.TotalPorts,      // NEW FIELD
+			ScannedPorts:    progress.ScannedPorts,
+			TotalPorts:      progress.TotalPorts,
 			ElapsedTime:     progress.ElapsedTime.String(),
 			EstimatedTime:   estimatedTime,
 			Errors:          progress.Errors,
@@ -568,14 +614,7 @@ func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, err
 	}, nil
 }
 
-// Rest of the methods remain the same...
-// (saveResultsToDatabase, broadcastScanCompleteWithResults, checkExistingDevice, 
-//  updateAssetOnlineStatus, StopScan, GetScanHistory, GetActiveScan, 
-//  convertToDiscoveredDevice, updateOfflineAssets, GetScanResults, 
-//  AddDeviceToInventory, ValidateIPRange, parseIPRange, etc.)
-
-// All other existing methods remain unchanged from the original file...
-
+// saveResultsToDatabase saves scan results to database
 func (s *ScanService) saveResultsToDatabase(activeScan *ActiveScan) {
 	activeScan.mu.Lock()
 	defer activeScan.mu.Unlock()
@@ -600,6 +639,7 @@ func (s *ScanService) saveResultsToDatabase(activeScan *ActiveScan) {
 	}
 }
 
+// broadcastScanCompleteWithResults broadcasts scan completion with results
 func (s *ScanService) broadcastScanCompleteWithResults(activeScan *ActiveScan) {
 	// Convert results to discovered devices format
 	devices := make([]DiscoveredDevice, 0)
@@ -638,6 +678,7 @@ func (s *ScanService) broadcastScanCompleteWithResults(activeScan *ActiveScan) {
 	})
 }
 
+// checkExistingDevice checks if device already exists in inventory
 func (s *ScanService) checkExistingDevice(device *scanner.DeviceResult) {
 	if device.IPAddress == "" {
 		return
@@ -665,6 +706,7 @@ func (s *ScanService) checkExistingDevice(device *scanner.DeviceResult) {
 	}
 }
 
+// updateAssetOnlineStatus updates asset online/offline status
 func (s *ScanService) updateAssetOnlineStatus(ipAddress string, isOnline bool) {
 	if ipAddress == "" {
 		return
@@ -692,9 +734,6 @@ func (s *ScanService) updateAssetOnlineStatus(ipAddress string, isOnline bool) {
 		s.logger.Debug("Asset status updated", "ip", ipAddress, "status", updates["status"])
 	}
 }
-
-// Other methods remain the same...
-// (StopScan, GetScanHistory, GetActiveScan, convertToDiscoveredDevice, etc.)
 
 // StopScan stops the currently running scan
 func (s *ScanService) StopScan(scanID string) error {
@@ -757,6 +796,69 @@ func (s *ScanService) GetActiveScan() *ActiveScan {
 	return s.activeScan
 }
 
+// GetScanResults returns the results of a scan
+func (s *ScanService) GetScanResults(scanID string) ([]DiscoveredDevice, error) {
+	// Check if this is the active scan
+	s.mu.RLock()
+	activeScan := s.activeScan
+	s.mu.RUnlock()
+
+	var devices []DiscoveredDevice
+
+	if activeScan != nil && activeScan.ID == scanID {
+		// Get results from active scan
+		activeScan.mu.Lock()
+		for _, result := range activeScan.Results {
+			device := s.convertToDiscoveredDevice(result)
+			
+			// Check inventory status
+			var existingAsset models.Asset
+			err := s.db.Where("ip_address = ?", result.IPAddress).First(&existingAsset).Error
+			if err == nil {
+				device.InInventory = true
+				device.AssetID = existingAsset.ID.String()
+			} else {
+				device.InInventory = false
+			}
+			
+			devices = append(devices, device)
+		}
+		activeScan.mu.Unlock()
+	} else {
+		// Load from database
+		var scanDB models.NetworkScan
+		if err := s.db.First(&scanDB, "id = ?", scanID).Error; err != nil {
+			return nil, fmt.Errorf("scan not found")
+		}
+
+		// Parse results from JSON
+		if scanDB.Results != "" {
+			var results []*scanner.DeviceResult
+			if err := json.Unmarshal([]byte(scanDB.Results), &results); err != nil {
+				return nil, fmt.Errorf("failed to parse scan results: %w", err)
+			}
+
+			for _, result := range results {
+				device := s.convertToDiscoveredDevice(result)
+				
+				// Check inventory status
+				var existingAsset models.Asset
+				err := s.db.Where("ip_address = ?", result.IPAddress).First(&existingAsset).Error
+				if err == nil {
+					device.InInventory = true
+					device.AssetID = existingAsset.ID.String()
+				} else {
+					device.InInventory = false
+				}
+				
+				devices = append(devices, device)
+			}
+		}
+	}
+
+	return devices, nil
+}
+
 // convertToDiscoveredDevice converts scanner result to UI model
 func (s *ScanService) convertToDiscoveredDevice(result *scanner.DeviceResult) DiscoveredDevice {
 	device := DiscoveredDevice{
@@ -802,75 +904,6 @@ func (s *ScanService) updateOfflineAssets(activeScan *ActiveScan) {
 			s.updateAssetOnlineStatus(targetIP, false)
 		}
 	}
-}
-
-// GetScanProgress returns the progress of a scan
-func (s *ScanService) GetScanProgress(scanID string) (*ScanProgressResponse, error) {
-	s.mu.RLock()
-	activeScan := s.activeScan
-	s.mu.RUnlock()
-
-	if activeScan != nil && activeScan.ID == scanID {
-		progress := activeScan.Scanner.GetProgress()
-		
-		// Get actual discovered count from results
-		activeScan.mu.Lock()
-		actualDiscoveredCount := len(activeScan.Results)
-		activeScan.mu.Unlock()
-		
-		// Calculate progress percentage
-		var progressPct float64
-		if progress.TotalHosts > 0 {
-			progressPct = float64(progress.ScannedHosts) / float64(progress.TotalHosts) * 100
-		}
-
-		// Estimate remaining time
-		var estimatedTime string
-		if progress.ScannedHosts > 0 && progressPct < 100 {
-			elapsed := progress.ElapsedTime
-			rate := float64(progress.ScannedHosts) / elapsed.Seconds()
-			remaining := float64(progress.TotalHosts-progress.ScannedHosts) / rate
-			estimatedTime = time.Duration(remaining * float64(time.Second)).String()
-		}
-
-		return &ScanProgressResponse{
-			ScanID:          scanID,
-			Status:          string(progress.Status),
-			Progress:        progressPct,
-			TotalHosts:      progress.TotalHosts,
-			ScannedHosts:    progress.ScannedHosts,
-			DiscoveredHosts: actualDiscoveredCount,
-			ElapsedTime:     progress.ElapsedTime.String(),
-			EstimatedTime:   estimatedTime,
-			Errors:          progress.Errors,
-		}, nil
-	}
-
-	// Check historical scan
-	s.mu.RLock()
-	scanDB, exists := s.scanHistory[scanID]
-	s.mu.RUnlock()
-
-	if !exists {
-		// Try to load from database
-		var scan models.NetworkScan
-		if err := s.db.First(&scan, "id = ?", scanID).Error; err != nil {
-			return nil, fmt.Errorf("scan not found")
-		}
-		scanDB = &scan
-	}
-
-	return &ScanProgressResponse{
-		ScanID:          scanID,
-		Status:          scanDB.Status,
-		Progress:        100,
-		TotalHosts:      0,
-		ScannedHosts:    0,
-		DiscoveredHosts: scanDB.DevicesFound,
-		ElapsedTime:     fmt.Sprintf("%d seconds", scanDB.Duration),
-		EstimatedTime:   "0",
-		Errors:          []string{},
-	}, nil
 }
 
 // AddDeviceToInventory adds a discovered device to the asset inventory

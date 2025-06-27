@@ -1,4 +1,4 @@
-// Discovery Page JavaScript - Fixed Version with Improved Scanning
+// Discovery Page JavaScript - Fixed Version with Protocol Selection
 let currentScan = null;
 let progressInterval = null;
 let scanResults = [];
@@ -119,7 +119,7 @@ function handleWebSocketMessage(message) {
     }
 }
 
-// Handle scan form submission - FIXED VERSION
+// Handle scan form submission - FIXED VERSION WITH PROTOCOLS
 async function handleScanSubmit(e) {
     e.preventDefault();
 
@@ -176,13 +176,15 @@ async function handleScanSubmit(e) {
         scan_type: scanType,
         timeout: parseInt(formData.get('timeout') || '30'),
         max_concurrent: 20, // Reduced for better stability
+        protocols: [] // Initialize protocols array
     };
 
     // Set protocols and port ranges based on scan type
     switch (scanType) {
         case 'industrial':
-            // Only scan industrial ports
+            // Industrial protocols
             scanConfig.protocols = ['modbus', 'dnp3', 'ethernet_ip', 'bacnet', 's7', 'iec104', 'opcua'];
+            // Only scan industrial ports
             scanConfig.port_ranges = [
                 { start: 102, end: 102 },     // S7
                 { start: 502, end: 502 },     // Modbus
@@ -198,8 +200,9 @@ async function handleScanSubmit(e) {
             break;
             
         case 'network':
+            // Industrial + common network protocols
+            scanConfig.protocols = ['modbus', 'dnp3', 'ethernet_ip', 'bacnet', 's7', 'snmp', 'http', 'https', 'ssh', 'telnet'];
             // Industrial + common network ports
-            scanConfig.protocols = ['modbus', 'dnp3', 'ethernet_ip', 'bacnet', 's7', 'snmp'];
             scanConfig.port_ranges = [
                 // Common network ports
                 { start: 22, end: 23 },       // SSH, Telnet
@@ -220,19 +223,29 @@ async function handleScanSubmit(e) {
             break;
             
         case 'custom':
+            // Custom protocols
+            scanConfig.protocols = ['custom'];
             // Parse custom ports
             const customPorts = formData.get('customPorts') || document.getElementById('customPorts').value;
             if (!customPorts) {
                 showNotification('Please enter custom ports', 'error');
                 return;
             }
-            scanConfig.protocols = ['custom'];
             scanConfig.port_ranges = parseCustomPorts(customPorts);
             if (scanConfig.port_ranges.length === 0) {
                 showNotification('Invalid custom port format', 'error');
                 return;
             }
             break;
+            
+        default:
+            showNotification('Invalid scan type selected', 'error');
+            return;
+    }
+
+    // Ensure protocols array is not empty
+    if (!scanConfig.protocols || scanConfig.protocols.length === 0) {
+        scanConfig.protocols = ['unknown'];
     }
 
     // Log scan configuration for debugging
@@ -458,6 +471,8 @@ function handleScanProgress(data) {
             total_hosts: data.total_hosts,
             scanned_hosts: data.scanned_hosts,
             discovered_hosts: data.discovered_hosts,
+            scanned_ports: data.scanned_ports,
+            total_ports: data.total_ports,
             elapsed_time: data.elapsed_time,
             errors: []
         });

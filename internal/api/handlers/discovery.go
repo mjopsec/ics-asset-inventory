@@ -22,7 +22,7 @@ func NewDiscoveryHandler() *DiscoveryHandler {
 	}
 }
 
-// StartScan initiates a new network scan
+// StartScan initiates a new network scan - FIXED TO REMOVE PROTOCOL VALIDATION
 // @Summary Start network scan
 // @Description Initiate a new network discovery scan
 // @Tags discovery
@@ -50,9 +50,9 @@ func (h *DiscoveryHandler) StartScan(c *gin.Context) {
 	if req.MaxConcurrent == 0 {
 		req.MaxConcurrent = 50
 	}
-	if len(req.Protocols) == 0 {
-		req.Protocols = []string{"modbus", "dnp3", "bacnet", "ethernet_ip", "s7", "snmp"}
-	}
+	
+	// REMOVED: Protocol validation that was causing the error
+	// The protocols field is now optional and handled by the service
 
 	response, err := h.scanService.StartScan(&req)
 	if err != nil {
@@ -122,7 +122,7 @@ func (h *DiscoveryHandler) GetScanProgress(c *gin.Context) {
 	c.JSON(http.StatusOK, progress)
 }
 
-// GetScanResults returns discovered devices - FIXED
+// GetScanResults returns discovered devices
 // @Summary Get scan results
 // @Description Get discovered devices from a network scan
 // @Tags discovery
@@ -338,7 +338,7 @@ func (h *DiscoveryHandler) GetProtocolPorts(c *gin.Context) {
 	c.JSON(http.StatusOK, protocolPorts)
 }
 
-// GetActiveScans returns currently active scans - FIXED
+// GetActiveScans returns currently active scans
 // @Summary Get active scans
 // @Description Get list of currently running scans
 // @Tags discovery
