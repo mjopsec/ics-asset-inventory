@@ -230,3 +230,18 @@ func BroadcastRealtimeMonitoring(data interface{}) {
 	hub := GetHub()
 	hub.BroadcastMessage(MessageTypeRealtimeMonitoring, data)
 }
+
+// BroadcastScanProgressEnhanced sends enhanced scan progress update to all clients
+func BroadcastScanProgressEnhanced(scanID string, progress float64, totalHosts, scannedHosts, discoveredHosts, scannedPorts, totalPorts int, elapsedTime string) {
+	hub := GetHub()
+	hub.BroadcastMessage(MessageTypeScanProgress, map[string]interface{}{
+		"scan_id":          scanID,
+		"progress":         progress,
+		"total_hosts":      totalHosts,
+		"scanned_hosts":    scannedHosts,
+		"discovered_hosts": discoveredHosts,
+		"scanned_ports":    scannedPorts,
+		"total_ports":      totalPorts,
+		"elapsed_time":     elapsedTime,
+	})
+}

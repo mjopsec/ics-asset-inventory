@@ -1,9 +1,9 @@
-// Discovery Page JavaScript - Fixed Version
+// Discovery Page JavaScript - Fixed Version with Improved Scanning
 let currentScan = null;
 let progressInterval = null;
 let scanResults = [];
-let allDiscoveredDevices = new Map(); // Store all discovered devices by IP
-let wsClient = null; // WebSocket client instance
+let allDiscoveredDevices = new Map();
+let wsClient = null;
 
 // Helper function to get authentication token
 function getAuthToken() {
@@ -23,12 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Discovery page initialized');
     setupEventListeners();
     loadScanHistory();
-    loadProtocolPorts();
     
     // Clear old scan results on page load
     scanResults = [];
     allDiscoveredDevices.clear();
-    currentScan = null; // Ensure currentScan is null on page load
+    currentScan = null;
     
     // Check for active scans on page load
     checkActiveScans();
@@ -46,7 +45,7 @@ function setupEventListeners() {
     }
 }
 
-// Initialize WebSocket connection with enhanced handlers
+// Initialize WebSocket connection
 function initializeWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/events`;
@@ -58,7 +57,6 @@ function initializeWebSocket() {
     }
     
     try {
-        // Create WebSocket connection with token
         wsClient = new WebSocket(`${wsUrl}?token=${token}`);
         
         wsClient.onopen = () => {
@@ -88,7 +86,7 @@ function initializeWebSocket() {
     }
 }
 
-// Handle WebSocket messages with enhanced scan completion
+// Handle WebSocket messages
 function handleWebSocketMessage(message) {
     const { type, data, timestamp } = message;
     
@@ -121,93 +119,27 @@ function handleWebSocketMessage(message) {
     }
 }
 
-// Handle scan completion with results - ENHANCED
-function handleScanCompleteWithResults(data) {
-    console.log('Scan completed with results:', data);
-    
-    // Only process if this is our current scan
-    if (!currentScan || data.scan_id !== currentScan.scan_id) {
-        console.log('Ignoring scan complete for different scan');
-        return;
-    }
-    
-    // Clear previous results for new scan
-    scanResults = [];
-    allDiscoveredDevices.clear();
-    
-    if (data.devices && Array.isArray(data.devices)) {
-        data.devices.forEach(device => {
-            // Add metadata
-            device.scan_timestamp = data.timestamp;
-            device.scan_id = data.scan_id;
-            
-            // Ensure all required fields are present
-            device.ip_address = device.ip_address || 'Unknown';
-            device.device_type = device.device_type || 'Unknown Device';
-            device.vendor = device.vendor || 'Unknown';
-            device.protocol = device.protocol || 'Unknown';
-            device.open_ports = device.open_ports || [];
-            
-            // Store in our Map
-            allDiscoveredDevices.set(device.ip_address, device);
-            
-            // Add to current scan results
-            scanResults.push(device);
-        });
-        
-        console.log('Processed scan results:', scanResults.length);
-    }
-    
-    // Update UI immediately
-    displayScanResults();
-    
-    // Show notification
-    showNotification(`Scan completed! Found ${data.devices_found} devices`, 'success');
-    
-    // Auto-switch to results tab after a short delay
-    setTimeout(() => {
-        switchTab('results');
-    }, 500);
-    
-    // Clear progress monitoring
-    if (progressInterval) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-    }
-    
-    // Hide progress section after delay
-    setTimeout(() => {
-        document.getElementById('scanProgress').classList.remove('active');
-    }, 3000);
-    
-    // Reload scan history
-    loadScanHistory();
-    
-    // Clear current scan
-    currentScan = null;
-}
-
-// Handle scan form submission - FIXED with better validation and state management
+// Handle scan form submission - FIXED VERSION
 async function handleScanSubmit(e) {
     e.preventDefault();
 
     console.log('Starting new scan');
 
-    // IMPORTANT: Stop any existing scan first
+    // Stop any existing scan first
     if (currentScan) {
         console.log('Stopping existing scan before starting new one');
         try {
-            await stopScan(true); // true = silent stop
+            await stopScan(true);
         } catch (error) {
             console.error('Error stopping existing scan:', error);
         }
     }
 
-    // Clear previous scan results BEFORE starting new scan
+    // Clear previous scan results
     scanResults = [];
     allDiscoveredDevices.clear();
     clearDisplayedResults();
-    currentScan = null; // Clear any existing scan reference
+    currentScan = null;
     
     // Clear any existing progress intervals
     if (progressInterval) {
@@ -217,12 +149,10 @@ async function handleScanSubmit(e) {
     
     const formData = new FormData(e.target);
     
-    // Get selected protocols
-    const selectedProtocols = Array.from(document.querySelectorAll('input[name="protocols"]:checked'))
-        .map(cb => cb.value);
-
-    if (selectedProtocols.length === 0) {
-        showNotification('Please select at least one protocol', 'warning');
+    // Get scan type
+    const scanType = formData.get('scanType');
+    if (!scanType) {
+        showNotification('Please select a scan type', 'error');
         return;
     }
 
@@ -240,31 +170,69 @@ async function handleScanSubmit(e) {
         return;
     }
 
-    // Build scan configuration
+    // Build scan configuration based on scan type
     const scanConfig = {
         ip_range: ipRangeInput.trim(),
-        scan_type: formData.get('scanType') || document.getElementById('scanType').value,
-        scan_mode: formData.get('scanMode') || 'active',
-        timeout: parseInt(formData.get('timeout') || document.getElementById('timeout').value),
-        max_concurrent: parseInt(formData.get('concurrent') || document.getElementById('concurrent').value),
-        protocols: selectedProtocols,
-        network_interface: formData.get('networkInterface') || 'eth0'
+        scan_type: scanType,
+        timeout: parseInt(formData.get('timeout') || '30'),
+        max_concurrent: 20, // Reduced for better stability
     };
 
-    // Show passive indicator if needed
-    if (scanConfig.scan_mode === 'passive' || scanConfig.scan_mode === 'hybrid') {
-        document.getElementById('scanModeIndicator').style.display = 'flex';
-    }
-
-    // Add custom port ranges if selected
-    if (scanConfig.scan_type === 'custom') {
-        scanConfig.port_ranges = [
-            { start: 1, end: 1024 },
-            { start: 502, end: 502 },
-            { start: 20000, end: 20000 },
-            { start: 44818, end: 44818 },
-            { start: 47808, end: 47808 }
-        ];
+    // Set protocols and port ranges based on scan type
+    switch (scanType) {
+        case 'industrial':
+            // Only scan industrial ports
+            scanConfig.protocols = ['modbus', 'dnp3', 'ethernet_ip', 'bacnet', 's7', 'iec104', 'opcua'];
+            scanConfig.port_ranges = [
+                { start: 102, end: 102 },     // S7
+                { start: 502, end: 502 },     // Modbus
+                { start: 1911, end: 1911 },   // Niagara Fox
+                { start: 2222, end: 2222 },   // EtherNet/IP Alt
+                { start: 2404, end: 2404 },   // IEC-104
+                { start: 4840, end: 4840 },   // OPC UA
+                { start: 20000, end: 20000 }, // DNP3
+                { start: 20547, end: 20547 }, // DNP3 Alt
+                { start: 44818, end: 44818 }, // EtherNet/IP
+                { start: 47808, end: 47808 }  // BACnet
+            ];
+            break;
+            
+        case 'network':
+            // Industrial + common network ports
+            scanConfig.protocols = ['modbus', 'dnp3', 'ethernet_ip', 'bacnet', 's7', 'snmp'];
+            scanConfig.port_ranges = [
+                // Common network ports
+                { start: 22, end: 23 },       // SSH, Telnet
+                { start: 80, end: 80 },       // HTTP
+                { start: 161, end: 162 },     // SNMP
+                { start: 443, end: 443 },     // HTTPS
+                { start: 3389, end: 3389 },   // RDP
+                // Industrial ports
+                { start: 102, end: 102 },     // S7
+                { start: 502, end: 502 },     // Modbus
+                { start: 1911, end: 1911 },   // Niagara Fox
+                { start: 2222, end: 2222 },   // EtherNet/IP Alt
+                { start: 2404, end: 2404 },   // IEC-104
+                { start: 20000, end: 20000 }, // DNP3
+                { start: 44818, end: 44818 }, // EtherNet/IP
+                { start: 47808, end: 47808 }  // BACnet
+            ];
+            break;
+            
+        case 'custom':
+            // Parse custom ports
+            const customPorts = formData.get('customPorts') || document.getElementById('customPorts').value;
+            if (!customPorts) {
+                showNotification('Please enter custom ports', 'error');
+                return;
+            }
+            scanConfig.protocols = ['custom'];
+            scanConfig.port_ranges = parseCustomPorts(customPorts);
+            if (scanConfig.port_ranges.length === 0) {
+                showNotification('Invalid custom port format', 'error');
+                return;
+            }
+            break;
     }
 
     // Log scan configuration for debugging
@@ -306,8 +274,35 @@ async function handleScanSubmit(e) {
     } catch (error) {
         console.error('Error starting scan:', error);
         showNotification(error.message, 'error');
-        currentScan = null; // Ensure currentScan is null on error
+        currentScan = null;
     }
+}
+
+// Parse custom ports input
+function parseCustomPorts(customPorts) {
+    const portRanges = [];
+    const parts = customPorts.split(',');
+    
+    for (const part of parts) {
+        const trimmed = part.trim();
+        if (!trimmed) continue;
+        
+        if (trimmed.includes('-')) {
+            // Range format: 1000-2000
+            const [start, end] = trimmed.split('-').map(p => parseInt(p.trim()));
+            if (!isNaN(start) && !isNaN(end) && start <= end && start > 0 && end <= 65535) {
+                portRanges.push({ start, end });
+            }
+        } else {
+            // Single port
+            const port = parseInt(trimmed);
+            if (!isNaN(port) && port > 0 && port <= 65535) {
+                portRanges.push({ start: port, end: port });
+            }
+        }
+    }
+    
+    return portRanges;
 }
 
 // Clear displayed results
@@ -318,7 +313,7 @@ function clearDisplayedResults() {
     }
 }
 
-// Display scan results with better handling - ENHANCED
+// Display scan results
 function displayScanResults() {
     const deviceGrid = document.getElementById('discoveredDevices');
     if (!deviceGrid) {
@@ -326,7 +321,6 @@ function displayScanResults() {
         return;
     }
 
-    // Clear existing content
     deviceGrid.innerHTML = '';
 
     console.log('Displaying scan results:', scanResults.length);
@@ -363,20 +357,18 @@ function displayScanResults() {
     console.log('Devices displayed successfully');
 }
 
-// Create device card element - Enhanced
+// Create device card element
 function createDeviceCard(device) {
     const card = document.createElement('div');
     card.className = 'device-card';
-    card.setAttribute('data-ip', device.ip_address); // Add data attribute for easy lookup
+    card.setAttribute('data-ip', device.ip_address);
     
-    // Determine status based on inventory check
     const statusClass = device.in_inventory ? 'existing' : 'new';
     const statusText = device.in_inventory ? 'In Inventory' : 'New';
     const deviceType = device.device_type || 'Unknown Device';
     const vendor = device.vendor || 'Unknown';
     const protocol = device.protocol || 'Unknown';
     const responseTime = device.response_time || 'N/A';
-    const scanMethod = device.fingerprint?.scan_method || 'active';
     
     // Auto-classification indicator
     const autoClassified = device.fingerprint?.auto_classified || false;
@@ -428,10 +420,8 @@ function createDeviceCard(device) {
                 <div class="device-detail-value">${vendor}</div>
             </div>
             <div class="device-detail">
-                <div class="device-detail-label">Detection</div>
-                <div class="device-detail-value">
-                    ${scanMethod === 'passive' ? '<i class="fas fa-wifi"></i> Passive' : '<i class="fas fa-radar"></i> Active'}
-                </div>
+                <div class="device-detail-label">Response</div>
+                <div class="device-detail-value">${responseTime}</div>
             </div>
         </div>
         ${classificationConfidence > 0 ? `
@@ -502,6 +492,71 @@ function handleScanComplete(data) {
             loadScanResults(data.scan_id);
         }, 3000);
     }
+}
+
+function handleScanCompleteWithResults(data) {
+    console.log('Scan completed with results:', data);
+    
+    // Only process if this is our current scan
+    if (!currentScan || data.scan_id !== currentScan.scan_id) {
+        console.log('Ignoring scan complete for different scan');
+        return;
+    }
+    
+    // Clear previous results for new scan
+    scanResults = [];
+    allDiscoveredDevices.clear();
+    
+    if (data.devices && Array.isArray(data.devices)) {
+        data.devices.forEach(device => {
+            // Add metadata
+            device.scan_timestamp = data.timestamp;
+            device.scan_id = data.scan_id;
+            
+            // Ensure all required fields are present
+            device.ip_address = device.ip_address || 'Unknown';
+            device.device_type = device.device_type || 'Unknown Device';
+            device.vendor = device.vendor || 'Unknown';
+            device.protocol = device.protocol || 'Unknown';
+            device.open_ports = device.open_ports || [];
+            
+            // Store in our Map
+            allDiscoveredDevices.set(device.ip_address, device);
+            
+            // Add to current scan results
+            scanResults.push(device);
+        });
+        
+        console.log('Processed scan results:', scanResults.length);
+    }
+    
+    // Update UI immediately
+    displayScanResults();
+    
+    // Show notification
+    showNotification(`Scan completed! Found ${data.devices_found} devices`, 'success');
+    
+    // Auto-switch to results tab after a short delay
+    setTimeout(() => {
+        switchTab('results');
+    }, 500);
+    
+    // Clear progress monitoring
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+    
+    // Hide progress section after delay
+    setTimeout(() => {
+        document.getElementById('scanProgress').classList.remove('active');
+    }, 3000);
+    
+    // Reload scan history
+    loadScanHistory();
+    
+    // Clear current scan
+    currentScan = null;
 }
 
 function handleScanError(data) {
@@ -619,16 +674,16 @@ function displayProgress(progress) {
     // Update statistics
     const devicesFound = document.getElementById('devicesFound');
     const ipsScanned = document.getElementById('ipsScanned');
-    const protocolsDetected = document.getElementById('protocolsDetected');
+    const portsScanned = document.getElementById('portsScanned');
     const errorsCount = document.getElementById('errorsCount');
     
     if (devicesFound) devicesFound.textContent = progress.discovered_hosts || 0;
     if (ipsScanned) ipsScanned.textContent = progress.scanned_hosts || 0;
-    if (protocolsDetected) protocolsDetected.textContent = progress.discovered_hosts || 0;
+    if (portsScanned) portsScanned.textContent = progress.scanned_ports || 0;
     if (errorsCount) errorsCount.textContent = progress.errors ? progress.errors.length : 0;
 }
 
-// Load scan results with better error handling - ENHANCED
+// Load scan results
 async function loadScanResults(scanId) {
     try {
         const token = getAuthToken();
@@ -684,7 +739,7 @@ async function loadScanResults(scanId) {
     }
 }
 
-// View scan results from history - FIXED
+// View scan results from history
 async function viewScanResults(scanId) {
     console.log('View scan results for:', scanId);
     
@@ -703,7 +758,7 @@ async function viewScanResults(scanId) {
     switchTab('results');
 }
 
-// Stop scan - FIXED with silent option
+// Stop scan
 async function stopScan(silent = false) {
     if (!currentScan) {
         if (!silent) {
@@ -850,7 +905,7 @@ function displayScanHistory(history) {
     });
 }
 
-// Check for active scans on page load - FIXED
+// Check for active scans on page load
 async function checkActiveScans() {
     try {
         const token = getAuthToken();
@@ -877,49 +932,6 @@ async function checkActiveScans() {
     } catch (error) {
         console.error('Error checking active scans:', error);
     }
-}
-
-// Load protocol ports information
-async function loadProtocolPorts() {
-    try {
-        const token = getAuthToken();
-        const response = await fetch('/api/discovery/protocol-ports', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            console.warn('Failed to load protocol ports');
-            return;
-        }
-
-        const protocolPorts = await response.json();
-        updateProtocolCards(protocolPorts);
-
-    } catch (error) {
-        console.error('Error loading protocol ports:', error);
-    }
-}
-
-// Update protocol cards with port information
-function updateProtocolCards(protocolPorts) {
-    Object.keys(protocolPorts).forEach(protocolKey => {
-        const protocolData = protocolPorts[protocolKey];
-        const protocolCard = document.querySelector(`input[value="${protocolKey}"]`)?.closest('.protocol-card');
-        
-        if (protocolCard) {
-            const portElement = protocolCard.querySelector('.protocol-port');
-            if (portElement && protocolData.default_port) {
-                portElement.textContent = `Port ${protocolData.default_port}`;
-            }
-            
-            const nameElement = protocolCard.querySelector('.protocol-name');
-            if (nameElement && protocolData.name) {
-                nameElement.textContent = protocolData.name;
-            }
-        }
-    });
 }
 
 // View device details
@@ -1149,13 +1161,6 @@ async function addAllDevicesToInventory() {
     }
 }
 
-// Protocol selection toggle
-function toggleProtocol(card) {
-    card.classList.toggle('selected');
-    const checkbox = card.querySelector('input[type="checkbox"]');
-    checkbox.checked = !checkbox.checked;
-}
-
 // Reset form
 function resetForm() {
     const form = document.getElementById('scanForm');
@@ -1163,24 +1168,23 @@ function resetForm() {
         form.reset();
     }
     
-    // Reset protocol selections
-    document.querySelectorAll('.protocol-card').forEach(card => {
+    // Reset scan type selection
+    document.querySelectorAll('.scan-type-card').forEach(card => {
         card.classList.remove('selected');
-        const checkbox = card.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-            checkbox.checked = false;
-        }
     });
     
-    // Set default protocols
-    const defaultProtocols = ['modbus', 'dnp3'];
-    defaultProtocols.forEach(protocol => {
-        const checkbox = document.querySelector(`input[value="${protocol}"]`);
-        if (checkbox) {
-            checkbox.checked = true;
-            checkbox.closest('.protocol-card').classList.add('selected');
-        }
-    });
+    // Select industrial scan by default
+    const industrialCard = document.querySelector('.scan-type-card input[value="industrial"]')?.closest('.scan-type-card');
+    if (industrialCard) {
+        industrialCard.classList.add('selected');
+        industrialCard.querySelector('input[type="radio"]').checked = true;
+    }
+    
+    // Hide custom ports section
+    const customPortsSection = document.getElementById('customPortsSection');
+    if (customPortsSection) {
+        customPortsSection.classList.remove('active');
+    }
 }
 
 // Validate IP range format - ENHANCED for multiple formats and better validation
@@ -1348,17 +1352,6 @@ if (!document.querySelector('#notification-styles')) {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(100%); opacity: 0; }
         }
-        .inventory-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            color: var(--success-color);
-            margin-top: 4px;
-        }
-        .inventory-indicator i {
-            font-size: 12px;
-        }
     `;
     document.head.appendChild(style);
 }
@@ -1366,7 +1359,6 @@ if (!document.querySelector('#notification-styles')) {
 // Export functions for use in HTML
 window.addAllDevicesToInventory = addAllDevicesToInventory;
 window.switchTab = switchTab;
-window.toggleProtocol = toggleProtocol;
 window.resetForm = resetForm;
 window.viewDeviceDetails = viewDeviceDetails;
 window.addDeviceToInventory = addDeviceToInventory;
